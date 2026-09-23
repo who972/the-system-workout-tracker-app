@@ -1,158 +1,434 @@
-<!doctype html>
-<html lang="en">
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#070a0f" />
-  <meta name="description" content="THE SYSTEM - gamified workout, progression, and fitness tracking app." />
-  <link rel="manifest" href="manifest.webmanifest" />
-  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>THE SYSTEM — Workout Tracker</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css" />
-  <title>THE SYSTEM - Workout Tracker</title>
-</head>
+  <link rel="manifest" href="manifest.webmanifest" />
+  <meta name="theme-color" content="#0a0c10" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+
+<style>
+.mission-exercise{padding:12px;border-radius:10px;background:rgba(255,255,255,.035);margin-bottom:10px}.mission-exercise__head{display:flex;justify-content:space-between;gap:10px;margin-bottom:8px}.mission-exercise__head small{opacity:.65}.mission-set{display:grid;grid-template-columns:55px minmax(60px,90px) 62px minmax(60px,90px) 64px;gap:7px;align-items:center;padding:7px 0;border-top:1px solid rgba(255,255,255,.06)}.mission-set--done{opacity:.6}.mission-input{width:100%;box-sizing:border-box;padding:8px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.2);color:inherit}.set-label,.set-unit,.previous-best{font-size:.72rem;opacity:.7}.set-done-btn{padding:8px 6px;border-radius:7px;border:1px solid currentColor;background:transparent;color:inherit;font-weight:700}.previous-best{grid-column:2/-1}@media(max-width:620px){.mission-set{grid-template-columns:45px 1fr 50px 1fr 58px}.mission-exercise__head{display:block}.mission-exercise__head small{display:block;margin-top:3px}}
+</style>
+<style>
+.settings-section{margin-top:28px;padding:24px;background:var(--panel-bg,#0d1017);border:1px solid var(--border-color,#242b38);border-radius:14px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.settings-form,.settings-actions{display:grid;gap:10px}.settings-check{display:flex;gap:8px;align-items:center;font-size:13px}.import-label{display:block;text-align:center;padding:10px 12px;border:1px solid var(--border-color,#333);border-radius:8px;cursor:pointer}.import-label input{display:none}.danger-btn{padding:10px 12px;border-radius:8px;border:1px solid #8b2c2c;background:transparent;color:inherit;cursor:pointer}.backup-status{margin-top:10px;font-size:12px;opacity:.7}@media(max-width:760px){.settings-grid{grid-template-columns:1fr}}
+</style><style>.cloud-actions{display:flex;gap:8px;flex-wrap:wrap}.cloud-badge{display:inline-block;margin:0 0 12px;padding:6px 9px;border:1px solid currentColor;border-radius:999px;font-size:11px;letter-spacing:.08em}.backup-status[data-ok="1"]{font-weight:700}</style></head>
 <body>
-  <div class="app-shell">
-    <header class="topbar">
-      <div>
-        <p class="eyebrow">PLAYER INTERFACE</p>
-        <h1>THE SYSTEM</h1>
-      </div>
-      <button class="icon-button" id="quickAddBtn" aria-label="Quick add workout">＋</button>
-    </header>
 
-    <main>
-      <section class="view active" id="dashboardView">
-        <div class="system-card hero-card">
-          <div class="rank-orb" id="rankOrb">E</div>
-          <div class="hero-copy">
-            <span class="muted">CURRENT RANK</span>
-            <h2 id="playerLevel">LEVEL 1</h2>
-            <div class="xp-row">
-              <div class="progress"><span id="xpBar"></span></div>
-              <span id="xpText">0 / 100 XP</span>
-            </div>
-          </div>
-        </div>
-
-        <div class="stats-grid" id="statsGrid"></div>
-
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">DAILY OBJECTIVE</p>
-            <h2>Today's Mission</h2>
-          </div>
-          <span class="pill" id="todayLabel"></span>
-        </div>
-        <div id="todayMission"></div>
-
-        <div class="section-heading compact">
-          <h2>Progress</h2>
-        </div>
-        <div class="metric-grid">
-          <article class="metric-card">
-            <span class="muted">STREAK</span>
-            <strong id="streakValue">0</strong>
-            <small>days</small>
-          </article>
-          <article class="metric-card">
-            <span class="muted">WORKOUTS</span>
-            <strong id="workoutValue">0</strong>
-            <small>completed</small>
-          </article>
-          <article class="metric-card">
-            <span class="muted">TOTAL XP</span>
-            <strong id="totalXpValue">0</strong>
-            <small>earned</small>
-          </article>
-        </div>
-
-        <div class="section-heading compact">
-          <h2>Recent Achievements</h2>
-        </div>
-        <div id="achievementPreview" class="achievement-list"></div>
-      </section>
-
-      <section class="view" id="missionsView">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">WEEKLY PROTOCOL</p>
-            <h2>7-Day Missions</h2>
-          </div>
-        </div>
-        <div id="missionList" class="mission-list"></div>
-      </section>
-
-      <section class="view" id="historyView">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">PLAYER RECORD</p>
-            <h2>History & PRs</h2>
-          </div>
-        </div>
-        <div id="prList" class="pr-list"></div>
-        <div class="section-heading compact"><h2>Workout Log</h2></div>
-        <div id="historyList" class="history-list"></div>
-      </section>
-
-      <section class="view" id="settingsView">
-        <div class="section-heading">
-          <div>
-            <p class="eyebrow">SYSTEM CONTROL</p>
-            <h2>Settings</h2>
-          </div>
-        </div>
-        <div class="system-card settings-card">
-          <label>
-            Theme
-            <select id="themeSelect">
-              <option value="system">System Green</option>
-              <option value="blue">Neon Blue</option>
-              <option value="crimson">Crimson</option>
-              <option value="mono">Monochrome</option>
-            </select>
-          </label>
-          <button class="secondary-button" id="exportBtn">Export Data</button>
-          <label class="file-button">
-            Import Data
-            <input type="file" id="importInput" accept="application/json" />
-          </label>
-          <button class="danger-button" id="resetBtn">Reset Progress</button>
-        </div>
-      </section>
-    </main>
-
-    <nav class="bottom-nav" aria-label="Primary navigation">
-      <button class="nav-item active" data-view="dashboardView"><span>⌂</span>Home</button>
-      <button class="nav-item" data-view="missionsView"><span>⚔</span>Missions</button>
-      <button class="nav-item" data-view="historyView"><span>◫</span>History</button>
-      <button class="nav-item" data-view="settingsView"><span>⚙</span>Settings</button>
-    </nav>
+  <!-- Ambient background glow -->
+  <div class="ambient-bg" aria-hidden="true">
+    <div class="glow-orb glow-orb--cyan"></div>
+    <div class="glow-orb glow-orb--violet"></div>
   </div>
 
-  <dialog id="workoutDialog">
-    <form method="dialog" id="workoutForm">
-      <div class="dialog-head">
-        <div>
-          <p class="eyebrow">MISSION LOG</p>
-          <h2 id="dialogTitle">Log Workout</h2>
-        </div>
-        <button value="cancel" class="icon-button" aria-label="Close">×</button>
+  <!-- Header -->
+  <header class="header">
+    <div class="header__brand">
+      <svg class="header__logo" viewBox="0 0 40 40" fill="none" stroke="currentColor" stroke-width="2" aria-label="System logo">
+        <path d="M20 4 L34 12 L34 28 L20 36 L6 28 L6 12 Z" />
+        <path d="M20 10 L28 15 L28 25 L20 30 L12 25 L12 15 Z" opacity="0.5" />
+        <circle cx="20" cy="20" r="3" fill="currentColor" stroke="none" />
+      </svg>
+      <div>
+        <h1 class="header__title">THE SYSTEM</h1>
+        <p class="header__subtitle">WORKOUT TRACKER • LEVEL UP EVERY DAY</p>
       </div>
-      <input type="hidden" id="workoutDay" />
-      <div id="exerciseFields"></div>
-      <label>
-        Notes
-        <textarea id="workoutNotes" rows="3" placeholder="How did the session feel?"></textarea>
-      </label>
-      <div class="dialog-actions">
-        <button value="cancel" class="secondary-button">Cancel</button>
-        <button type="submit" value="default" class="primary-button">Complete Mission</button>
+    </div>
+    <button class="theme-toggle" data-theme-toggle aria-label="Switch to light mode">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+    </button>
+  </header>
+<nav class="app-nav" aria-label="Main navigation">
+  <button data-target="playerCard">Home</button>
+  <button data-target="daily-mission">Workout</button>
+  <button data-target="progressAnalytics">Progress</button>
+  <button data-target="workoutBuilder">Missions</button>
+  <button data-target="exerciseLibrary">Library</button>
+  <button data-target="profileSettings">Profile</button>
+</nav>
+
+
+  <!-- Player Card -->
+  <section class="player-card" id="playerCard">
+    <div class="player-card__top">
+      <div class="player-card__rank-badge" id="rankBadge">
+        <span class="rank-badge__letter" id="rankLetter">E</span>
+        <span class="rank-badge__label" id="rankLabel">E-Rank</span>
+      </div>
+      <div class="player-card__info">
+        <p class="player-card__name" id="playerName">Awakened Hunter</p>
+        <div class="player-card__level-row">
+          <span class="player-card__level" id="playerLevel">Level 1</span>
+          <span class="player-card__streak" id="playerStreak">🔥 0 day streak</span>
+        </div>
+      </div>
+      <div class="player-card__total" id="totalWorkouts">
+        <span class="player-card__total-num">0</span>
+        <span class="player-card__total-label">Total Quests</span>
+      </div>
+    </div>
+
+    <!-- XP Bar -->
+    <div class="xp-bar-container">
+      <div class="xp-bar-header">
+        <span class="xp-bar-label">EXP</span>
+        <span class="xp-bar-values" id="xpValues">0 / 100</span>
+      </div>
+      <div class="xp-bar-track">
+        <div class="xp-bar-fill" id="xpBarFill" style="width: 0%"></div>
+        <div class="xp-bar-glow" id="xpBarGlow"></div>
+      </div>
+    </div>
+
+    <div class="player-dashboard-strip"><div><span>WORKOUTS</span><strong id="dashWorkouts">0</strong></div><div><span>TRAINING</span><strong id="dashMinutes">0m</strong></div><div><span>WEIGHT</span><strong id="dashWeight">--</strong></div><div><span>GOAL</span><strong id="dashGoal">--</strong></div></div>
+
+    <!-- Stats -->
+    <div class="player-stats">
+      <div class="player-stat">
+        <span class="player-stat__icon">⚔️</span>
+        <span class="player-stat__label">STR</span>
+        <span class="player-stat__value" id="statStr">0</span>
+      </div>
+      <div class="player-stat">
+        <span class="player-stat__icon">🛡️</span>
+        <span class="player-stat__label">END</span>
+        <span class="player-stat__value" id="statEnd">0</span>
+      </div>
+      <div class="player-stat">
+        <span class="player-stat__icon">💨</span>
+        <span class="player-stat__label">AGI</span>
+        <span class="player-stat__value" id="statAgi">0</span>
+      </div>
+      <div class="player-stat">
+        <span class="player-stat__icon">❤️</span>
+        <span class="player-stat__label">VIT</span>
+        <span class="player-stat__value" id="statVit">0</span>
+      </div>
+    </div>
+  </section>
+
+
+<section id="daily-mission" class="card system-mission-card">
+  <div class="section-header">
+    <div>
+      <div class="eyebrow">SYSTEM MISSION</div>
+      <h2 id="mission-title">Today's Training</h2>
+    </div>
+    <div class="mission-xp" id="mission-xp">+0 XP</div>
+  </div>
+  <p id="mission-focus">Complete today's 30-minute mission to earn XP and improve your stats.</p>
+  <div id="mission-exercises" class="mission-exercises"></div>
+  <button id="start-mission-btn" class="primary-btn" type="button">START WORKOUT</button>
+</section>
+
+  <!-- Progress & Analytics v7 -->
+  <section class="analytics-section" id="progressAnalytics">
+    <div class="quest-section__header">
+      <div><p class="analytics-kicker">SYSTEM ANALYSIS</p><h2 class="quest-section__title">Progress & Analytics</h2></div>
+      <span class="quest-section__meta" id="analyticsRange">Last 30 Days</span>
+    </div>
+    <div class="analytics-kpis">
+      <div class="analytics-kpi"><span>THIS WEEK</span><strong id="analyticsWeek">0</strong><small>workouts</small></div>
+      <div class="analytics-kpi"><span>THIS MONTH</span><strong id="analyticsMonth">0</strong><small>workouts</small></div>
+      <div class="analytics-kpi"><span>TRAINING TIME</span><strong id="analyticsMinutes">0m</strong><small>total</small></div>
+      <div class="analytics-kpi"><span>TOTAL XP</span><strong id="analyticsXp">0</strong><small>earned</small></div>
+      <div class="analytics-kpi"><span>STREAK</span><strong id="analyticsStreak">0</strong><small>days</small></div>
+      <div class="analytics-kpi"><span>BEST STREAK</span><strong id="analyticsBestStreak">0</strong><small>days</small></div>
+    </div>
+    <div class="analytics-grid">
+      <article class="analytics-card">
+        <div class="analytics-card__head"><h3>Weight Progress</h3><span id="weightProgressText">No data</span></div>
+        <div class="goal-meter"><div id="weightGoalFill"></div></div>
+        <div class="weight-chart" id="weightChart"></div>
+      </article>
+      <article class="analytics-card">
+        <div class="analytics-card__head"><h3>Training Calendar</h3><span id="calendarMonth"></span></div>
+        <div class="calendar-grid" id="trainingCalendar"></div>
+        <div class="calendar-legend"><span>● Workout</span><span>◆ PR</span></div>
+      </article>
+      <article class="analytics-card analytics-card--wide">
+        <div class="analytics-card__head"><h3>Strength Progress</h3><select id="strengthExercise" class="analytics-select"></select></div>
+        <div class="strength-grid">
+          <div><span>BEST REPS</span><strong id="strengthReps">--</strong></div>
+          <div><span>BEST WEIGHT</span><strong id="strengthWeight">--</strong></div>
+          <div><span>BEST VOLUME</span><strong id="strengthVolume">--</strong></div>
+          <div><span>SESSIONS</span><strong id="strengthSessions">0</strong></div>
+        </div>
+        <div class="strength-history" id="strengthHistory"></div>
+      </article>
+      <article class="analytics-card analytics-card--wide">
+        <div class="analytics-card__head"><h3>Personal Records</h3><span id="prCount">0 records</span></div>
+        <div class="pr-grid" id="personalRecords"></div>
+      </article>
+      <article class="analytics-card analytics-card--wide system-insight">
+        <div class="analytics-card__head"><h3>System Insights</h3><span>Based on your training data</span></div>
+        <div id="systemInsights" class="insight-list"></div>
+      </article>
+    </div>
+  </section>
+
+
+  <!-- Adaptive Progression v10 -->
+  <section class="adaptive-section" id="adaptiveProgression">
+    <div class="quest-section__header">
+      <div><p class="analytics-kicker">SYSTEM COACH</p><h2 class="quest-section__title">Adaptive Progression</h2><p class="quest-section__desc">Recommendations are based on your recent completed sets. You stay in control of every change.</p></div>
+      <span class="quest-section__meta" id="adaptiveMeta">V10</span>
+    </div>
+    <div id="adaptiveRecommendations" class="adaptive-grid"></div>
+  </section>
+
+  <!-- System Notification Panel -->
+  <section class="system-panel" id="systemPanel">
+    <div class="system-panel__header">
+      <span class="system-panel__dot"></span>
+      <span class="system-panel__title">SYSTEM</span>
+    </div>
+    <div class="system-panel__log" id="systemLog">
+      <p class="system-log__entry system-log__entry--idle">SYSTEM ONLINE. Complete your daily quests to grow stronger.</p>
+    </div>
+  </section>
+
+  <!-- Main Quest Grid -->
+  <div class="quest-grid">
+
+    <!-- Daily Quests -->
+    <section class="quest-section quest-section--daily">
+      <div class="quest-section__header">
+        <h2 class="quest-section__title">Daily Quests</h2>
+        <span class="quest-section__meta" id="dailyMeta">0/0 Complete</span>
+      </div>
+      <p class="quest-section__desc">Quests reset at midnight. Complete all for bonus XP.</p>
+      <div class="quest-list" id="dailyQuestList"></div>
+      <div class="daily-bonus" id="dailyBonus">
+        <div class="daily-bonus__bar">
+          <div class="daily-bonus__fill" id="dailyBonusFill" style="width: 0%"></div>
+        </div>
+        <p class="daily-bonus__text" id="dailyBonusText">All Quests Complete Bonus: +250 XP</p>
+      </div>
+    </section>
+
+    <!-- Weekly Objectives -->
+    <section class="quest-section quest-section--weekly">
+      <div class="quest-section__header">
+        <h2 class="quest-section__title">Weekly Objectives</h2>
+        <span class="quest-section__meta" id="weeklyMeta">Resets Monday</span>
+      </div>
+      <p class="quest-section__desc">Complete these for large XP rewards.</p>
+      <div class="quest-list" id="weeklyQuestList"></div>
+    </section>
+  </div>
+
+  <!-- Custom Workout Log -->
+  <section class="custom-workout">
+    <div class="quest-section__header">
+      <h2 class="quest-section__title">Training Log</h2>
+      <span class="quest-section__meta">Custom Workout</span>
+    </div>
+    <p class="quest-section__desc">Log any workout. XP = duration × intensity multiplier.</p>
+    <form class="custom-workout__form" id="customWorkoutForm">
+      <div class="form-row">
+        <input type="text" id="workoutName" placeholder="Workout name (e.g., Shadow Sprint)" class="form-input form-input--flex" required />
+        <input type="number" id="workoutDuration" placeholder="Minutes" min="1" max="300" class="form-input form-input--small" required />
+        <select id="workoutIntensity" class="form-input form-input--select">
+          <option value="1.0">Light (×1.0)</option>
+          <option value="1.5" selected>Moderate (×1.5)</option>
+          <option value="2.0">Intense (×2.0)</option>
+          <option value="2.5">Extreme (×2.5)</option>
+        </select>
+        <button type="submit" class="btn-primary">Log & Claim XP</button>
       </div>
     </form>
-  </dialog>
+  </section>
 
-  <div id="toast" role="status" aria-live="polite"></div>
+  <!-- Workout Builder v8 -->
+  <section class="workout-builder" id="workoutBuilder">
+    <div class="quest-section__header"><div><h2 class="quest-section__title">Workout Builder</h2><p class="quest-section__desc">Create reusable System Missions with automatic XP and stat rewards.</p></div><span class="quest-section__meta">CUSTOM MISSIONS</span></div>
+    <div class="builder-grid">
+      <article class="builder-card">
+        <form id="builderForm" class="builder-form">
+          <div class="builder-row">
+            <input id="builderName" class="form-input" placeholder="Mission name" required>
+            <select id="builderStat" class="form-input"><option value="str">STR</option><option value="end">END</option><option value="agi">AGI</option><option value="vit">VIT</option></select>
+            <select id="builderDay" class="form-input"><option value="any">Any day</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select>
+            <input id="builderMinutes" class="form-input" type="number" min="5" max="180" value="30" aria-label="Target minutes">
+          </div>
+          <div id="builderExercises" class="builder-exercises"></div>
+          <div class="builder-actions"><button id="addBuilderExercise" type="button" class="btn-primary">+ Add Exercise</button><button type="submit" class="btn-primary">Save Mission</button></div>
+        </form>
+      </article>
+      <article class="builder-card"><div class="dashboard-card__head"><span>⚔</span><h3>Saved Missions</h3></div><div id="savedWorkouts" class="saved-workouts"></div></article>
+    </div>
+  </section>
 
-  <script src="app.js"></script>
+  <!-- Training & Body Progress -->
+  <section class="system-dashboard">
+    <div class="quest-section__header">
+      <h2 class="quest-section__title">System Dashboard</h2>
+      <span class="quest-section__meta">Progress Tracking</span>
+    </div>
+    <div class="dashboard-grid">
+      <article class="dashboard-card">
+        <div class="dashboard-card__head"><span>⚔</span><h3>Today's Mission</h3></div>
+        <div id="todayPlan" class="mission-list"></div>
+      </article>
+      <article class="dashboard-card">
+        <div class="dashboard-card__head"><span>⚖</span><h3>Body Progress</h3></div>
+        <div class="body-stats">
+          <div><span>Current</span><strong id="currentWeight">--</strong></div>
+          <div><span>Goal</span><strong id="goalWeight">--</strong></div>
+          <div><span>Lost</span><strong id="weightLost">--</strong></div>
+        </div>
+        <form id="weightForm" class="compact-form">
+          <input id="weightInput" type="number" step="0.1" min="50" max="700" placeholder="Weight (lb)" required>
+          <input id="goalWeightInput" type="number" step="0.1" min="50" max="700" placeholder="Goal (lb)" required>
+          <button class="btn-primary" type="submit">Update</button>
+        </form>
+      </article>
+      <article class="dashboard-card dashboard-card--wide">
+        <div class="dashboard-card__head"><span>📈</span><h3>Training History</h3><span id="historyMeta" class="quest-section__meta"></span></div>
+        <div id="historyList" class="history-list"></div>
+      </article>
+    </div>
+  </section>
+
+
+  <!-- Exercise Library v9 -->
+  <section class="exercise-library" id="exerciseLibrary">
+    <div class="quest-section__header"><div><h2 class="quest-section__title">Exercise Library</h2><p class="quest-section__desc">Browse built-in exercises or add your own. Library exercises can be loaded directly into the Workout Builder.</p></div><span class="quest-section__meta">V9 LIBRARY</span></div>
+    <div class="library-toolbar"><input id="librarySearch" class="form-input" placeholder="Search exercises"><select id="libraryMuscle" class="form-input"><option value="all">All muscle groups</option></select><select id="libraryEquipment" class="form-input"><option value="all">All equipment</option></select></div>
+    <div id="exerciseLibraryGrid" class="exercise-library-grid"></div>
+    <details class="library-add"><summary>+ Add Custom Exercise</summary><form id="libraryExerciseForm" class="builder-form"><div class="builder-row"><input id="libName" class="form-input" placeholder="Exercise name" required><input id="libMuscle" class="form-input" placeholder="Muscle group" required><input id="libEquipment" class="form-input" placeholder="Equipment" value="Bodyweight" required><select id="libDifficulty" class="form-input"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select><select id="libStat" class="form-input"><option value="str">STR</option><option value="end">END</option><option value="agi">AGI</option><option value="vit">VIT</option></select><input id="libSets" class="form-input" type="number" min="1" max="20" value="3" aria-label="Default sets"><input id="libTarget" class="form-input" value="8-12 reps" aria-label="Default target"><input id="libRest" class="form-input" type="number" min="0" max="600" value="45" aria-label="Default rest seconds"></div><button class="btn-primary" type="submit">Save Exercise</button></form></details>
+  </section>
+
+  <!-- Exercise Logger -->
+  <section class="exercise-tracker">
+    <div class="quest-section__header">
+      <h2 class="quest-section__title">Exercise Tracker</h2>
+      <span class="quest-section__meta">Progressive Overload</span>
+    </div>
+    <p class="quest-section__desc">Record sets, reps and weight. Your personal bests are tracked automatically.</p>
+    <form id="exerciseForm" class="exercise-form">
+      <select id="exerciseSelect" class="form-input form-input--select">
+        <option value="Push-Ups">Push-Ups</option>
+        <option value="Squats">Squats</option>
+        <option value="Lunges">Lunges</option>
+        <option value="Dumbbell Press">Dumbbell Press</option>
+        <option value="Rows">Rows</option>
+        <option value="Shoulder Press">Shoulder Press</option>
+        <option value="Biceps Curls">Biceps Curls</option>
+        <option value="Triceps Extensions">Triceps Extensions</option>
+      </select>
+      <input id="exerciseSets" class="form-input" type="number" min="1" max="20" placeholder="Sets" required>
+      <input id="exerciseReps" class="form-input" type="number" min="1" max="500" placeholder="Reps" required>
+      <input id="exerciseWeight" class="form-input" type="number" min="0" max="1000" step="0.5" placeholder="Weight (lb)">
+      <button class="btn-primary" type="submit">Log Set</button>
+    </form>
+    <div id="exerciseRecords" class="exercise-records"></div>
+  </section>
+
+  <!-- Achievements -->
+  <section class="achievements">
+    <div class="quest-section__header">
+      <h2 class="quest-section__title">Achievement Hall</h2>
+      <span class="quest-section__meta" id="achievementMeta">0 Unlocked</span>
+    </div>
+    <div class="achievement-tiers">
+      <div class="tier-labels">
+        <span class="tier-label tier-label--bronze">Bronze</span>
+        <span class="tier-label tier-label--silver">Silver</span>
+        <span class="tier-label tier-label--gold">Gold</span>
+        <span class="tier-label tier-label--srank">S-Rank</span>
+        <span class="tier-label tier-label--shadow">Shadow Sovereign</span>
+      </div>
+      <div class="achievement-grid" id="achievementGrid"></div>
+    </div>
+  </section>
+
+<section class="settings-section" id="cloudSync">
+  <div class="quest-section__header"><h2 class="quest-section__title">Account & Cloud Sync</h2><span class="quest-section__meta">RC1</span></div>
+  <div class="settings-grid">
+    <article class="dashboard-card"><h3>Cloud Setup</h3><p class="quest-section__desc">Connect your own Supabase project. Your project URL and public anon key stay on this device.</p><div class="settings-form"><input id="cloudUrl" class="form-input" placeholder="Supabase project URL"><input id="cloudAnonKey" class="form-input" type="password" placeholder="Supabase anon/public key"><button id="cloudSaveConfig" class="btn-primary" type="button">Save Cloud Setup</button></div></article>
+    <article class="dashboard-card"><h3>System Account</h3><div id="cloudSignedIn" class="cloud-badge">NOT SIGNED IN</div><div class="settings-form"><input id="cloudEmail" class="form-input" type="email" autocomplete="email" placeholder="Email"><input id="cloudPassword" class="form-input" type="password" autocomplete="current-password" placeholder="Password (6+ characters)"><div class="cloud-actions"><button id="cloudSignIn" class="btn-primary" type="button">Sign In</button><button id="cloudSignUp" type="button">Create Account</button><button id="cloudSignOut" type="button">Sign Out</button></div></div></article>
+    <article class="dashboard-card dashboard-card--wide"><h3>Sync Progress</h3><p class="quest-section__desc">Upload this device's progress or restore your latest cloud backup on another device.</p><div class="cloud-actions"><button id="cloudPush" class="btn-primary" type="button">Upload Progress</button><button id="cloudPull" type="button">Restore From Cloud</button></div><div id="lastCloudSync" class="backup-status">No cloud sync yet.</div><div id="cloudStatus" class="backup-status"></div></article>
+  </div>
+</section>
+<section class="settings-section" id="profileSettings">
+    <div class="quest-section__header"><h2 class="quest-section__title">Profile & Settings</h2><span class="quest-section__meta">RC1</span></div>
+    <div class="settings-grid">
+      <article class="dashboard-card"><h3>Player Profile</h3><form id="profileForm" class="settings-form"><input id="profileName" class="form-input" placeholder="Player name"><select id="unitSystem" class="form-input"><option value="imperial">Imperial (lb)</option><option value="metric">Metric (kg)</option></select><select id="workoutGoal" class="form-input"><option value="balanced">Balanced</option><option value="strength">Strength</option><option value="endurance">Endurance</option><option value="weight-loss">Weight loss</option><option value="mobility">Mobility</option></select><label class="settings-check"><input id="soundSetting" type="checkbox"> System sounds</label><button class="btn-primary" type="submit">Save Settings</button></form></article>
+      <article class="dashboard-card"><h3>Data Management</h3><p class="quest-section__desc">Your data lives on this device unless you export a backup.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label><button id="resetTrainingBtn" type="button">Reset Training Data</button><button id="resetAllBtn" class="danger-btn" type="button">Factory Reset</button></div><div id="backupStatus" class="backup-status"></div></article>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <p>THE SYSTEM — WORKOUT TRACKER • RELEASE CANDIDATE 1</p>
+    <button class="btn-reset" id="resetBtn" aria-label="Reset all progress">Reset Progress</button>
+  </footer>
+
+  <!-- Level-Up Modal -->
+  <div class="levelup-modal" id="levelupModal" aria-hidden="true">
+    <div class="levelup-modal__backdrop"></div>
+    <div class="levelup-modal__content">
+      <div class="levelup-modal__rays"></div>
+      <p class="levelup-modal__system">⚠ SYSTEM ALERT ⚠</p>
+      <h2 class="levelup-modal__title">LEVEL UP</h2>
+      <div class="levelup-modal__level">
+        <span class="levelup-modal__arrow">→</span>
+        <span class="levelup-modal__newlevel" id="levelupNewLevel">Level 2</span>
+      </div>
+      <p class="levelup-modal__rank" id="levelupRank">You have reached a new rank</p>
+      <button class="levelup-modal__btn" id="levelupClose">Continue</button>
+    </div>
+  </div>
+
+  <!-- Reset Confirm Modal -->
+  <div class="confirm-modal" id="confirmModal" aria-hidden="true">
+    <div class="confirm-modal__backdrop" id="confirmBackdrop"></div>
+    <div class="confirm-modal__content">
+      <h3 class="confirm-modal__title">Reset All Progress?</h3>
+      <p class="confirm-modal__desc">This will erase your level, XP, stats, and achievements. This cannot be undone.</p>
+      <div class="confirm-modal__buttons">
+        <button class="btn-secondary" id="confirmNo">Cancel</button>
+        <button class="btn-danger" id="confirmYes">Reset Everything</button>
+      </div>
+    </div>
+  </div>
+
+  
+
+
+
+
+<div id="workoutMode" class="workout-mode" aria-hidden="true">
+  <div class="workout-mode__top"><div><span class="eyebrow">LIVE WORKOUT</span><h2 id="liveMissionName">SYSTEM MISSION</h2></div><button id="exitWorkoutBtn" class="workout-exit" type="button">✕</button></div>
+  <div class="workout-clock" id="workoutClock">00:00</div>
+  <div class="workout-progress"><div id="workoutProgressFill"></div></div>
+  <div class="workout-stage">
+    <span id="liveExerciseCount" class="eyebrow">EXERCISE 1</span><h1 id="liveExerciseName">Ready</h1><p id="liveTarget">Press start to begin.</p>
+    <div class="live-set-grid"><label>REPS / SEC<input id="liveReps" type="number" min="0" inputmode="decimal"></label><label>WEIGHT (LB)<input id="liveWeight" type="number" min="0" step="0.5" inputmode="decimal"></label></div>
+    <button id="completeLiveSet" class="workout-main-btn" type="button">COMPLETE SET</button>
+  </div>
+  <div id="restPanel" class="rest-panel" hidden><span class="eyebrow">REST</span><div id="restClock">00:45</div><button id="skipRestBtn" type="button">SKIP REST</button></div>
+  <div class="workout-live-stats"><span id="liveSetCount">0 sets</span><span id="liveXpPreview">+0 XP</span></div>
+</div>
+
+
+  
+
+
+
+
+<datalist id="exerciseLibraryNames"></datalist>
+<script src="app.js"></script>
+<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
 </body>
 </html>
