@@ -124,8 +124,10 @@
     <div class="mission-xp" id="mission-xp">+0 XP</div>
   </div>
   <p id="mission-focus">Complete today's 30-minute mission to earn XP and improve your stats.</p>
+  <div id="homeMissionSummary" class="home-mission-summary">Today • Training Mission</div>
   <div id="mission-exercises" class="mission-exercises"></div>
   <button id="start-mission-btn" class="primary-btn" type="button">START WORKOUT</button>
+  <div class="home-quick-stats" aria-label="Weekly training status"><span id="homeQuickStreak">🔥 0 day streak</span><span id="homeQuickWeek">✓ 0 workouts this week</span></div>
 </section>
 
   <!-- Progress & Analytics v7 -->
@@ -460,7 +462,26 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
   },true));
   window.addEventListener("popstate",()=>showView(location.hash.slice(1)||"home",false));
   window.addEventListener("hashchange",()=>showView(location.hash.slice(1)||"home",false));
+  function syncHomeSummary(){
+    const streak=document.getElementById("playerStreak");
+    const week=document.getElementById("analyticsWeek");
+    const list=document.getElementById("mission-exercises");
+    const quickStreak=document.getElementById("homeQuickStreak");
+    const quickWeek=document.getElementById("homeQuickWeek");
+    const summary=document.getElementById("homeMissionSummary");
+    if(streak&&quickStreak) quickStreak.textContent=streak.textContent;
+    if(week&&quickWeek) quickWeek.textContent="✓ "+week.textContent+" workouts this week";
+    if(list&&summary){
+      const count=list.children.length;
+      summary.textContent=count?count+" exercise"+(count===1?"":"s")+" • ~30 min":"Today • ~30 min";
+    }
+  }
+  ["playerStreak","analyticsWeek","mission-exercises"].forEach(id=>{
+    const el=document.getElementById(id);
+    if(el)new MutationObserver(syncHomeSummary).observe(el,{childList:true,subtree:true,characterData:true});
+  });
   showView(location.hash.slice(1)||"home",false);
+  syncHomeSummary();
 })();
 </script>
 </body>
