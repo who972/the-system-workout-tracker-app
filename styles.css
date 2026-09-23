@@ -1422,3 +1422,21 @@ body[data-view="missions"] .quest-grid{grid-template-columns:1fr 1fr}
  body[data-view="missions"] .builder-actions{display:grid;grid-template-columns:1fr;gap:8px}
  body[data-view="missions"] .builder-actions .btn-primary{width:100%;min-height:46px}
 }
+
+/* Missions mobile overflow fix */
+body[data-view="missions"] .workout-builder,
+body[data-view="missions"] .builder-grid,
+body[data-view="missions"] .builder-card,
+body[data-view="missions"] .builder-form,
+body[data-view="missions"] .builder-row,
+body[data-view="missions"] .builder-exercises,
+body[data-view="missions"] .builder-exercise{min-width:0;max-width:100%;box-sizing:border-box}
+body[data-view="missions"] .builder-row > *,
+body[data-view="missions"] .builder-exercise > *{min-width:0;width:100%;max-width:100%;box-sizing:border-box}
+@media(max-width:640px){
+ body[data-view="missions"] .workout-builder{padding:14px}
+ body[data-view="missions"] .builder-card{padding:12px}
+ body[data-view="missions"] .builder-row{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ body[data-view="missions"] .builder-exercise{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+ body[data-view="missions"] .builder-exercise .exercise-name{grid-column:1/-1}
+}
