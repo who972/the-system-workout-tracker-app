@@ -1408,3 +1408,17 @@ body[data-view="progress"] .achievement-tiers{margin-top:10px}
  body[data-view="progress"] .analytics-card{padding:12px}
  body[data-view="progress"] .quest-section__header{align-items:flex-start;gap:8px}
 }
+
+/* V2 Missions screen */
+body[data-view="missions"] .missions-primary,body[data-view="missions"] .missions-secondary,body[data-view="missions"] .missions-objectives{max-width:920px;margin-left:auto;margin-right:auto}
+body[data-view="missions"] .missions-primary{margin-top:10px;border-color:rgba(76,201,240,.35)}
+body[data-view="missions"] .builder-grid{gap:14px}
+body[data-view="missions"] .missions-objectives{margin-top:16px}
+body[data-view="missions"] .missions-secondary{margin-top:16px}
+body[data-view="missions"] .quest-grid{grid-template-columns:1fr 1fr}
+@media(max-width:640px){
+ body[data-view="missions"] .missions-primary,body[data-view="missions"] .missions-secondary,body[data-view="missions"] .missions-objectives{margin-left:10px;margin-right:10px}
+ body[data-view="missions"] .builder-grid,body[data-view="missions"] .quest-grid{grid-template-columns:1fr}
+ body[data-view="missions"] .builder-actions{display:grid;grid-template-columns:1fr;gap:8px}
+ body[data-view="missions"] .builder-actions .btn-primary{width:100%;min-height:46px}
+}
