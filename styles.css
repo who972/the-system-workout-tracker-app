@@ -1440,3 +1440,26 @@ body[data-view="missions"] .builder-exercise > *{min-width:0;width:100%;max-widt
  body[data-view="missions"] .builder-exercise{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
  body[data-view="missions"] .builder-exercise .exercise-name{grid-column:1/-1}
 }
+
+/* Missions mobile overflow fix v2 */
+@media(max-width:640px){
+ body[data-view="missions"]{overflow-x:hidden}
+ body[data-view="missions"] main,
+ body[data-view="missions"] .workout-builder,
+ body[data-view="missions"] .builder-grid,
+ body[data-view="missions"] .builder-card,
+ body[data-view="missions"] .builder-form,
+ body[data-view="missions"] .builder-row,
+ body[data-view="missions"] .builder-exercises,
+ body[data-view="missions"] .builder-exercise,
+ body[data-view="missions"] .saved-workouts,
+ body[data-view="missions"] .saved-workout{width:100%;max-width:100%;min-width:0;box-sizing:border-box}
+ body[data-view="missions"] .builder-row,
+ body[data-view="missions"] .builder-exercise{grid-template-columns:minmax(0,1fr)!important}
+ body[data-view="missions"] .builder-row > *,
+ body[data-view="missions"] .builder-exercise > *,
+ body[data-view="missions"] input,
+ body[data-view="missions"] select,
+ body[data-view="missions"] button{min-width:0!important;max-width:100%!important;width:100%;box-sizing:border-box}
+ body[data-view="missions"] .builder-exercise .exercise-name{grid-column:auto}
+}
