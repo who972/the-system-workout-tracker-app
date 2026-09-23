@@ -446,14 +446,21 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
   };
   const all=[...new Set(Object.values(views).flat())];
   function node(key){return aliases[key]?document.querySelector(aliases[key]):document.getElementById(key);}
-  function showView(name){
+  function showView(name,push=true){
+    if(!views[name]) name="home";
     all.forEach(key=>{const el=node(key);if(el)el.classList.toggle("v2-view-hidden",!views[name].includes(key));});
     document.querySelectorAll(".app-nav [data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
     document.body.dataset.view=name;
-    window.scrollTo({top:0,behavior:"smooth"});
+    document.title=(name==="home"?"THE SYSTEM":name.charAt(0).toUpperCase()+name.slice(1)+" • THE SYSTEM")+" — Workout Tracker";
+    if(push && location.hash!=="#"+name) history.pushState({view:name},"","#"+name);
+    window.scrollTo({top:0,behavior:"auto"});
   }
-  document.querySelectorAll(".app-nav [data-view]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();showView(b.dataset.view);},true));
-  showView("home");
+  document.querySelectorAll(".app-nav [data-view]").forEach(b=>b.addEventListener("click",e=>{
+    e.preventDefault();e.stopImmediatePropagation();showView(b.dataset.view);
+  },true));
+  window.addEventListener("popstate",()=>showView(location.hash.slice(1)||"home",false));
+  window.addEventListener("hashchange",()=>showView(location.hash.slice(1)||"home",false));
+  showView(location.hash.slice(1)||"home",false);
 })();
 </script>
 </body>
