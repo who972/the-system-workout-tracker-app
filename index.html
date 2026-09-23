@@ -47,12 +47,11 @@
     </button>
   </header>
 <nav class="app-nav" aria-label="Main navigation">
-  <button data-target="playerCard">Home</button>
-  <button data-target="daily-mission">Workout</button>
-  <button data-target="progressAnalytics">Progress</button>
-  <button data-target="workoutBuilder">Missions</button>
-  <button data-target="exerciseLibrary">Library</button>
-  <button data-target="profileSettings">Profile</button>
+  <button data-view="home" data-target="playerCard" class="active">Home</button>
+  <button data-view="train" data-target="exerciseTracker">Train</button>
+  <button data-view="progress" data-target="progressAnalytics">Progress</button>
+  <button data-view="missions" data-target="workoutBuilder">Missions</button>
+  <button data-view="profile" data-target="profileSettings">Profile</button>
 </nav>
 
 
@@ -309,7 +308,7 @@
   </section>
 
   <!-- Exercise Logger -->
-  <section class="exercise-tracker">
+  <section class="exercise-tracker" id="exerciseTracker">
     <div class="quest-section__header">
       <h2 class="quest-section__title">Exercise Tracker</h2>
       <span class="quest-section__meta">Progressive Overload</span>
@@ -429,6 +428,33 @@
 
 <datalist id="exerciseLibraryNames"></datalist>
 <script src="app.js"></script>
-<script>if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}</script>
+<script>
+if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+(function(){
+  const views={
+    home:["playerCard","daily-mission"],
+    train:["exerciseTracker","systemPanel","customWorkout","systemDashboard"],
+    progress:["progressAnalytics","adaptiveProgression","achievements"],
+    missions:["workoutBuilder","exerciseLibrary","questGrid"],
+    profile:["cloudSync","profileSettings"]
+  };
+  const aliases={
+    customWorkout:".custom-workout",
+    systemDashboard:".system-dashboard",
+    achievements:".achievements",
+    questGrid:".quest-grid"
+  };
+  const all=[...new Set(Object.values(views).flat())];
+  function node(key){return aliases[key]?document.querySelector(aliases[key]):document.getElementById(key);}
+  function showView(name){
+    all.forEach(key=>{const el=node(key);if(el)el.classList.toggle("v2-view-hidden",!views[name].includes(key));});
+    document.querySelectorAll(".app-nav [data-view]").forEach(b=>b.classList.toggle("active",b.dataset.view===name));
+    document.body.dataset.view=name;
+    window.scrollTo({top:0,behavior:"smooth"});
+  }
+  document.querySelectorAll(".app-nav [data-view]").forEach(b=>b.addEventListener("click",e=>{e.preventDefault();e.stopImmediatePropagation();showView(b.dataset.view);},true));
+  showView("home");
+})();
+</script>
 </body>
 </html>
