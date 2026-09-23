@@ -1,51 +1,17 @@
 # THE SYSTEM — Workout Tracker
 
-A mobile-first, installable workout tracker built around missions, XP, levels, ranks, stats, streaks, PRs, achievements, and progressive overload.
+Static workout tracker web app. Open `index.html` through a local web server to develop, or deploy the repository root as a static site.
 
-## Features
+## Local preview
 
-- 7-day mission structure
-- Exercise set/reps/weight tracking
-- XP + leveling
-- E → D → C → B → A → S rank progression
-- STR / END / AGI / VIT stats
-- Personal records
-- Workout history
-- Streak tracking
-- Achievements
-- Progressive overload suggestions
-- Theme selection
-- Local persistence
-- Import/export backup
-- PWA install support
-- Offline shell via service worker
-
-## Run locally
-
-Because the app registers a service worker, run it from a local web server rather than opening `index.html` directly.
-
-### Python
-
-```bash
-python -m http.server 8080
+```sh
+python3 -m http.server 8000
 ```
 
-Then open:
-
-```text
-http://localhost:8080
-```
-
-### Node
-
-```bash
-npx serve .
-```
+Visit `http://localhost:8000` from the project directory. The service worker requires localhost or HTTPS.
 
 ## Deployment
 
-This is a static app and can be deployed to GitHub Pages, Netlify, Vercel, Cloudflare Pages, or any static web host.
+For Vercel, import this repository as an **Other** framework project. Leave the build command empty and set the output directory to `.`. No dependencies or build step are required.
 
-## Data
-
-Workout data is stored in the browser with `localStorage`. Use **Export Data** in Settings to create a JSON backup.
+Workout data is stored on the device in browser local storage. The optional cloud backup UI requires the user to configure a Supabase project and account; publishing this site alone does not enable cloud sync.
