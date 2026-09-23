@@ -1394,3 +1394,17 @@ body[data-view="train"] .exercise-form{display:grid;grid-template-columns:minmax
 body[data-view="train"] .exercise-form .btn-primary{grid-column:1/-1;min-height:48px}
 body[data-view="train"] .system-dashboard .dashboard-card:nth-child(2),body[data-view="train"] .system-dashboard .dashboard-card--wide{display:none}
 @media(max-width:640px){body[data-view="train"] .train-primary,body[data-view="train"] .train-secondary{margin-left:10px;margin-right:10px}body[data-view="train"] .exercise-form{grid-template-columns:1fr 1fr}body[data-view="train"] .exercise-form #exerciseSelect,body[data-view="train"] .exercise-form .btn-primary{grid-column:1/-1}}
+
+/* V2 Progress screen */
+body[data-view="progress"] .progress-primary,body[data-view="progress"] .progress-secondary{max-width:920px;margin-left:auto;margin-right:auto}
+body[data-view="progress"] .progress-primary{margin-top:10px;border-color:rgba(76,201,240,.35)}
+body[data-view="progress"] .analytics-grid{gap:12px}
+body[data-view="progress"] .analytics-card{min-height:0}
+body[data-view="progress"] .progress-secondary{margin-top:16px}
+body[data-view="progress"] .achievement-tiers{margin-top:10px}
+@media(max-width:640px){
+ body[data-view="progress"] .progress-primary,body[data-view="progress"] .progress-secondary{margin-left:10px;margin-right:10px}
+ body[data-view="progress"] .analytics-grid{grid-template-columns:1fr 1fr;gap:8px}
+ body[data-view="progress"] .analytics-card{padding:12px}
+ body[data-view="progress"] .quest-section__header{align-items:flex-start;gap:8px}
+}
