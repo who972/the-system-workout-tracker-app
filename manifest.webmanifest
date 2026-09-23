@@ -1,11 +1,12 @@
 {
-  "name": "THE SYSTEM - Workout Tracker",
-  "short_name": "THE SYSTEM",
-  "description": "Gamified workout, progression, and fitness tracking.",
+  "name": "The System - Workout Tracker",
+  "short_name": "The System",
+  "description": "Gamified workout tracking, live training, progression, analytics and custom missions.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#070a0f",
-  "theme_color": "#070a0f",
+  "background_color": "#0a0c10",
+  "theme_color": "#0a0c10",
+  "orientation": "portrait-primary",
   "icons": [
     {
       "src": "icon.svg",
