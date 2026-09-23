@@ -1377,3 +1377,12 @@ body[data-view="home"] #start-mission-btn{width:100%;min-height:56px;font:700 15
   .app-nav button{flex:1 1 20%;padding:10px 4px;border:0;background:transparent;font-size:10px;border-radius:8px}
   .app-nav button.active{background:rgba(76,201,240,.12);color:var(--color-cyan)}
 }
+
+/* V2 screen-navigation home dashboard */
+body[data-view="home"] #mission-exercises{display:none!important}
+body[data-view="home"] .home-mission-summary{margin:8px 0 16px;padding:12px 14px;border-radius:10px;background:rgba(76,201,240,.08);border:1px solid rgba(76,201,240,.18);font:600 13px var(--font-mono);letter-spacing:.04em}
+.home-quick-stats{display:flex;justify-content:space-between;gap:12px;margin-top:14px;font:600 12px var(--font-mono);color:var(--color-text-muted)}
+body[data-view="home"] .player-card__top{align-items:center}
+body[data-view="home"] .player-card__info{flex:1}
+body[data-view="home"] .xp-bar-container{margin-top:10px}
+@media(max-width:640px){body[data-view="home"] .player-card__top{gap:10px}.home-quick-stats{font-size:11px;gap:8px;flex-wrap:wrap}}
