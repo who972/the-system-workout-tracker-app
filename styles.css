@@ -1463,3 +1463,26 @@ body[data-view="missions"] .builder-exercise > *{min-width:0;width:100%;max-widt
  body[data-view="missions"] button{min-width:0!important;max-width:100%!important;width:100%;box-sizing:border-box}
  body[data-view="missions"] .builder-exercise .exercise-name{grid-column:auto}
 }
+
+/* Missions root-width fix */
+body[data-view="missions"] #workoutBuilder,
+body[data-view="missions"] #exerciseLibrary,
+body[data-view="missions"] .quest-grid{
+  width:auto;
+  max-width:min(920px,calc(100% - 20px));
+  margin-left:auto;
+  margin-right:auto;
+}
+@media(max-width:640px){
+ body[data-view="missions"] #workoutBuilder,
+ body[data-view="missions"] #exerciseLibrary,
+ body[data-view="missions"] .quest-grid{
+   width:calc(100% - 20px)!important;
+   max-width:calc(100% - 20px)!important;
+   margin-left:10px!important;
+   margin-right:10px!important;
+ }
+ body[data-view="missions"] .builder-card{overflow:hidden}
+ body[data-view="missions"] .quest-section__header{min-width:0;flex-wrap:wrap}
+ body[data-view="missions"] .quest-section__header>div{min-width:0;max-width:100%}
+}
