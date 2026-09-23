@@ -1345,3 +1345,35 @@ body{padding-bottom:82px}
 .system-mission-card{margin:22px auto;max-width:1180px}.primary-btn,.btn-primary,.workout-main-btn{min-height:44px}.form-input,input,select,button{font-size:16px}@media(min-width:800px){.form-input,input,select,button{font-size:inherit}}
 @media(max-width:640px){.header{padding-top:14px}.player-card,.analytics-section,.adaptive-section,.system-panel,.custom-workout,.workout-builder,.system-dashboard,.exercise-library,.exercise-tracker,.achievements,.settings-section,.system-mission-card{margin-left:10px;margin-right:10px}.app-nav{position:fixed;top:auto;bottom:0;left:0;right:0;justify-content:flex-start;padding:9px 10px max(9px,env(safe-area-inset-bottom));box-shadow:0 -10px 30px rgba(0,0,0,.35)}.app-nav button{padding:9px 12px}.workout-mode{padding-bottom:max(20px,env(safe-area-inset-bottom))}}
 .empty-state,.builder-empty,.adaptive-empty{line-height:1.5}
+
+
+/* V2 Home Redesign: focused Mission Control */
+.v2-view-hidden{display:none!important}
+body[data-view="home"] .header{padding-bottom:10px}
+body[data-view="home"] .player-card{max-width:760px;margin:8px auto 12px;padding:18px}
+body[data-view="home"] .player-card__top{margin-bottom:14px}
+body[data-view="home"] .player-card__rank-badge{width:58px;height:58px}
+body[data-view="home"] .player-card__total{display:none}
+body[data-view="home"] .player-dashboard-strip{display:none}
+body[data-view="home"] .player-stats{display:none}
+body[data-view="home"] .xp-bar-container{margin-bottom:0}
+body[data-view="home"] .system-mission-card{max-width:760px;margin:0 auto 22px;padding:22px;border:1px solid var(--color-cyan);box-shadow:0 0 28px rgba(76,201,240,.08)}
+body[data-view="home"] .system-mission-card .section-header{margin-bottom:8px}
+body[data-view="home"] #mission-focus{color:var(--color-text-muted);font-size:13px;margin-bottom:12px}
+body[data-view="home"] #mission-exercises{max-height:180px;overflow:auto;margin-bottom:14px}
+body[data-view="home"] #start-mission-btn{width:100%;min-height:56px;font:700 15px var(--font-mono);letter-spacing:.1em;box-shadow:var(--glow-cyan)}
+.app-nav{justify-content:center}
+@media(max-width:640px){
+  body[data-view="home"] .header{padding:12px 14px 8px}
+  body[data-view="home"] .header__logo{width:34px;height:34px}
+  body[data-view="home"] .header__title{font-size:16px}
+  body[data-view="home"] .player-card{margin:4px 10px 10px;padding:15px}
+  body[data-view="home"] .player-card__name{font-size:16px}
+  body[data-view="home"] .player-card__rank-badge{width:52px;height:52px}
+  body[data-view="home"] .rank-badge__letter{font-size:1.45rem}
+  body[data-view="home"] .system-mission-card{margin:0 10px 14px;padding:17px}
+  body[data-view="home"] #mission-exercises{max-height:150px}
+  .app-nav{justify-content:space-around;overflow:visible}
+  .app-nav button{flex:1 1 20%;padding:10px 4px;border:0;background:transparent;font-size:10px;border-radius:8px}
+  .app-nav button.active{background:rgba(76,201,240,.12);color:var(--color-cyan)}
+}
