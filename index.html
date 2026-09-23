@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#070a0f" />
+  <meta name="description" content="THE SYSTEM - gamified workout, progression, and fitness tracking app." />
+  <link rel="manifest" href="manifest.webmanifest" />
+  <link rel="icon" href="icon.svg" type="image/svg+xml" />
+  <link rel="stylesheet" href="styles.css" />
+  <title>THE SYSTEM - Workout Tracker</title>
+</head>
+<body>
+  <div class="app-shell">
+    <header class="topbar">
+      <div>
+        <p class="eyebrow">PLAYER INTERFACE</p>
+        <h1>THE SYSTEM</h1>
+      </div>
+      <button class="icon-button" id="quickAddBtn" aria-label="Quick add workout">＋</button>
+    </header>
+
+    <main>
+      <section class="view active" id="dashboardView">
+        <div class="system-card hero-card">
+          <div class="rank-orb" id="rankOrb">E</div>
+          <div class="hero-copy">
+            <span class="muted">CURRENT RANK</span>
+            <h2 id="playerLevel">LEVEL 1</h2>
+            <div class="xp-row">
+              <div class="progress"><span id="xpBar"></span></div>
+              <span id="xpText">0 / 100 XP</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="stats-grid" id="statsGrid"></div>
+
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">DAILY OBJECTIVE</p>
+            <h2>Today's Mission</h2>
+          </div>
+          <span class="pill" id="todayLabel"></span>
+        </div>
+        <div id="todayMission"></div>
+
+        <div class="section-heading compact">
+          <h2>Progress</h2>
+        </div>
+        <div class="metric-grid">
+          <article class="metric-card">
+            <span class="muted">STREAK</span>
+            <strong id="streakValue">0</strong>
+            <small>days</small>
+          </article>
+          <article class="metric-card">
+            <span class="muted">WORKOUTS</span>
+            <strong id="workoutValue">0</strong>
+            <small>completed</small>
+          </article>
+          <article class="metric-card">
+            <span class="muted">TOTAL XP</span>
+            <strong id="totalXpValue">0</strong>
+            <small>earned</small>
+          </article>
+        </div>
+
+        <div class="section-heading compact">
+          <h2>Recent Achievements</h2>
+        </div>
+        <div id="achievementPreview" class="achievement-list"></div>
+      </section>
+
+      <section class="view" id="missionsView">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">WEEKLY PROTOCOL</p>
+            <h2>7-Day Missions</h2>
+          </div>
+        </div>
+        <div id="missionList" class="mission-list"></div>
+      </section>
+
+      <section class="view" id="historyView">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">PLAYER RECORD</p>
+            <h2>History & PRs</h2>
+          </div>
+        </div>
+        <div id="prList" class="pr-list"></div>
+        <div class="section-heading compact"><h2>Workout Log</h2></div>
+        <div id="historyList" class="history-list"></div>
+      </section>
+
+      <section class="view" id="settingsView">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">SYSTEM CONTROL</p>
+            <h2>Settings</h2>
+          </div>
+        </div>
+        <div class="system-card settings-card">
+          <label>
+            Theme
+            <select id="themeSelect">
+              <option value="system">System Green</option>
+              <option value="blue">Neon Blue</option>
+              <option value="crimson">Crimson</option>
+              <option value="mono">Monochrome</option>
+            </select>
+          </label>
+          <button class="secondary-button" id="exportBtn">Export Data</button>
+          <label class="file-button">
+            Import Data
+            <input type="file" id="importInput" accept="application/json" />
+          </label>
+          <button class="danger-button" id="resetBtn">Reset Progress</button>
+        </div>
+      </section>
+    </main>
+
+    <nav class="bottom-nav" aria-label="Primary navigation">
+      <button class="nav-item active" data-view="dashboardView"><span>⌂</span>Home</button>
+      <button class="nav-item" data-view="missionsView"><span>⚔</span>Missions</button>
+      <button class="nav-item" data-view="historyView"><span>◫</span>History</button>
+      <button class="nav-item" data-view="settingsView"><span>⚙</span>Settings</button>
+    </nav>
+  </div>
+
+  <dialog id="workoutDialog">
+    <form method="dialog" id="workoutForm">
+      <div class="dialog-head">
+        <div>
+          <p class="eyebrow">MISSION LOG</p>
+          <h2 id="dialogTitle">Log Workout</h2>
+        </div>
+        <button value="cancel" class="icon-button" aria-label="Close">×</button>
+      </div>
+      <input type="hidden" id="workoutDay" />
+      <div id="exerciseFields"></div>
+      <label>
+        Notes
+        <textarea id="workoutNotes" rows="3" placeholder="How did the session feel?"></textarea>
+      </label>
+      <div class="dialog-actions">
+        <button value="cancel" class="secondary-button">Cancel</button>
+        <button type="submit" value="default" class="primary-button">Complete Mission</button>
+      </div>
+    </form>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="app.js"></script>
+</body>
+</html>
