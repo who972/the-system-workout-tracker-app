@@ -144,9 +144,9 @@ function rankRewardSummary(rank){const r=RANK_REWARDS[rank]||RANK_REWARDS.E;retu
 
 const ONBOARDING_KEY='systemOnboardingV2';
 const ASSESSMENT_KEY='systemAwakeningAssessmentV1';
-const ASSESSMENT_RANKS=['D','C','B','A','S'];
-const ASSESSMENT_LEVEL={E:1,D:5,C:10,B:20,A:30,S:40};
-const ASSESSMENT_BONUS={E:0,D:250,C:700,B:1500,A:2600,S:4000};
+const ASSESSMENT_RANKS=['D','C'];
+const ASSESSMENT_LEVEL={E:1,D:5,C:10};
+const ASSESSMENT_BONUS={E:0,D:250,C:700};
 function onboardingData(){try{return JSON.parse(localStorage.getItem(ONBOARDING_KEY)||'null')}catch(e){return null}}
 function onboardingPath(goal){return {'fat-loss':'Fat Loss','muscle':'Muscle Building','strength':'Strength','endurance':'Endurance','balanced':'Balanced'}[goal]||'Balanced'}
 function shouldOnboard(){return !!(typeof getCloudSession==='function'&&getCloudSession()?.access_token)&&!onboardingData()}
