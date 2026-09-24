@@ -823,7 +823,7 @@ const SYSTEM_MISSIONS = [
 function systemMissionKey(){return getTodayStr();}
 function systemPlayerProfile(){try{return JSON.parse(localStorage.getItem('systemPlayerBuildV1')||'{}')}catch(e){return {}}}
 function adaptiveSystemMission(){
- const base=adaptiveSystemMission(),b=systemPlayerProfile(),profile=b.profile||{},path=b.path||'Balanced',exp=profile.experience||'Beginner',gear=profile.equipment||['Bodyweight'];
+ const base=SYSTEM_MISSIONS[new Date().getDay()],b=systemPlayerProfile(),profile=b.profile||{},path=b.path||'Balanced',exp=profile.experience||'Beginner',gear=profile.equipment||['Bodyweight'];
  const scale=exp==='Advanced'?1.25:exp==='Intermediate'?1.1:0.9, has=x=>gear.includes(x)||gear.includes('Full Gym');
  let exercises=base.exercises.map(e=>[...e]);
  if(has('Dumbbells')||has('Full Gym')){
