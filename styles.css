@@ -1595,3 +1595,8 @@ body[data-view="nutrition"] #nutritionDashboard{width:auto;max-width:min(920px,c
 .side-ideas summary{cursor:pointer;font-size:.78rem;font-weight:800;letter-spacing:.08em}
 .side-ideas ul{margin:8px 0 0;padding-left:20px;font-size:.85rem;opacity:.85}
 @media(max-width:600px){.side-board-progress{align-items:flex-start;flex-direction:column}}
+
+/* Health data provider / Step Hunter */
+.step-provider{margin-top:12px;padding:12px;border:1px solid var(--border,#334155);border-radius:10px}
+.step-progress{margin-bottom:10px}.step-track{height:7px;margin-top:6px;border-radius:99px;background:rgba(148,163,184,.18);overflow:hidden}.step-track i{display:block;height:100%;background:currentColor}
+.step-provider label{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:7px 0;font-size:.82rem}.step-provider input{width:110px;padding:7px;border-radius:7px;border:1px solid var(--border,#334155);background:transparent;color:inherit}.step-provider small{display:block;margin-top:8px;opacity:.65;font-size:.72rem}
