@@ -142,16 +142,49 @@ window.renderPlayerStatus=renderPlayerStatus;
 function analyzeBossFailure(rank){const missing=weakestStats(rank),c=correctiveMission(rank);if(!missing.length)return 'Build standards met. Continue developing all attributes.';return 'Weakest attribute: '+missing[0].stat+' ('+missing[0].value+'/'+missing[0].need+'). '+(c?'Directive: '+c.desc:'')}
 function rankRewardSummary(rank){const r=RANK_REWARDS[rank]||RANK_REWARDS.E;return r.desc}
 
-const ONBOARDING_KEY='systemOnboardingV1';
+const ONBOARDING_KEY='systemOnboardingV2';
+const ASSESSMENT_KEY='systemAwakeningAssessmentV1';
+const ASSESSMENT_RANKS=['D','C','B','A','S'];
+const ASSESSMENT_LEVEL={E:1,D:5,C:10,B:20,A:30,S:40};
+const ASSESSMENT_BONUS={E:0,D:250,C:700,B:1500,A:2600,S:4000};
 function onboardingData(){try{return JSON.parse(localStorage.getItem(ONBOARDING_KEY)||'null')}catch(e){return null}}
 function onboardingPath(goal){return {'fat-loss':'Fat Loss','muscle':'Muscle Building','strength':'Strength','endurance':'Endurance','balanced':'Balanced'}[goal]||'Balanced'}
 function shouldOnboard(){return !!(typeof getCloudSession==='function'&&getCloudSession()?.access_token)&&!onboardingData()}
+function seedAssessmentStats(rank){
+ const b=loadBuild(),req=RANK_STANDARDS[rank]||{};
+ BUILD_STATS.forEach(x=>b.stats[x]=x==='Consistency'?0:Math.max(b.stats[x]||0,req[x]||0));
+ saveBuild(b);
+}
+function applyAssessmentPlacement(rank){
+ const s=loadSideSystem(),target=rankIndex(rank);
+ BOSS_STAGES.forEach(b=>{if(rankIndex(b.rank)<=target&&ASSESSMENT_RANKS.includes(b.rank))s.boss[b.rank]={...(s.boss[b.rank]||{}),passed:true,assessment:true,passedAt:new Date().toISOString(),attempts:0,history:[]}});
+ saveSideSystem(s);seedAssessmentStats(rank);
+ if(typeof state!=='undefined'){state.level=Math.max(state.level||1,ASSESSMENT_LEVEL[rank]||1);state.xp=(state.xp||0)+(ASSESSMENT_BONUS[rank]||0);if(typeof saveState==='function')saveState()}
+ localStorage.setItem(ASSESSMENT_KEY,JSON.stringify({rank,bonus:ASSESSMENT_BONUS[rank]||0,completedAt:new Date().toISOString()}));
+}
+function assessmentTrial(rank){
+ const b=BOSS_STAGES.find(x=>x.rank===rank),v=b?.variants?.[2]||b?.variants?.[0];
+ return v?{rank,title:b.title,focus:v.focus,tasks:v.tasks}:null;
+}
+function showAwakeningAssessment(done){
+ let el=document.getElementById('awakeningAssessment');if(!el){el=document.createElement('div');el.id='awakeningAssessment';el.className='system-onboarding';document.body.appendChild(el)}
+ let idx=0,highest='E';
+ function render(){
+  const rank=ASSESSMENT_RANKS[idx],trial=assessmentTrial(rank);
+  if(!trial){finish();return}
+  el.innerHTML='<div class="ob-card"><span class="side-tag">AWAKENING ASSESSMENT</span><h1>'+rank+'-CLASS EVALUATION</h1><p>Complete this safely. Stop if you experience pain, dizziness, chest pain, or unusual shortness of breath. This is placement, not punishment.</p><div class="ob-awaken"><small>'+trial.focus+'</small><strong>'+trial.title+'</strong></div><div class="assessment-list">'+trial.tasks.map(x=>'<p>• '+x.text+'</p>').join('')+'</div><div class="ob-actions"><button id="assessStop">ACCEPT '+highest+'-CLASS</button><button id="assessPass" class="btn-primary">I COMPLETED THIS TRIAL</button></div></div>';
+  el.classList.add('active');
+  document.getElementById('assessStop').onclick=finish;
+  document.getElementById('assessPass').onclick=()=>{highest=rank;idx++;render()};
+ }
+ function finish(){applyAssessmentPlacement(highest);el.classList.remove('active');if(typeof addSystemMessage==='function')addSystemMessage('AWAKENING ASSESSMENT COMPLETE — '+highest+'-CLASS • Previous training recognized.','level');if(typeof renderAll==='function')renderAll();renderSideSystem();if(done)done(highest)}
+ render();
+}
 function showOnboarding(){if(!shouldOnboard())return;let el=document.getElementById('systemOnboarding');if(!el){el=document.createElement('div');el.id='systemOnboarding';el.className='system-onboarding';document.body.appendChild(el)}let step=0,data={name:'',goal:'balanced',experience:'beginner',equipment:[],days:4};const screens=[
- ()=>'<span class="side-tag">CREATE PLAYER • 1/5</span><h1>WHO ARE YOU BECOMING?</h1><p>Set up your player profile. You can change these choices later.</p><input id="obName" class="form-input" placeholder="Player name" value="'+data.name+'">',
- ()=>'<span class="side-tag">PRIMARY GOAL • 2/5</span><h1>CHOOSE YOUR PATH</h1><p>The System will use this to guide your missions.</p><div class="ob-options">'+[['fat-loss','Fat Loss'],['muscle','Muscle Building'],['strength','Strength'],['endurance','Endurance'],['balanced','Balanced Fitness']].map(x=>'<button data-goal="'+x[0]+'" class="'+(data.goal===x[0]?'selected':'')+'">'+x[1]+'</button>').join('')+'</div>',
- ()=>'<span class="side-tag">EXPERIENCE • 3/5</span><h1>TRAINING LEVEL</h1><p>This helps The System keep early missions appropriate.</p><div class="ob-options">'+[['beginner','Beginner'],['intermediate','Intermediate'],['advanced','Advanced']].map(x=>'<button data-exp="'+x[0]+'" class="'+(data.experience===x[0]?'selected':'')+'">'+x[1]+'</button>').join('')+'</div>',
- ()=>'<span class="side-tag">EQUIPMENT • 4/5</span><h1>AVAILABLE GEAR</h1><p>Select everything you can reliably train with.</p><div class="ob-options ob-equipment">'+['Bodyweight','Dumbbells','Barbell','Resistance Bands','Cardio Machine','Full Gym'].map(x=>'<button data-eq="'+x+'" class="'+(data.equipment.includes(x)?'selected':'')+'">'+x+'</button>').join('')+'</div><label class="ob-days">Training days per week <input id="obDays" type="number" min="1" max="7" value="'+data.days+'"></label>',
- ()=>'<span class="side-tag">SYSTEM ANALYSIS • 5/5</span><h1>BUILD ANALYZED</h1><div class="ob-awaken"><small>TRAINING PATH ASSIGNED</small><strong>'+onboardingPath(data.goal)+'</strong><span>E-CLASS AWAKENING</span></div><p>'+data.experience.toUpperCase()+' • '+data.days+' DAYS/WEEK • '+(data.equipment.join(' + ')||'BODYWEIGHT')+'</p>'
-];function render(){el.innerHTML='<div class="ob-card">'+screens[step]()+'<div class="ob-actions">'+(step?'<button id="obBack">BACK</button>':'')+'<button id="obNext" class="btn-primary">'+(step===4?'AWAKEN':'CONTINUE')+'</button></div></div>';el.classList.add('active');el.querySelectorAll('[data-goal]').forEach(x=>x.onclick=()=>{data.goal=x.dataset.goal;render()});el.querySelectorAll('[data-exp]').forEach(x=>x.onclick=()=>{data.experience=x.dataset.exp;render()});el.querySelectorAll('[data-eq]').forEach(x=>x.onclick=()=>{data.equipment=data.equipment.includes(x.dataset.eq)?data.equipment.filter(v=>v!==x.dataset.eq):[...data.equipment,x.dataset.eq];render()});document.getElementById('obBack')?.addEventListener('click',()=>{step--;render()});document.getElementById('obNext').onclick=()=>{if(step===0){data.name=(document.getElementById('obName')?.value||'').trim()||'Player'}if(step===3)data.days=Math.max(1,Math.min(7,Number(document.getElementById('obDays')?.value)||4));if(step<4){step++;render();return}const path=onboardingPath(data.goal),b=loadBuild();b.path=path;b.profile={experience:data.experience,equipment:data.equipment,days:data.days};saveBuild(b);localStorage.setItem(ONBOARDING_KEY,JSON.stringify({...data,path,completedAt:new Date().toISOString()}));try{const settings=JSON.parse(localStorage.getItem('theSystemSettings')||'{}');settings.name=data.name;settings.goal=data.goal;localStorage.setItem('theSystemSettings',JSON.stringify(settings))}catch(e){}if(typeof addSystemMessage==='function')addSystemMessage('E-CLASS AWAKENING COMPLETE — '+path+' path assigned.','level');el.classList.remove('active');renderPlayerStatus();renderSideSystem();if(typeof renderAll==='function')renderAll()}}render()}
-window.SystemOnboarding={show:showOnboarding,reset:()=>localStorage.removeItem(ONBOARDING_KEY)};
+ ()=>'<span class="side-tag">CREATE PLAYER • 1/4</span><h1>WHO ARE YOU BECOMING?</h1><p>Set up your player profile. You can change these choices later.</p><input id="obName" class="form-input" placeholder="Player name" value="'+data.name+'">',
+ ()=>'<span class="side-tag">PRIMARY GOAL • 2/4</span><h1>CHOOSE YOUR PATH</h1><p>The System will use this to guide your missions.</p><div class="ob-options">'+[['fat-loss','Fat Loss'],['muscle','Muscle Building'],['strength','Strength'],['endurance','Endurance'],['balanced','Balanced Fitness']].map(x=>'<button data-goal="'+x[0]+'" class="'+(data.goal===x[0]?'selected':'')+'">'+x[1]+'</button>').join('')+'</div>',
+ ()=>'<span class="side-tag">TRAINING PROFILE • 3/4</span><h1>EXPERIENCE</h1><p>This guides exercise selection. Your actual Class will be determined by the Awakening Assessment.</p><div class="ob-options">'+[['beginner','Beginner'],['intermediate','Intermediate'],['advanced','Advanced']].map(x=>'<button data-exp="'+x[0]+'" class="'+(data.experience===x[0]?'selected':'')+'">'+x[1]+'</button>').join('')+'</div>',
+ ()=>'<span class="side-tag">EQUIPMENT • 4/4</span><h1>PREPARE FOR ASSESSMENT</h1><p>Select your available gear and weekly training availability.</p><div class="ob-options ob-equipment">'+['Bodyweight','Dumbbells','Barbell','Resistance Bands','Cardio Machine','Full Gym'].map(x=>'<button data-eq="'+x+'" class="'+(data.equipment.includes(x)?'selected':'')+'">'+x+'</button>').join('')+'</div><label class="ob-days">Training days per week <input id="obDays" type="number" min="1" max="7" value="'+data.days+'"></label>'
+ ];function render(){el.innerHTML='<div class="ob-card">'+screens[step]()+'<div class="ob-actions">'+(step?'<button id="obBack">BACK</button>':'')+'<button id="obNext" class="btn-primary">'+(step===3?'BEGIN ASSESSMENT':'CONTINUE')+'</button></div></div>';el.classList.add('active');el.querySelectorAll('[data-goal]').forEach(x=>x.onclick=()=>{data.goal=x.dataset.goal;render()});el.querySelectorAll('[data-exp]').forEach(x=>x.onclick=()=>{data.experience=x.dataset.exp;render()});el.querySelectorAll('[data-eq]').forEach(x=>x.onclick=()=>{data.equipment=data.equipment.includes(x.dataset.eq)?data.equipment.filter(v=>v!==x.dataset.eq):[...data.equipment,x.dataset.eq];render()});document.getElementById('obBack')?.addEventListener('click',()=>{step--;render()});document.getElementById('obNext').onclick=()=>{if(step===0)data.name=(document.getElementById('obName')?.value||'').trim()||'Player';if(step===3)data.days=Math.max(1,Math.min(7,Number(document.getElementById('obDays')?.value)||4));if(step<3){step++;render();return}const path=onboardingPath(data.goal),b=loadBuild();b.path=path;b.profile={experience:data.experience,equipment:data.equipment.length?data.equipment:['Bodyweight'],days:data.days};saveBuild(b);localStorage.setItem(ONBOARDING_KEY,JSON.stringify({...data,path,assessmentPending:true,completedAt:new Date().toISOString()}));el.classList.remove('active');showAwakeningAssessment(()=>{const ob=onboardingData()||{};ob.assessmentPending=false;localStorage.setItem(ONBOARDING_KEY,JSON.stringify(ob));renderPlayerStatus()})}}render()}
+window.SystemOnboarding={show:showOnboarding,assessment:showAwakeningAssessment,reset:()=>{localStorage.removeItem(ONBOARDING_KEY);localStorage.removeItem(ASSESSMENT_KEY)}};
 document.addEventListener('DOMContentLoaded',()=>{renderSideSystem();renderPlayerStatus();setTimeout(showOnboarding,250)});
