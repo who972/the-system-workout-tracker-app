@@ -1,5 +1,24 @@
 /* THE SYSTEM: Side Missions + Full-Screen Boss Battles */
 const SIDE_SYSTEM_KEY='systemMission:sideBossV3';
+const RANK_REWARDS={
+ E:{label:'AWAKENED',desc:'Core daily Side Missions'},
+ D:{label:'HUNTER',desc:'Challenge Missions unlocked',bonus:10},
+ C:{label:'VETERAN',desc:'Advanced Missions + 15% Side Mission XP',bonus:15},
+ B:{label:'ELITE',desc:'Elite Missions + 20% Side Mission XP',bonus:20},
+ A:{label:'MASTER',desc:'Master Missions + 25% Side Mission XP',bonus:25},
+ S:{label:'S-RANK',desc:'S-Rank Missions + 35% Side Mission XP',bonus:35},
+ 'S+':{label:'NATIONAL LEVEL',desc:'National-Level Missions + 45% Side Mission XP',bonus:45},
+ Shadow:{label:'SOVEREIGN',desc:'Sovereign Missions + 60% Side Mission XP',bonus:60}
+};
+const RANK_MISSIONS=[
+ {id:'challenge100',rank:'D',title:'Hunter Challenge',desc:'Complete 100 total bodyweight reps.',xp:80},
+ {id:'cardio25',rank:'C',title:'Veteran Endurance',desc:'Complete 25 minutes of continuous cardio.',xp:100},
+ {id:'eliteCircuit',rank:'B',title:'Elite Circuit',desc:'Complete 4 rounds of a full-body circuit.',xp:125},
+ {id:'masterMobility',rank:'A',title:'Master Control',desc:'Complete 20 minutes of mobility plus core work.',xp:150},
+ {id:'sRankSession',rank:'S',title:'S-Rank Session',desc:'Complete a challenging 45-minute training session.',xp:200},
+ {id:'nationalTrial',rank:'S+',title:'National-Level Mission',desc:'Complete 60 minutes of combined strength and conditioning.',xp:275},
+ {id:'sovereignTrial',rank:'Shadow',title:'Sovereign Mission',desc:'Complete your hardest safe full-body session of the week.',xp:350}
+];
 const SIDE_MISSIONS=[
 {id:'walk20',title:'Extra Mile',desc:'Walk for 20 minutes outside your scheduled workout.',xp:50},
 {id:'hydrate',title:'Hydration Mission',desc:'Hit your daily water target.',xp:25},
@@ -29,20 +48,23 @@ function today(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth
 function loadSideSystem(){let s={};try{s=JSON.parse(localStorage.getItem(SIDE_SYSTEM_KEY)||'{}')}catch(e){}if(s.date!==today())s={...s,date:today(),completed:[]};s.completed=s.completed||[];s.boss=s.boss||{};return s}
 function saveSideSystem(s){localStorage.setItem(SIDE_SYSTEM_KEY,JSON.stringify(s))}
 function currentClass(s){let c='E';for(const b of BOSS_STAGES)if(s.boss[b.rank]?.passed)c=b.rank;return c}
+function rankIndex(rank){return ['E','D','C','B','A','S','S+','Shadow'].indexOf(rank)}
+function unlockedMissions(s){const ci=rankIndex(currentClass(s));return SIDE_MISSIONS.concat(RANK_MISSIONS.filter(m=>rankIndex(m.rank)<=ci))}
+function rewardXp(base,s){const r=RANK_REWARDS[currentClass(s)]||RANK_REWARDS.E;return Math.round(base*(1+(r.bonus||0)/100))}
 function bossIndex(rank){return BOSS_STAGES.findIndex(b=>b.rank===rank)}
 function eligible(b,s){const i=bossIndex(b.rank),level=typeof state!=='undefined'?state.level:1;return level>=b.level&&(i===0||!!s.boss[BOSS_STAGES[i-1].rank]?.passed)}
 function chooseVariant(b,e){let n=Math.floor(Math.random()*b.variants.length);if(b.variants.length>1&&n===e.lastVariant)n=(n+1+Math.floor(Math.random()*(b.variants.length-1)))%b.variants.length;return n}
 function shuffle(n){const a=Array.from({length:n},(_,i)=>i);for(let i=n-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a}
 function ensureAttempt(b,s){const e=s.boss[b.rank]||{attempts:0,history:[]};if(e.activeVariant==null){e.activeVariant=chooseVariant(b,e);e.order=shuffle(b.variants[e.activeVariant].tasks.length);e.current=0;e.damage=0;e.checks=[];e.startedAt=new Date().toISOString()}e.history=e.history||[];s.boss[b.rank]=e;saveSideSystem(s);return e}
 function renderSideSystem(){const root=document.getElementById('sideMissionSystem');if(!root)return;const s=loadSideSystem(),missions=document.getElementById('sideMissionList');
-missions.innerHTML=SIDE_MISSIONS.map(m=>'<article class="side-card '+(s.completed.includes(m.id)?'is-done':'')+'"><div><span class="side-tag">SIDE MISSION</span><h3>'+m.title+'</h3><p>'+m.desc+'</p></div><div class="side-reward">+'+m.xp+' XP</div><button data-side="'+m.id+'" '+(s.completed.includes(m.id)?'disabled':'')+'>'+(s.completed.includes(m.id)?'COMPLETE':'CLAIM COMPLETE')+'</button></article>').join('');
-missions.querySelectorAll('[data-side]').forEach(x=>x.onclick=()=>completeSideMission(x.dataset.side));document.getElementById('currentRankClass').textContent=currentClass(s)+'-CLASS';
+const available=unlockedMissions(s);missions.innerHTML=available.map(m=>'<article class="side-card '+(s.completed.includes(m.id)?'is-done':'')+'"><div><span class="side-tag">SIDE MISSION</span><h3>'+m.title+'</h3><p>'+m.desc+'</p></div><div class="side-reward">+'+m.xp+' XP</div><button data-side="'+m.id+'" '+(s.completed.includes(m.id)?'disabled':'')+'>'+(s.completed.includes(m.id)?'COMPLETE':'CLAIM COMPLETE')+'</button></article>').join('');
+missions.querySelectorAll('[data-side]').forEach(x=>x.onclick=()=>completeSideMission(x.dataset.side));const cls=currentClass(s),reward=RANK_REWARDS[cls]||RANK_REWARDS.E;document.getElementById('currentRankClass').textContent=cls+'-CLASS • '+reward.label;
 const wrap=document.getElementById('bossStageList');wrap.innerHTML=BOSS_STAGES.map(b=>{const e=s.boss[b.rank]||{attempts:0,history:[]},best=(e.history||[]).reduce((m,x)=>Math.max(m,x.completed||0),0);
 if(e.passed)return '<article class="boss-card boss-passed"><span class="side-tag">BOSS DEFEATED</span><h3>'+b.title+'</h3><p>Promotion achieved • +'+b.reward+' XP</p><button disabled>'+b.rank+'-CLASS UNLOCKED</button></article>';
 if(!eligible(b,s))return '<article class="boss-card boss-locked"><span class="side-tag">LOCKED</span><h3>'+b.title+'</h3><p>Requires Level '+b.level+(bossIndex(b.rank)>0?' + previous promotion':'')+'</p><button disabled>LOCKED</button></article>';
 return '<article class="boss-card boss-ready"><span class="side-tag">BOSS INTEL</span><h3>'+b.title+'</h3><p>Level '+b.level+' • +'+b.reward+' XP • '+b.variants.length+' possible trials</p><p>Attempts: '+(e.attempts||0)+' • Best: '+best+'/5</p><p>Objectives and order are classified until battle begins.</p><button data-start="'+b.rank+'">'+(e.activeVariant!=null?'RESUME BOSS BATTLE':'BEGIN RANK TRIAL')+'</button></article>'}).join('');
 wrap.querySelectorAll('[data-start]').forEach(x=>x.onclick=()=>startBoss(x.dataset.start))}
-function completeSideMission(id){const s=loadSideSystem(),m=SIDE_MISSIONS.find(x=>x.id===id);if(!m||s.completed.includes(id))return;s.completed.push(id);saveSideSystem(s);if(typeof addXp==='function')addXp(m.xp,'side-mission');if(typeof addSystemMessage==='function')addSystemMessage('Side Mission Complete: '+m.title+' — +'+m.xp+' XP','quest');if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();renderSideSystem()}
+function completeSideMission(id){const s=loadSideSystem(),m=unlockedMissions(s).find(x=>x.id===id);if(!m||s.completed.includes(id))return;const earned=rewardXp(m.xp,s);s.completed.push(id);saveSideSystem(s);if(typeof addXp==='function')addXp(earned,'side-mission');if(typeof addSystemMessage==='function')addSystemMessage('Side Mission Complete: '+m.title+' — +'+earned+' XP','quest');if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();renderSideSystem()}
 function startBoss(rank){const b=BOSS_STAGES.find(x=>x.rank===rank),s=loadSideSystem();if(!b||!eligible(b,s))return;ensureAttempt(b,s);openBossBattle(rank)}
 function ensureBattleUI(){let el=document.getElementById('bossBattleMode');if(el)return el;el=document.createElement('div');el.id='bossBattleMode';el.className='boss-battle-mode';el.innerHTML='<div class="bb-top"><div><span class="side-tag">SYSTEM • RANK TRIAL</span><h2 id="bbTitle">BOSS STAGE</h2></div><button id="bbExit">✕</button></div><div class="bb-hud"><span id="bbRank"></span><span id="bbAttempt"></span><span id="bbClock">00:00</span></div><div class="bb-hp"><div><span>BOSS HP</span><strong id="bbHpText">100 / 100</strong></div><div class="bb-hp-track"><i id="bbHpBar"></i></div></div><main class="bb-arena"><span id="bbCount" class="side-tag"></span><p id="bbFocus"></p><h1 id="bbObjective"></h1><div id="bbAttack" class="bb-attack"></div><div id="bbTimerPanel" class="bb-timer" hidden><strong id="bbTimer">00:00</strong><button id="bbTimerStart">START TIMER</button></div><button id="bbComplete" class="bb-main">COMPLETE OBJECTIVE</button><button id="bbEnd" class="bb-end">END ATTEMPT</button></main><div id="bbFlash" class="bb-flash"></div>';document.body.appendChild(el);document.getElementById('bbExit').onclick=closeBossBattle;return el}
 function openBossBattle(rank){const el=ensureBattleUI();el.dataset.rank=rank;el.classList.add('active');document.body.classList.add('boss-mode-open');battleStartedAt=Date.now();clearInterval(bossClock);bossClock=setInterval(updateBattleClock,1000);renderBossBattle()}
@@ -57,4 +79,5 @@ function showHit(obj){const f=document.getElementById('bbFlash');if(!f)return;f.
 function endBossAttempt(rank){const d=battleData();if(!d||d.rank!==rank)return;const{b,s,e}=d,completed=(e.checks||[]).filter(Boolean).length,damage=e.damage||0;e.attempts=(e.attempts||0)+1;e.history=e.history||[];e.history.push({variant:e.activeVariant,completed,total:5,damage,date:new Date().toISOString(),passed:false});e.lastVariant=e.activeVariant;e.activeVariant=null;e.order=[];e.current=0;e.damage=0;e.checks=[];saveSideSystem(s);if(typeof addSystemMessage==='function')addSystemMessage('BOSS SURVIVED — '+completed+'/5 objectives • '+damage+' damage. Performance recorded.','quest');closeBossBattle();alert('BATTLE ENDED\n'+completed+'/5 OBJECTIVES\n'+damage+' DAMAGE DEALT\nBOSS SURVIVED\nNext attempt will change.')}
 function defeatBoss(rank){const d=battleData();if(!d||d.rank!==rank)return;const{b,s,e}=d;e.attempts=(e.attempts||0)+1;e.history=e.history||[];e.history.push({variant:e.activeVariant,completed:5,total:5,damage:100,date:new Date().toISOString(),passed:true});e.lastVariant=e.activeVariant;e.activeVariant=null;e.order=[];e.current=0;e.damage=0;e.checks=[];e.passed=true;e.passedAt=new Date().toISOString();s.boss[rank]=e;saveSideSystem(s);if(typeof addXp==='function')addXp(b.reward,'boss-stage');if(typeof addSystemMessage==='function')addSystemMessage('BOSS DEFEATED! RANK PROMOTION: '+rank+'-CLASS — +'+b.reward+' XP','level');if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();const el=ensureBattleUI();el.innerHTML='<div class="bb-victory"><span class="side-tag">SYSTEM ALERT</span><h1>BOSS DEFEATED</h1><p>RANK PROMOTION ACHIEVED</p><div class="bb-new-rank">'+rank+'-CLASS</div><strong>+'+b.reward+' XP</strong><button id="bbVictoryClose" class="bb-main">CONTINUE</button></div>';document.getElementById('bbVictoryClose').onclick=()=>{el.remove();document.body.classList.remove('boss-mode-open');renderSideSystem()}}
 if(typeof getRank==='function'){const levelRank=getRank;getRank=function(level){const s=loadSideSystem(),c=currentClass(s);if(c==='E')return levelRank(Math.min(level,9));const b=BOSS_STAGES.find(x=>x.rank===c);return b?levelRank(b.level):levelRank(level)}}
+function rankRewardSummary(rank){const r=RANK_REWARDS[rank]||RANK_REWARDS.E;return r.desc}
 document.addEventListener('DOMContentLoaded',renderSideSystem);
