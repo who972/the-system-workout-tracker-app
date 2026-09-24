@@ -1576,3 +1576,6 @@ body[data-view="nutrition"] #nutritionDashboard{width:auto;max-width:min(920px,c
 
 /* Recovery view visibility */
 .auth-form[hidden],.auth-tabs[hidden],.auth-link[hidden]{display:none!important}
+
+/* Respect native hidden state regardless of component display rules */
+[hidden]{display:none!important}
