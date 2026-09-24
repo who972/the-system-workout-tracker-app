@@ -40,14 +40,48 @@ const RANK_MISSIONS=[
  {id:'nationalTrial',rank:'S+',title:'National-Level Mission',desc:'Complete 60 minutes of combined strength and conditioning.',xp:275},
  {id:'sovereignTrial',rank:'Shadow',title:'Sovereign Mission',desc:'Complete your hardest safe full-body session of the week.',xp:350}
 ];
-const SIDE_MISSIONS=[
-{id:'walk20',title:'Extra Mile',desc:'Walk for 20 minutes outside your scheduled workout.',xp:50},
-{id:'hydrate',title:'Hydration Mission',desc:'Hit your daily water target.',xp:25},
-{id:'protein',title:'Protein Protocol',desc:'Hit your daily protein target.',xp:25},
-{id:'core50',title:'Core Assault',desc:'Complete 50 total core reps.',xp:40},
-{id:'mobility',title:'Recovery Mission',desc:'Complete 10 minutes of stretching or mobility.',xp:30},
-{id:'weekend',title:'Weekend Warrior',desc:'Complete an extra Saturday or Sunday workout.',xp:75}
-];
+const SIDE_MISSION_POOLS={
+ movement:[
+  {id:'steps',title:'Step Hunter',desc:'Reach your daily step goal.',xp:40,ideas:['Take a walk during lunch.','Walk while making a phone call.','Park farther from the entrance.']},
+  {id:'stairs',title:'Take the High Road',desc:'Choose the stairs at least twice today.',xp:15,ideas:['Use stairs instead of the elevator.','Skip the escalator.','Add one extra stair trip when practical.']},
+  {id:'breaksit',title:'Break the Sit',desc:'Complete 3 short movement breaks.',xp:15,ideas:['Walk for 3–5 minutes.','Stand and move between tasks.','Take a short lap during a break.']}
+ ],
+ fuel:[
+  {id:'hydrate',title:'Hydration Protocol',desc:'Hit your daily water target.',xp:25,ideas:['Carry a refillable bottle.','Drink water with each meal.','Choose water instead of a sugary drink.']},
+  {id:'smartfuel',title:'Fuel Selection',desc:'Make one intentional balanced food choice.',xp:20,ideas:['Add a fruit or vegetable.','Choose a lean protein.','Swap a highly processed snack for a balanced option.']},
+  {id:'protein',title:'Protein Protocol',desc:'Hit your daily protein target.',xp:25,ideas:['Include protein at breakfast.','Choose a protein-rich snack.','Build a meal around a lean protein source.']}
+ ],
+ lifestyle:[
+  {id:'parkfar',title:'Park & Pursue',desc:'Create one extra walking opportunity today.',xp:10,ideas:['Park farther from the entrance.','Get off one stop earlier when practical.','Take the longer safe walking route.']},
+  {id:'smartchoice',title:'Intentional Choice',desc:'Replace one less-helpful habit with a healthier choice.',xp:20,ideas:['Take a short walk instead of scrolling.','Choose water instead of a sugary drink.','Prepare tomorrow instead of leaving it to chance.']},
+  {id:'prep',title:'Prepare Tomorrow',desc:'Prepare one thing that makes tomorrow easier.',xp:15,ideas:['Lay out workout clothes.','Prepare a meal or snack.','Fill your water bottle before bed.']}
+ ],
+ recovery:[
+  {id:'mobility',title:'Recovery Protocol',desc:'Complete 10 minutes of stretching or mobility.',xp:30,ideas:['Do a full-body stretch.','Use a short mobility routine.','Stretch while watching TV.']},
+  {id:'reset',title:'System Reset',desc:'Take 10 intentional minutes to recover and decompress.',xp:20,ideas:['Take an easy walk.','Do gentle mobility.','Spend 10 quiet minutes away from screens.']},
+  {id:'sleepready',title:'Recovery Setup',desc:'Make one choice that supports better sleep tonight.',xp:20,ideas:['Set a consistent bedtime.','Dim screens before bed.','Prepare the room for sleep.']}
+ ]
+};
+function dailyPick(pool,key){const seed=Number(today().replace(/-/g,''))+[...key].reduce((n,x)=>n+x.charCodeAt(0),0);return pool[seed%pool.length]}
+function growthMission(){const s=loadSideSystem(),b=loadBuild(),next=nextPromotion(s),rank=next?.rank,req=rank?RANK_STANDARDS[rank]||{}:{},stats=b.stats||{};let target=BUILD_STATS.map(x=>({stat:x,gap:Math.max(0,(req[x]||0)-(stats[x]||0))})).sort((a,z)=>z.gap-a.gap)[0]?.stat||'Consistency';
+ const map={
+ Strength:{title:'Build the Foundation',desc:'Complete 2 short strength breaks today.',xp:25,ideas:['10 chair or bodyweight squats.','5–10 incline push-ups.','10 glute bridges.']},
+ Endurance:{title:'Extra Movement',desc:'Complete 10 minutes of additional purposeful movement.',xp:25,ideas:['Take a 10-minute walk.','Walk during a phone call.','Use a cardio machine for 10 minutes if available.']},
+ Conditioning:{title:'Raise the Engine',desc:'Complete 5–10 minutes of brisk movement.',xp:25,ideas:['Brisk walk.','March in place.','Short low-impact circuit.']},
+ Mobility:{title:'Restore Range',desc:'Complete 10 minutes of mobility work.',xp:20,ideas:['Hip and ankle mobility.','Shoulder mobility.','Gentle full-body stretching.']},
+ Consistency:{title:'Keep the Promise',desc:'Complete one planned healthy action at the time you intended.',xp:20,ideas:['Take the walk you scheduled.','Prepare the meal you planned.','Start your workout at the planned time.']},
+ Recovery:{title:'Recovery Investment',desc:'Complete 10 minutes of intentional recovery.',xp:20,ideas:['Gentle stretching.','Easy recovery walk.','Quiet screen-free wind-down.']}
+ };
+ return {id:'growth',tag:'GROWTH MISSION',stat:target,...map[target]};
+}
+function dailySideMissions(){return [
+ {...dailyPick(SIDE_MISSION_POOLS.movement,'movement'),tag:'MOVEMENT'},
+ {...dailyPick(SIDE_MISSION_POOLS.fuel,'fuel'),tag:'FUEL'},
+ {...dailyPick(SIDE_MISSION_POOLS.lifestyle,'lifestyle'),tag:'LIFESTYLE'},
+ {...dailyPick(SIDE_MISSION_POOLS.recovery,'recovery'),tag:'RECOVERY'},
+ growthMission()
+]}
+const SIDE_MISSIONS=dailySideMissions();
 function task(text,damage,attack,seconds=0){return{text,damage,attack,seconds}}
 function variants(sq,pu,lu,pl,cardio){return[
 {name:'Strength Trial',focus:'Strength / Core',time:(cardio+10)+'–'+(cardio+18)+' min',tasks:[task(sq+' squats',30,'POWER STRIKE'),task(pu+' push-ups',30,'POWER STRIKE'),task(lu+' alternating lunges',15,'LEG BREAK'),task(pl+'-second plank',15,'CORE BREAK',pl),task(cardio+'-minute cardio',10,'ENDURANCE HIT',cardio*60)]},
@@ -70,7 +104,7 @@ function loadSideSystem(){let s={};try{s=JSON.parse(localStorage.getItem(SIDE_SY
 function saveSideSystem(s){localStorage.setItem(SIDE_SYSTEM_KEY,JSON.stringify(s))}
 function currentClass(s){let c='E';for(const b of BOSS_STAGES)if(s.boss[b.rank]?.passed)c=b.rank;return c}
 function rankIndex(rank){return ['E','D','C','B','A','S','S+','Shadow'].indexOf(rank)}
-function unlockedMissions(s){const ci=rankIndex(currentClass(s));return SIDE_MISSIONS.concat(RANK_MISSIONS.filter(m=>rankIndex(m.rank)<=ci))}
+function unlockedMissions(s){return dailySideMissions()}
 function rewardXp(base,s){const r=RANK_REWARDS[currentClass(s)]||RANK_REWARDS.E;return Math.round(base*(1+(r.bonus||0)/100))}
 function bossIndex(rank){return BOSS_STAGES.findIndex(b=>b.rank===rank)}
 function eligible(b,s){const i=bossIndex(b.rank),level=typeof state!=='undefined'?state.level:1;return level>=b.level&&(i===0||!!s.boss[BOSS_STAGES[i-1].rank]?.passed)&&buildEligible(b.rank)}
@@ -121,14 +155,20 @@ function completeAdaptiveMission(id){const evidence=todayWorkoutEvidence(),s=loa
 function ensureAdaptivePanel(){let el=document.getElementById('adaptiveMissionPanel');if(el)return el;const root=document.getElementById('sideMissionSystem');if(!root)return null;el=document.createElement('section');el.id='adaptiveMissionPanel';el.className='adaptive-mission-panel';const grid=root.querySelector('.side-system-grid');root.insertBefore(el,grid||null);return el}
 function renderAdaptiveMissions(){const el=ensureAdaptivePanel();if(!el)return;const s=loadSideSystem();s.adaptiveDone=s.adaptiveDone||[];const list=adaptiveMissions();el.innerHTML='<div class="adaptive-head"><div><span class="side-tag">SYSTEM GUIDANCE</span><h2>ADAPTIVE MISSIONS</h2><p>Generated from your Training Path, build weaknesses and next promotion. Attribute growth comes from logged training.</p></div></div><div class="adaptive-mission-grid">'+list.map(m=>'<article class="adaptive-mission '+(s.adaptiveDone.includes(m.id)?'done':'')+'"><span class="side-tag">'+m.tag+'</span><h3>'+m.title+'</h3><p>'+m.desc+'</p><div><strong>+'+m.xp+' XP</strong><button data-adaptive="'+m.id+'" '+(s.adaptiveDone.includes(m.id)?'disabled':'')+'>'+(s.adaptiveDone.includes(m.id)?'COMPLETE':'CLAIM COMPLETE')+'</button></div></article>').join('')+'</div>';el.querySelectorAll('[data-adaptive]').forEach(x=>x.onclick=()=>completeAdaptiveMission(x.dataset.adaptive))}
 function renderSideSystem(){renderPlayerStatus();const root=document.getElementById('sideMissionSystem');if(!root)return;const s=loadSideSystem(),missions=document.getElementById('sideMissionList');renderRankPath();
-renderAdaptiveMissions();const available=unlockedMissions(s);missions.innerHTML=available.map(m=>'<article class="side-card '+(s.completed.includes(m.id)?'is-done':'')+'"><div><span class="side-tag">SIDE MISSION</span><h3>'+m.title+'</h3><p>'+m.desc+'</p></div><div class="side-reward">+'+m.xp+' XP</div><button data-side="'+m.id+'" '+(s.completed.includes(m.id)?'disabled':'')+'>'+(s.completed.includes(m.id)?'COMPLETE':'CLAIM COMPLETE')+'</button></article>').join('');
+renderAdaptiveMissions();const available=unlockedMissions(s),count=available.filter(m=>s.completed.includes(m.id)).length;missions.innerHTML='<div class="side-board-progress"><strong>DAILY SIDE MISSIONS • '+count+'/5</strong><span>3/5: +50 XP • 5/5: +100 XP</span></div>'+available.map(m=>'<article class="side-card '+(s.completed.includes(m.id)?'is-done':'')+'"><div><span class="side-tag">'+(m.tag||'SIDE MISSION')+(m.stat?' • '+m.stat.toUpperCase():'')+'</span><h3>'+m.title+'</h3><p>'+m.desc+'</p><details class="side-ideas"><summary>IDEAS</summary><ul>'+(m.ideas||[]).map(x=>'<li>'+x+'</li>').join('')+'</ul></details></div><div class="side-reward">+'+m.xp+' XP</div><button data-side="'+m.id+'" '+(s.completed.includes(m.id)?'disabled':'')+'>'+(s.completed.includes(m.id)?'COMPLETE':'CLAIM COMPLETE')+'</button></article>').join('');
 missions.querySelectorAll('[data-side]').forEach(x=>x.onclick=()=>completeSideMission(x.dataset.side));const cls=currentClass(s),reward=RANK_REWARDS[cls]||RANK_REWARDS.E;document.getElementById('currentRankClass').textContent=cls+'-CLASS • '+reward.label;
 const wrap=document.getElementById('bossStageList');wrap.innerHTML=BOSS_STAGES.map(b=>{const e=s.boss[b.rank]||{attempts:0,history:[]},best=(e.history||[]).reduce((m,x)=>Math.max(m,x.completed||0),0);
 if(e.passed)return '<article class="boss-card boss-passed"><span class="side-tag">BOSS DEFEATED</span><h3>'+b.title+'</h3><p>Promotion achieved • +'+b.reward+' XP</p><button disabled>'+b.rank+'-CLASS UNLOCKED</button></article>';
 if(!eligible(b,s)){const level=typeof state!=='undefined'?state.level:1,cm=correctiveMission(b.rank),missing=weakestStats(b.rank);return '<article class="boss-card boss-locked"><span class="side-tag">SYSTEM ANALYSIS</span><h3>'+b.title+'</h3><p>Requires Level '+b.level+(bossIndex(b.rank)>0?' + previous promotion':'')+'. Promotion also requires a balanced build.</p>'+(missing.length?'<div class="build-warning"><strong>UNDERDEVELOPED: '+missing.map(x=>x.stat+' '+x.value+'/'+x.need).join(' • ')+'</strong>'+(cm?'<p>SYSTEM DIRECTIVE: '+cm.desc+'</p>':'')+'</div>':'')+'<button disabled>'+(level<b.level?'LEVEL REQUIREMENT NOT MET':'BUILD STABILIZATION REQUIRED')+'</button></article>'}
 return '<article class="boss-card boss-ready"><span class="side-tag">BOSS INTEL</span><h3>'+b.title+'</h3><p>Level '+b.level+' • +'+b.reward+' XP • '+b.variants.length+' possible trials</p><p>Attempts: '+(e.attempts||0)+' • Best: '+best+'/5</p><p>Objectives and order are classified until battle begins.</p><button data-start="'+b.rank+'">'+(e.activeVariant!=null?'RESUME BOSS BATTLE':'BEGIN RANK TRIAL')+'</button></article>'}).join('');
 wrap.querySelectorAll('[data-start]').forEach(x=>x.onclick=()=>startBoss(x.dataset.start))}
-function completeSideMission(id){const evidence=todayWorkoutEvidence(),s=loadSideSystem(),m=unlockedMissions(s).find(x=>x.id===id);if(!m||s.completed.includes(id))return;if(['walk20','core50','mobility','weekend','challenge100','cardio25','eliteCircuit','masterMobility','sRankSession','nationalTrial','sovereignTrial'].includes(id)&&!missionEvidence(id,evidence)){alert('SYSTEM: Today’s logged training does not yet satisfy '+m.title+'. Complete the mission requirement before claiming XP.');return;}const earned=rewardXp(m.xp,s);s.completed.push(id);saveSideSystem(s);awardBuildMission(id);if(typeof addXp==='function')addXp(earned,'side-mission');if(typeof addSystemMessage==='function')addSystemMessage('Side Mission Complete: '+m.title+' — +'+earned+' XP','quest');if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();renderSideSystem()}
+function completeSideMission(id){const evidence=todayWorkoutEvidence(),s=loadSideSystem(),m=unlockedMissions(s).find(x=>x.id===id);if(!m||s.completed.includes(id))return;
+ const verifiable=['mobility'];if(verifiable.includes(id)&&!missionEvidence(id,evidence)){alert('SYSTEM: Today’s logged training does not yet satisfy '+m.title+'. Complete the mission requirement before claiming XP.');return;}
+ const before=s.completed.length,earned=rewardXp(m.xp,s);s.completed.push(id);let bonus=0;if(before<3&&s.completed.length>=3&&!s.sideBonus3){s.sideBonus3=true;bonus+=50}if(before<5&&s.completed.length>=5&&!s.sideBonus5){s.sideBonus5=true;bonus+=100}saveSideSystem(s);
+ if(m.id==='growth'&&typeof window!=='undefined'&&window.SystemBuild?.awardSideGrowth)window.SystemBuild.awardSideGrowth(m.stat,1);
+ if(typeof addXp==='function'){addXp(earned,'side-mission');if(bonus)addXp(bonus,'side-mission-bonus')}
+ if(typeof addSystemMessage==='function'){addSystemMessage('Side Mission Complete: '+m.title+' — +'+earned+' XP','quest');if(bonus)addSystemMessage('SIDE MISSION MILESTONE: '+s.completed.length+'/5 — +'+bonus+' BONUS XP','quest')}
+ if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();renderSideSystem();if(bonus)setTimeout(()=>alert('SIDE MISSION MILESTONE\n'+s.completed.length+'/5 COMPLETE\n+'+bonus+' BONUS XP'),100)}
 function startBoss(rank){const b=BOSS_STAGES.find(x=>x.rank===rank),s=loadSideSystem();if(!b||!eligible(b,s))return;ensureAttempt(b,s);openBossBattle(rank)}
 function ensureBattleUI(){let el=document.getElementById('bossBattleMode');if(el)return el;el=document.createElement('div');el.id='bossBattleMode';el.className='boss-battle-mode';el.innerHTML='<div class="bb-top"><div><span class="side-tag">SYSTEM • RANK TRIAL</span><h2 id="bbTitle">BOSS STAGE</h2></div><button id="bbExit">✕</button></div><div class="bb-hud"><span id="bbRank"></span><span id="bbAttempt"></span><span id="bbClock">00:00</span></div><div class="bb-hp"><div><span>BOSS HP</span><strong id="bbHpText">100 / 100</strong></div><div class="bb-hp-track"><i id="bbHpBar"></i></div></div><main class="bb-arena"><span id="bbCount" class="side-tag"></span><p id="bbFocus"></p><h1 id="bbObjective"></h1><div id="bbAttack" class="bb-attack"></div><div id="bbTimerPanel" class="bb-timer" hidden><strong id="bbTimer">00:00</strong><button id="bbTimerStart">START TIMER</button></div><button id="bbComplete" class="bb-main">COMPLETE OBJECTIVE</button><button id="bbEnd" class="bb-end">END ATTEMPT</button></main><div id="bbFlash" class="bb-flash"></div>';document.body.appendChild(el);document.getElementById('bbExit').onclick=closeBossBattle;return el}
 function openBossBattle(rank){const el=ensureBattleUI();el.dataset.rank=rank;el.classList.add('active');document.body.classList.add('boss-mode-open');battleStartedAt=Date.now();clearInterval(bossClock);bossClock=setInterval(updateBattleClock,1000);renderBossBattle()}
