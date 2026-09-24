@@ -383,6 +383,17 @@
     <div id="mealRecommendations" class="meal-recommendations"></div>
   </article>
   <article class="nutrition-card">
+    <div class="dashboard-card__head"><span>▦</span><h3>7-Day Meal Plan</h3></div>
+    <p class="quest-section__desc">Build a simple week from the recommended meals, then adjust any day from Today's Meals.</p>
+    <div class="meal-actions weekly-actions"><button id="generateWeekBtn" class="btn-primary" type="button">Generate 7-Day Plan</button><button id="clearWeekBtn" type="button">Clear Week</button></div>
+    <div id="weeklyMealPlan" class="weekly-meal-plan"></div>
+  </article>
+  <article class="nutrition-card">
+    <div class="dashboard-card__head"><span>☷</span><h3>Grocery List</h3></div>
+    <p class="quest-section__desc">Combined ingredients for the meals currently planned over the next seven days.</p>
+    <div id="groceryList" class="grocery-list"></div>
+  </article>
+  <article class="nutrition-card">
     <div class="dashboard-card__head"><span>＋</span><h3>Add Your Own Meal</h3></div>
     <form id="customMealForm" class="nutrition-target-form">
       <input id="mealName" class="form-input" placeholder="Meal name" required>
