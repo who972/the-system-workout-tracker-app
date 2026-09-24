@@ -996,19 +996,23 @@ window.addEventListener('error',e=>{console.error('THE SYSTEM runtime error:',e.
 // --- V3 Nutrition System ---
 const NUTRITION_KEY='theSystemNutritionV1';
 const DEFAULT_MEALS=[
- {name:'Greek Yogurt Power Bowl',type:'Breakfast',calories:410,protein:35,carbs:48,fat:9},
- {name:'Egg & Oat Breakfast',type:'Breakfast',calories:460,protein:32,carbs:45,fat:17},
- {name:'Chicken Rice Bowl',type:'Lunch',calories:560,protein:52,carbs:61,fat:12},
- {name:'Turkey Wrap & Fruit',type:'Lunch',calories:490,protein:39,carbs:57,fat:12},
- {name:'Lean Beef & Potato Plate',type:'Dinner',calories:620,protein:51,carbs:63,fat:18},
- {name:'Chicken Pasta',type:'Dinner',calories:590,protein:49,carbs:70,fat:13},
- {name:'Protein Shake & Banana',type:'Snack',calories:280,protein:31,carbs:34,fat:3},
- {name:'Cottage Cheese & Berries',type:'Snack',calories:240,protein:27,carbs:25,fat:4}
+ {name:'Greek Yogurt Power Bowl',type:'Breakfast',calories:410,protein:35,carbs:48,fat:9,ingredients:['Greek yogurt','oats','berries','honey']},
+ {name:'Egg & Oat Breakfast',type:'Breakfast',calories:460,protein:32,carbs:45,fat:17,ingredients:['eggs','oats','banana']},
+ {name:'Chicken Rice Bowl',type:'Lunch',calories:560,protein:52,carbs:61,fat:12,ingredients:['chicken breast','rice','mixed vegetables','salsa']},
+ {name:'Turkey Wrap & Fruit',type:'Lunch',calories:490,protein:39,carbs:57,fat:12,ingredients:['turkey breast','whole wheat wraps','lettuce','tomato','fruit']},
+ {name:'Lean Beef & Potato Plate',type:'Dinner',calories:620,protein:51,carbs:63,fat:18,ingredients:['lean ground beef','potatoes','green beans']},
+ {name:'Chicken Pasta',type:'Dinner',calories:590,protein:49,carbs:70,fat:13,ingredients:['chicken breast','pasta','marinara sauce','spinach']},
+ {name:'Protein Shake & Banana',type:'Snack',calories:280,protein:31,carbs:34,fat:3,ingredients:['protein powder','milk','banana']},
+ {name:'Cottage Cheese & Berries',type:'Snack',calories:240,protein:27,carbs:25,fat:4,ingredients:['cottage cheese','berries']}
 ];
 function nutritionState(){try{return JSON.parse(localStorage.getItem(NUTRITION_KEY))||{}}catch(e){return {}}}
 function saveNutrition(s){localStorage.setItem(NUTRITION_KEY,JSON.stringify(s))}
 function nutritionToday(){return new Date().toISOString().slice(0,10)}
-function ensureNutrition(){const s=nutritionState();s.targets=s.targets||{calories:2000,protein:160,carbs:200,fat:65};s.days=s.days||{};s.days[nutritionToday()]=s.days[nutritionToday()]||[];return s}
+function ensureNutrition(){const s=nutritionState();s.targets=s.targets||{calories:2000,protein:160,carbs:200,fat:65};s.days=s.days||{};s.groceryChecked=s.groceryChecked||{};s.days[nutritionToday()]=s.days[nutritionToday()]||[];return s}
+function nutritionDate(offset=0){const d=new Date();d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10)}
+function generateNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++){const date=nutritionDate(d);s.days[date]=['Breakfast','Lunch','Dinner','Snack'].map((type,i)=>{const pool=DEFAULT_MEALS.filter(m=>m.type===type);return {...pool[(d+i)%pool.length],id:Date.now()+d*10+i}})}saveNutrition(s);renderNutrition()}
+function clearNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++)delete s.days[nutritionDate(d)];s.days[nutritionToday()]=[];saveNutrition(s);renderNutrition()}
+function toggleGrocery(name,checked){const s=ensureNutrition();s.groceryChecked[name]=checked;saveNutrition(s)}
 function mealMacros(m){return m.calories+' cal • '+m.protein+'g protein • '+(m.carbs||0)+'g carbs • '+(m.fat||0)+'g fat'}
 function addNutritionMeal(m){const s=ensureNutrition();s.days[nutritionToday()].push({...m,id:Date.now()+Math.random()});saveNutrition(s);renderNutrition()}
 function removeNutritionMeal(id){const s=ensureNutrition();s.days[nutritionToday()]=s.days[nutritionToday()].filter(m=>m.id!==id);saveNutrition(s);renderNutrition()}
@@ -1018,6 +1022,8 @@ function renderNutrition(){const s=ensureNutrition(),t=s.targets,meals=s.days[nu
  const plan=document.getElementById('todayMeals');if(plan)plan.innerHTML=meals.length?meals.map(m=>'<div class="meal-item"><div class="meal-item__head"><strong>'+m.type+': '+m.name+'</strong><button type="button" data-remove-meal="'+m.id+'">Remove</button></div><div class="meal-macros">'+mealMacros(m)+'</div></div>').join(''):'<div class="builder-empty">No meals planned yet. Add a recommendation below.</div>';
  const rec=document.getElementById('mealRecommendations');if(rec)rec.innerHTML=DEFAULT_MEALS.map((m,i)=>'<div class="meal-rec"><div class="meal-rec__head"><strong>'+m.name+'</strong><span>'+m.type+'</span></div><div class="meal-macros">'+mealMacros(m)+'</div><div class="meal-actions"><button class="btn-primary" type="button" data-add-rec="'+i+'">Add to Today</button></div></div>').join('');
  document.querySelectorAll('[data-add-rec]').forEach(b=>b.onclick=()=>addNutritionMeal(DEFAULT_MEALS[Number(b.dataset.addRec)]));document.querySelectorAll('[data-remove-meal]').forEach(b=>b.onclick=()=>removeNutritionMeal(Number(b.dataset.removeMeal)));
+ const weekly=document.getElementById('weeklyMealPlan');if(weekly)weekly.innerHTML=Array.from({length:7},(_,d)=>{const date=nutritionDate(d),list=s.days[date]||[],label=new Date(date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});return '<div class="week-day"><div class="week-day__head"><strong>'+label+'</strong><span>'+list.reduce((a,m)=>a+(Number(m.calories)||0),0)+' cal</span></div><div class="week-day__meals">'+(list.length?list.map(m=>'<div class="week-meal"><span>'+m.type+': '+m.name+'</span><span>'+m.protein+'g P</span></div>').join(''):'<span class="builder-empty">No meals planned</span>')+'</div></div>'}).join('');
+ const groceries={};for(let d=0;d<7;d++)(s.days[nutritionDate(d)]||[]).forEach(m=>(m.ingredients||[]).forEach(x=>groceries[x]=(groceries[x]||0)+1));const gl=document.getElementById('groceryList');if(gl)gl.innerHTML=Object.keys(groceries).length?Object.keys(groceries).sort().map(x=>'<label class="grocery-item"><input type="checkbox" data-grocery="'+x+'" '+(s.groceryChecked[x]?'checked':'')+'> '+x+' <small>×'+groceries[x]+'</small></label>').join(''):'<div class="builder-empty">Generate or add meals to build your grocery list.</div>';document.querySelectorAll('[data-grocery]').forEach(x=>x.onchange=()=>toggleGrocery(x.dataset.grocery,x.checked));
 }
-function initNutrition(){renderNutrition();document.getElementById('nutritionTargetForm')?.addEventListener('submit',e=>{e.preventDefault();const s=ensureNutrition();s.targets={calories:Number(document.getElementById('targetCalories').value)||2000,protein:Number(document.getElementById('targetProtein').value)||160,carbs:Number(document.getElementById('targetCarbs').value)||200,fat:Number(document.getElementById('targetFat').value)||65};saveNutrition(s);renderNutrition()});document.getElementById('customMealForm')?.addEventListener('submit',e=>{e.preventDefault();addNutritionMeal({name:document.getElementById('mealName').value.trim(),type:document.getElementById('mealType').value,calories:Number(document.getElementById('mealCalories').value),protein:Number(document.getElementById('mealProtein').value),carbs:Number(document.getElementById('mealCarbs').value)||0,fat:Number(document.getElementById('mealFat').value)||0});e.target.reset()})}
+function initNutrition(){renderNutrition();document.getElementById('generateWeekBtn')?.addEventListener('click',generateNutritionWeek);document.getElementById('clearWeekBtn')?.addEventListener('click',clearNutritionWeek);document.getElementById('nutritionTargetForm')?.addEventListener('submit',e=>{e.preventDefault();const s=ensureNutrition();s.targets={calories:Number(document.getElementById('targetCalories').value)||2000,protein:Number(document.getElementById('targetProtein').value)||160,carbs:Number(document.getElementById('targetCarbs').value)||200,fat:Number(document.getElementById('targetFat').value)||65};saveNutrition(s);renderNutrition()});document.getElementById('customMealForm')?.addEventListener('submit',e=>{e.preventDefault();addNutritionMeal({name:document.getElementById('mealName').value.trim(),type:document.getElementById('mealType').value,calories:Number(document.getElementById('mealCalories').value),protein:Number(document.getElementById('mealProtein').value),carbs:Number(document.getElementById('mealCarbs').value)||0,fat:Number(document.getElementById('mealFat').value)||0});e.target.reset()})}
 document.addEventListener('DOMContentLoaded',initNutrition);
