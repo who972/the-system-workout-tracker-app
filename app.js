@@ -466,6 +466,7 @@ function logCustomWorkout(name, duration, intensity) {
   }
 
   updateStreak();
+  if (window.SystemBuild && typeof window.SystemBuild.awardTraining === 'function') window.SystemBuild.awardTraining(name, duration, intensity);
   recordHistory('custom_' + Date.now(), xp);
   checkAchievements();
   saveState();
