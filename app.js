@@ -832,8 +832,8 @@ function adaptiveWeekStatus(){
  return {missed,future,todayDone,directive};
 }
 function adaptiveSystemMission(){
- const base=SYSTEM_MISSIONS[new Date().getDay()],b=systemPlayerProfile(),profile=b.profile||{},path=b.path||'Balanced',exp=profile.experience||'Beginner',gear=profile.equipment||['Bodyweight'];
- const has=x=>gear.includes(x)||gear.includes('Full Gym'), levelScale=exp==='Advanced'?1.3:exp==='Intermediate'?1.12:.9;
+ const base=SYSTEM_MISSIONS[new Date().getDay()],b=systemPlayerProfile(),profile=b.profile||{},path=b.path||'Balanced',exp=profile.experience||'Beginner',gear=(profile.equipment&&profile.equipment.length?profile.equipment:['No Equipment']);
+ const noGear=gear.includes('No Equipment')||(!gear.some(x=>['Dumbbells','Barbell','Resistance Bands','Cardio Machine','Full Gym'].includes(x))),has=x=>!noGear&&(gear.includes(x)||gear.includes('Full Gym')), levelScale=exp==='Advanced'?1.3:exp==='Intermediate'?1.12:.9;
  const swap={
   'Push-Ups':has('Barbell')?['Barbell Bench Press',3,'8-10 reps',75]:has('Dumbbells')?['Dumbbell Press',3,'8-12 reps',60]:has('Resistance Bands')?['Band Chest Press',3,'12-15 reps',45]:null,
   'Incline Push-Ups':has('Dumbbells')?['Dumbbell Press',2,'10-12 reps',60]:has('Resistance Bands')?['Band Chest Press',2,'12-15 reps',45]:null,
@@ -843,6 +843,10 @@ function adaptiveSystemMission(){
   'March in Place':has('Cardio Machine')?['Cardio Machine',1,'5 min',0]:null
  };
  let exercises=base.exercises.map(e=>swap[e[0]]?[...swap[e[0]]]:[...e]);
+ if(noGear){
+  const bodyweight={'Push-Ups':['Push-Ups',3,'8-12 reps',45],'Incline Push-Ups':['Incline Push-Ups',2,'10-15 reps',30],'Bodyweight Squats':['Bodyweight Squats',3,'12-15 reps',45],'Glute Bridge':['Glute Bridge',3,'12-15 reps',30],'Brisk Walk':['Brisk Walk',1,'10 min',0],'March in Place':['March in Place',1,'5 min',0]};
+  exercises=exercises.map(e=>bodyweight[e[0]]?[...bodyweight[e[0]]]:e);
+ }
  exercises=exercises.map(e=>{
    let sets=e[1],rest=e[3];
    if(!/min/i.test(e[2]))sets=Math.max(1,Math.round(sets*levelScale));
