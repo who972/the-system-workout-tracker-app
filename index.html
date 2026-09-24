@@ -51,6 +51,7 @@
   <button data-view="train" data-target="exerciseTracker">Train</button>
   <button data-view="progress" data-target="progressAnalytics">Progress</button>
   <button data-view="missions" data-target="workoutBuilder">Missions</button>
+  <button data-view="nutrition" data-target="nutritionDashboard">Nutrition</button>
   <button data-view="profile" data-target="profileSettings">Profile</button>
 </nav>
 
@@ -353,6 +354,48 @@
     </div>
   </section>
 
+
+<section class="nutrition-section" id="nutritionDashboard">
+  <div class="quest-section__header"><div><h2 class="quest-section__title">Daily Fuel</h2><p class="quest-section__desc">Plan meals around your nutrition targets and training goals.</p></div><span class="quest-section__meta">NUTRITION</span></div>
+  <div class="nutrition-targets">
+    <article class="nutrition-stat"><span>Calories</span><strong id="nutritionCalories">0 / 2000</strong><div class="nutrition-bar"><i id="nutritionCaloriesBar"></i></div></article>
+    <article class="nutrition-stat"><span>Protein</span><strong id="nutritionProtein">0 / 160g</strong><div class="nutrition-bar"><i id="nutritionProteinBar"></i></div></article>
+    <article class="nutrition-stat"><span>Carbs</span><strong id="nutritionCarbs">0 / 200g</strong></article>
+    <article class="nutrition-stat"><span>Fat</span><strong id="nutritionFat">0 / 65g</strong></article>
+  </div>
+  <article class="nutrition-card">
+    <div class="dashboard-card__head"><span>◎</span><h3>Nutrition Targets</h3></div>
+    <form id="nutritionTargetForm" class="nutrition-target-form">
+      <label>Calories<input id="targetCalories" class="form-input" type="number" min="1000" max="6000" step="50"></label>
+      <label>Protein (g)<input id="targetProtein" class="form-input" type="number" min="40" max="400"></label>
+      <label>Carbs (g)<input id="targetCarbs" class="form-input" type="number" min="0" max="800"></label>
+      <label>Fat (g)<input id="targetFat" class="form-input" type="number" min="20" max="250"></label>
+      <button class="btn-primary" type="submit">Save Targets</button>
+    </form>
+  </article>
+  <article class="nutrition-card">
+    <div class="dashboard-card__head"><span>◈</span><h3>Today's Meals</h3></div>
+    <div id="todayMeals" class="meal-plan"></div>
+  </article>
+  <article class="nutrition-card">
+    <div class="dashboard-card__head"><span>✦</span><h3>Recommended Meals</h3></div>
+    <p class="quest-section__desc">Built-in suggestions make meal planning useful immediately, without requiring a food-service account.</p>
+    <div id="mealRecommendations" class="meal-recommendations"></div>
+  </article>
+  <article class="nutrition-card">
+    <div class="dashboard-card__head"><span>＋</span><h3>Add Your Own Meal</h3></div>
+    <form id="customMealForm" class="nutrition-target-form">
+      <input id="mealName" class="form-input" placeholder="Meal name" required>
+      <select id="mealType" class="form-input"><option>Breakfast</option><option>Lunch</option><option>Dinner</option><option>Snack</option></select>
+      <input id="mealCalories" class="form-input" type="number" min="0" placeholder="Calories" required>
+      <input id="mealProtein" class="form-input" type="number" min="0" placeholder="Protein (g)" required>
+      <input id="mealCarbs" class="form-input" type="number" min="0" placeholder="Carbs (g)">
+      <input id="mealFat" class="form-input" type="number" min="0" placeholder="Fat (g)">
+      <button class="btn-primary" type="submit">Add to Today</button>
+    </form>
+  </article>
+</section>
+
 <section class="settings-section profile-secondary" id="cloudSync">
   <div class="quest-section__header"><h2 class="quest-section__title">Account & Cloud Sync</h2><span class="quest-section__meta">SYSTEM SETTINGS</span></div>
   <div class="settings-grid">
@@ -438,6 +481,7 @@ if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.se
     train:["exerciseTracker","systemPanel","customWorkout","systemDashboard"],
     progress:["progressAnalytics","adaptiveProgression","achievements"],
     missions:["workoutBuilder","exerciseLibrary","questGrid"],
+    nutrition:["nutritionDashboard"],
     profile:["cloudSync","profileSettings"]
   };
   const aliases={
