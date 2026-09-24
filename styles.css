@@ -1486,3 +1486,34 @@ body[data-view="missions"] .quest-grid{
  body[data-view="missions"] .quest-section__header{min-width:0;flex-wrap:wrap}
  body[data-view="missions"] .quest-section__header>div{min-width:0;max-width:100%}
 }
+
+/* Final Missions field containment */
+@media(max-width:640px){
+ body[data-view="missions"] #workoutBuilder .builder-card,
+ body[data-view="missions"] #workoutBuilder .builder-form,
+ body[data-view="missions"] #workoutBuilder .builder-row,
+ body[data-view="missions"] #workoutBuilder .builder-exercises,
+ body[data-view="missions"] #workoutBuilder .builder-exercise{
+   display:block!important;
+   width:100%!important;
+   max-width:100%!important;
+   min-width:0!important;
+ }
+ body[data-view="missions"] #workoutBuilder .builder-row>*,
+ body[data-view="missions"] #workoutBuilder .builder-exercise>*{
+   display:block;
+   width:100%!important;
+   max-width:100%!important;
+   min-width:0!important;
+   margin:0 0 8px!important;
+ }
+ body[data-view="missions"] #workoutBuilder input,
+ body[data-view="missions"] #workoutBuilder select,
+ body[data-view="missions"] #workoutBuilder button{
+   inline-size:100%!important;
+   max-inline-size:100%!important;
+   min-inline-size:0!important;
+   box-sizing:border-box!important;
+ }
+ body[data-view="missions"] #workoutBuilder .builder-actions{display:grid!important;grid-template-columns:minmax(0,1fr)!important;width:100%!important}
+}
