@@ -26,7 +26,9 @@ function getRank(level) {
 
 // --- XP Formula ---
 function xpNeededForLevel(level) {
-  return Math.floor(100 * Math.pow(level, 1.05));
+  // Fitness-RPG pacing: early levels move quickly, while higher ranks
+  // still require sustained consistency and successful promotion trials.
+  return Math.floor(80 + (level * 12) + (Math.pow(level, 1.35) * 4));
 }
 
 // --- Default Quests ---
