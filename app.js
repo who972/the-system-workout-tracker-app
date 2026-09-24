@@ -833,19 +833,30 @@ function adaptiveWeekStatus(){
 }
 function adaptiveSystemMission(){
  const base=SYSTEM_MISSIONS[new Date().getDay()],b=systemPlayerProfile(),profile=b.profile||{},path=b.path||'Balanced',exp=profile.experience||'Beginner',gear=profile.equipment||['Bodyweight'];
- const scale=exp==='Advanced'?1.25:exp==='Intermediate'?1.1:0.9, has=x=>gear.includes(x)||gear.includes('Full Gym');
- let exercises=base.exercises.map(e=>[...e]);
- if(has('Dumbbells')||has('Full Gym')){
-   exercises=exercises.map(e=>e[0]==='Push-Ups'?['Dumbbell Press',e[1],e[2],Math.max(45,e[3])]:e[0]==='Glute Bridge'?['Dumbbell Rows',e[1],e[2],60]:e);
- }
- if(path==='Strength'||path==='Muscle Building'){
-   exercises=exercises.map(e=>[e[0],Math.max(1,Math.round(e[1]*scale)),e[2],Math.max(e[3],45)]);
- }else if(path==='Endurance'||path==='Fat Loss'){
-   exercises=exercises.map(e=>[e[0],e[1],e[2],Math.max(0,Math.round(e[3]*.8))]);
- }
+ const has=x=>gear.includes(x)||gear.includes('Full Gym'), levelScale=exp==='Advanced'?1.3:exp==='Intermediate'?1.12:.9;
+ const swap={
+  'Push-Ups':has('Barbell')?['Barbell Bench Press',3,'8-10 reps',75]:has('Dumbbells')?['Dumbbell Press',3,'8-12 reps',60]:has('Resistance Bands')?['Band Chest Press',3,'12-15 reps',45]:null,
+  'Incline Push-Ups':has('Dumbbells')?['Dumbbell Press',2,'10-12 reps',60]:has('Resistance Bands')?['Band Chest Press',2,'12-15 reps',45]:null,
+  'Bodyweight Squats':has('Barbell')?['Barbell Squat',3,'8-10 reps',90]:has('Dumbbells')?['Goblet Squat',3,'10-12 reps',60]:has('Resistance Bands')?['Band Squat',3,'12-15 reps',45]:null,
+  'Glute Bridge':has('Barbell')?['Barbell Hip Thrust',3,'10-12 reps',75]:has('Dumbbells')?['Dumbbell Glute Bridge',3,'12-15 reps',60]:has('Resistance Bands')?['Band Glute Bridge',3,'15 reps',45]:null,
+  'Brisk Walk':has('Cardio Machine')?['Cardio Machine',1,'10 min',0]:null,
+  'March in Place':has('Cardio Machine')?['Cardio Machine',1,'5 min',0]:null
+ };
+ let exercises=base.exercises.map(e=>swap[e[0]]?[...swap[e[0]]]:[...e]);
+ exercises=exercises.map(e=>{
+   let sets=e[1],rest=e[3];
+   if(!/min/i.test(e[2]))sets=Math.max(1,Math.round(sets*levelScale));
+   if(exp==='Beginner')rest=Math.round(rest*1.15);
+   if(exp==='Advanced'&&rest)rest=Math.max(20,Math.round(rest*.9));
+   if(path==='Strength'||path==='Muscle Building')rest=Math.max(rest,45);
+   if(path==='Endurance'||path==='Fat Loss')rest=Math.max(0,Math.round(rest*.8));
+   return [e[0],sets,e[2],rest];
+ });
+ if((path==='Endurance'||path==='Fat Loss')&&has('Cardio Machine')&&!exercises.some(e=>e[0]==='Cardio Machine'))exercises.push(['Cardio Machine',1,exp==='Advanced'?'15 min':exp==='Intermediate'?'12 min':'10 min',0]);
  const names={'Fat Loss':'Fat Loss Protocol','Muscle Building':'Hypertrophy Protocol',Strength:'Strength Protocol',Endurance:'Endurance Protocol',Balanced:base.name};
  const focus=path==='Balanced'?base.focus:path+' • '+base.focus;
- return {...base,name:names[path]||base.name,focus,exercises,profile:{path,experience:exp,equipment:gear,days:Number(profile.days)||4}};
+ const volume=exercises.reduce((n,e)=>n+e[1],0),xp=Math.round((base.xp*(exp==='Advanced'?1.15:exp==='Intermediate'?1.07:1)+Math.max(0,volume-12)*3)/5)*5;
+ return {...base,name:names[path]||base.name,focus,xp,exercises,profile:{path,experience:exp,equipment:gear,days:Number(profile.days)||4}};
 }
 function missionProgressKey(){return "systemMissionProgress:"+systemMissionKey();}
 function missionRecordsKey(){return "systemMissionRecords";}
