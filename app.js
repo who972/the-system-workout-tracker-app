@@ -133,7 +133,6 @@ function defaultState() {
     bestStreak: 0,
     currentStreak: 0,
     lastWorkoutDate: null,
-    stats: { str: 0, end: 0, agi: 0, vit: 0 },
     dailyQuests: DEFAULT_DAILY_QUESTS.map(q => ({ ...q, progress: 0, completed: false })),
     weeklyGoals: DEFAULT_WEEKLY_GOALS.map(g => ({ ...g, progress: 0, completed: false })),
     achievements: ACHIEVEMENTS.map(a => ({ id: a.id, unlocked: false })),
@@ -143,7 +142,6 @@ function defaultState() {
     allDailyCompleted: false,
     allWeeklyCompleted: false,
     weeklyCompleted: 0,
-    statsEarned: { str: 0, end: 0, agi: 0, vit: 0 },
     weight: { current: null, starting: null, goal: null, history: [] },
     exerciseRecords: [],
   };
@@ -158,8 +156,6 @@ function loadState() {
     // Merge with defaults to handle new fields
     const state = defaultState();
     Object.assign(state, saved);
-    state.stats = Object.assign({ str: 0, end: 0, agi: 0, vit: 0 }, saved.stats || {});
-    state.statsEarned = Object.assign({ str: 0, end: 0, agi: 0, vit: 0 }, saved.statsEarned || {});
     state.weight = Object.assign({ current: null, starting: null, goal: null, history: [] }, saved.weight || {});
     state.weight.history = Array.isArray(state.weight.history) ? state.weight.history : [];
     state.exerciseRecords = Array.isArray(saved.exerciseRecords) ? saved.exerciseRecords : [];
@@ -283,11 +279,6 @@ function addXp(amount, source = 'quest') {
   return leveled;
 }
 
-function addStat(statType, amount) {
-  if (!(statType in state.stats)) return;
-  state.stats[statType] += amount;
-  state.statsEarned[statType] = (state.statsEarned[statType] || 0) + amount;
-}
 
 // --- Streak Management ---
 function updateStreak() {
@@ -569,10 +560,10 @@ function renderPlayerCard() {
   document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
 
   const canonical=window.SystemBuild?.getBuild?.()?.stats;
-  document.getElementById('statStr').textContent = canonical?.Strength ?? state.stats.str;
-  document.getElementById('statEnd').textContent = canonical?.Endurance ?? state.stats.end;
-  document.getElementById('statAgi').textContent = canonical?.Conditioning ?? state.stats.agi;
-  document.getElementById('statVit').textContent = canonical?.Recovery ?? state.stats.vit;
+  document.getElementById('statStr').textContent = canonical?.Strength ?? 0;
+  document.getElementById('statEnd').textContent = canonical?.Endurance ?? 0;
+  document.getElementById('statAgi').textContent = canonical?.Conditioning ?? 0;
+  document.getElementById('statVit').textContent = canonical?.Recovery ?? 0;
 }
 
 function renderDailyQuests() {
@@ -812,13 +803,13 @@ setTimeout(() => {
 
 /* ===== THE SYSTEM: LIVE 30-MINUTE WORKOUT ENGINE ===== */
 const SYSTEM_MISSIONS = [
- {day:0,name:"Recovery Protocol",focus:"Active recovery + mobility",stat:"vit",xp:250,exercises:[["Brisk Walk",1,"10 min",0],["Stretching",1,"10 min",0],["Glute Bridge",2,"15 reps",30],["Plank",2,"30 sec",30]]},
- {day:1,name:"Strength Awakening",focus:"Upper-body strength + core",stat:"str",xp:300,exercises:[["Push-Ups",3,"8-12 reps",45],["Bodyweight Squats",3,"12-15 reps",45],["Plank",3,"30 sec",30],["Incline Push-Ups",2,"10-15 reps",30],["March in Place",1,"5 min",0]]},
- {day:2,name:"Endurance Protocol",focus:"Cardio conditioning + endurance",stat:"end",xp:300,exercises:[["Brisk Walk",1,"10 min",0],["High Knees",4,"30 sec",30],["Bodyweight Squats",3,"12 reps",30],["March in Place",1,"5 min",0],["Stretching",1,"5 min",0]]},
- {day:3,name:"Agility Protocol",focus:"Movement, coordination + speed",stat:"agi",xp:300,exercises:[["High Knees",5,"30 sec",30],["Mountain Climbers",4,"30 sec",30],["Reverse Lunges",3,"10/leg",30],["March in Place",1,"5 min",0],["Stretching",1,"5 min",0]]},
- {day:4,name:"Vitality Recovery",focus:"Mobility, core + recovery",stat:"vit",xp:300,exercises:[["Plank",3,"30-45 sec",30],["Glute Bridge",3,"12-15 reps",30],["Bodyweight Squats",3,"12 reps",30],["Stretching",1,"10 min",0],["Brisk Walk",1,"5 min",0]]},
- {day:5,name:"Full Body Assault",focus:"Full-body conditioning",stat:"str",xp:350,exercises:[["Push-Ups",3,"8-12 reps",45],["Bodyweight Squats",3,"15 reps",45],["Reverse Lunges",3,"10/leg",30],["Mountain Climbers",3,"30 sec",30],["Plank",3,"30 sec",30]]},
- {day:6,name:"Cardio Challenge",focus:"Conditioning + calorie burn",stat:"end",xp:350,exercises:[["Brisk Walk",1,"15 min",0],["High Knees",5,"30 sec",30],["Mountain Climbers",5,"30 sec",30],["March in Place",1,"5 min",0]]}
+ {day:0,name:"Recovery Protocol",focus:"Active recovery + mobility",stat:"Recovery",xp:250,exercises:[["Brisk Walk",1,"10 min",0],["Stretching",1,"10 min",0],["Glute Bridge",2,"15 reps",30],["Plank",2,"30 sec",30]]},
+ {day:1,name:"Strength Awakening",focus:"Upper-body strength + core",stat:"Strength",xp:300,exercises:[["Push-Ups",3,"8-12 reps",45],["Bodyweight Squats",3,"12-15 reps",45],["Plank",3,"30 sec",30],["Incline Push-Ups",2,"10-15 reps",30],["March in Place",1,"5 min",0]]},
+ {day:2,name:"Endurance Protocol",focus:"Cardio conditioning + endurance",stat:"Endurance",xp:300,exercises:[["Brisk Walk",1,"10 min",0],["High Knees",4,"30 sec",30],["Bodyweight Squats",3,"12 reps",30],["March in Place",1,"5 min",0],["Stretching",1,"5 min",0]]},
+ {day:3,name:"Agility Protocol",focus:"Movement, coordination + speed",stat:"Conditioning",xp:300,exercises:[["High Knees",5,"30 sec",30],["Mountain Climbers",4,"30 sec",30],["Reverse Lunges",3,"10/leg",30],["March in Place",1,"5 min",0],["Stretching",1,"5 min",0]]},
+ {day:4,name:"Vitality Recovery",focus:"Mobility, core + recovery",stat:"Recovery",xp:300,exercises:[["Plank",3,"30-45 sec",30],["Glute Bridge",3,"12-15 reps",30],["Bodyweight Squats",3,"12 reps",30],["Stretching",1,"10 min",0],["Brisk Walk",1,"5 min",0]]},
+ {day:5,name:"Full Body Assault",focus:"Full-body conditioning",stat:"Strength",xp:350,exercises:[["Push-Ups",3,"8-12 reps",45],["Bodyweight Squats",3,"15 reps",45],["Reverse Lunges",3,"10/leg",30],["Mountain Climbers",3,"30 sec",30],["Plank",3,"30 sec",30]]},
+ {day:6,name:"Cardio Challenge",focus:"Conditioning + calorie burn",stat:"Endurance",xp:350,exercises:[["Brisk Walk",1,"15 min",0],["High Knees",5,"30 sec",30],["Mountain Climbers",5,"30 sec",30],["March in Place",1,"5 min",0]]}
 ];
 function systemMissionKey(){return getTodayStr();}
 function systemPlayerProfile(){try{return JSON.parse(localStorage.getItem('systemPlayerBuildV1')||'{}')}catch(e){return {}}}
@@ -928,28 +919,28 @@ document.addEventListener('DOMContentLoaded',initWorkoutBuilder);
 
 // --- Exercise Library v9 ---
 const BUILTIN_EXERCISES=[
-{name:'Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'str',sets:3,target:'8-12 reps',rest:45},
-{name:'Incline Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'str',sets:3,target:'10-15 reps',rest:45},
-{name:'Bodyweight Squats',muscle:'Legs',equipment:'Bodyweight',difficulty:'Beginner',stat:'str',sets:3,target:'12-15 reps',rest:45},
-{name:'Reverse Lunges',muscle:'Legs',equipment:'Bodyweight',difficulty:'Beginner',stat:'agi',sets:3,target:'10/leg',rest:30},
-{name:'Glute Bridge',muscle:'Glutes',equipment:'Bodyweight',difficulty:'Beginner',stat:'vit',sets:3,target:'12-15 reps',rest:30},
-{name:'Plank',muscle:'Core',equipment:'Bodyweight',difficulty:'Beginner',stat:'end',sets:3,target:'30-45 sec',rest:30},
-{name:'Mountain Climbers',muscle:'Full Body',equipment:'Bodyweight',difficulty:'Intermediate',stat:'agi',sets:4,target:'30 sec',rest:30},
-{name:'High Knees',muscle:'Cardio',equipment:'Bodyweight',difficulty:'Beginner',stat:'agi',sets:4,target:'30 sec',rest:30},
-{name:'Brisk Walk',muscle:'Cardio',equipment:'None',difficulty:'Beginner',stat:'end',sets:1,target:'10 min',rest:0},
-{name:'Stretching',muscle:'Mobility',equipment:'None',difficulty:'Beginner',stat:'vit',sets:1,target:'10 min',rest:0},
-{name:'Dumbbell Press',muscle:'Chest',equipment:'Dumbbells',difficulty:'Beginner',stat:'str',sets:3,target:'8-12 reps',rest:60},
-{name:'Dumbbell Rows',muscle:'Back',equipment:'Dumbbells',difficulty:'Beginner',stat:'str',sets:3,target:'8-12 reps',rest:60},
-{name:'Shoulder Press',muscle:'Shoulders',equipment:'Dumbbells',difficulty:'Beginner',stat:'str',sets:3,target:'8-12 reps',rest:60},
-{name:'Biceps Curls',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'str',sets:3,target:'10-15 reps',rest:45},
-{name:'Triceps Extensions',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'str',sets:3,target:'10-15 reps',rest:45}
+{name:'Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:45},
+{name:'Incline Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
+{name:'Bodyweight Squats',muscle:'Legs',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:45},
+{name:'Reverse Lunges',muscle:'Legs',equipment:'Bodyweight',difficulty:'Beginner',stat:'Conditioning',sets:3,target:'10/leg',rest:30},
+{name:'Glute Bridge',muscle:'Glutes',equipment:'Bodyweight',difficulty:'Beginner',stat:'Recovery',sets:3,target:'12-15 reps',rest:30},
+{name:'Plank',muscle:'Core',equipment:'Bodyweight',difficulty:'Beginner',stat:'Endurance',sets:3,target:'30-45 sec',rest:30},
+{name:'Mountain Climbers',muscle:'Full Body',equipment:'Bodyweight',difficulty:'Intermediate',stat:'Conditioning',sets:4,target:'30 sec',rest:30},
+{name:'High Knees',muscle:'Cardio',equipment:'Bodyweight',difficulty:'Beginner',stat:'Conditioning',sets:4,target:'30 sec',rest:30},
+{name:'Brisk Walk',muscle:'Cardio',equipment:'None',difficulty:'Beginner',stat:'Endurance',sets:1,target:'10 min',rest:0},
+{name:'Stretching',muscle:'Mobility',equipment:'None',difficulty:'Beginner',stat:'Recovery',sets:1,target:'10 min',rest:0},
+{name:'Dumbbell Press',muscle:'Chest',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
+{name:'Dumbbell Rows',muscle:'Back',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
+{name:'Shoulder Press',muscle:'Shoulders',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
+{name:'Biceps Curls',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
+{name:'Triceps Extensions',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45}
 ];
 function getCustomExercises(){try{return JSON.parse(localStorage.getItem('systemCustomExercises')||'[]')}catch(e){return []}}
 function saveCustomExercises(x){localStorage.setItem('systemCustomExercises',JSON.stringify(x));}
 function exerciseLibrary(){const m=new Map();[...BUILTIN_EXERCISES,...getCustomExercises()].forEach(x=>m.set(x.name.toLowerCase(),x));return [...m.values()];}
 function addLibraryExerciseToBuilder(name){const x=exerciseLibrary().find(e=>e.name===name);if(!x)return;addBuilderExercise({name:x.name,sets:x.sets,target:x.target,rest:x.rest});document.getElementById('workoutBuilder')?.scrollIntoView({behavior:'smooth'});}
 function deleteLibraryExercise(name){const x=getCustomExercises().filter(e=>e.name!==name);saveCustomExercises(x);renderExerciseLibrary();}
-function renderExerciseLibrary(){const grid=document.getElementById('exerciseLibraryGrid');if(!grid)return;const all=exerciseLibrary(),q=(document.getElementById('librarySearch')?.value||'').toLowerCase(),mus=document.getElementById('libraryMuscle')?.value||'all',eq=document.getElementById('libraryEquipment')?.value||'all';const muscles=[...new Set(all.map(x=>x.muscle))].sort(),equip=[...new Set(all.map(x=>x.equipment))].sort();const ms=document.getElementById('libraryMuscle'),es=document.getElementById('libraryEquipment');if(ms&&ms.options.length<=1)ms.innerHTML='<option value="all">All muscle groups</option>'+muscles.map(x=>`<option>${x}</option>`).join('');if(es&&es.options.length<=1)es.innerHTML='<option value="all">All equipment</option>'+equip.map(x=>`<option>${x}</option>`).join('');const filtered=all.filter(x=>(!q||[x.name,x.muscle,x.equipment,x.stat].join(' ').toLowerCase().includes(q))&&(mus==='all'||x.muscle===mus)&&(eq==='all'||x.equipment===eq));grid.innerHTML=filtered.map(x=>`<article class="library-card"><div class="library-card__head"><h3>${x.name}</h3><span class="stat-chip">${x.stat.toUpperCase()}</span></div><div class="library-card__meta">${x.muscle} • ${x.equipment} • ${x.difficulty}</div><div class="library-card__defaults">${x.sets} sets • ${x.target} • ${x.rest}s rest</div><div class="library-card__actions"><button type="button" onclick="addLibraryExerciseToBuilder('${x.name.replace(/'/g,"\\'")}')">Add to Mission</button>${BUILTIN_EXERCISES.some(b=>b.name===x.name)?'':`<button type="button" onclick="deleteLibraryExercise('${x.name.replace(/'/g,"\\'")}')">Delete</button>`}</div></article>`).join('')||'<div class="builder-empty">No exercises match those filters.</div>';const dl=document.getElementById('exerciseLibraryNames');if(dl)dl.innerHTML=all.map(x=>`<option value="${x.name}"></option>`).join('');}
+function renderExerciseLibrary(){const grid=document.getElementById('exerciseLibraryGrid');if(!grid)return;const all=exerciseLibrary(),q=(document.getElementById('librarySearch')?.value||'').toLowerCase(),mus=document.getElementById('libraryMuscle')?.value||'all',eq=document.getElementById('libraryEquipment')?.value||'all';const muscles=[...new Set(all.map(x=>x.muscle))].sort(),equip=[...new Set(all.map(x=>x.equipment))].sort();const ms=document.getElementById('libraryMuscle'),es=document.getElementById('libraryEquipment');if(ms&&ms.options.length<=1)ms.innerHTML='<option value="all">All muscle groups</option>'+muscles.map(x=>`<option>${x}</option>`).join('');if(es&&es.options.length<=1)es.innerHTML='<option value="all">All equipment</option>'+equip.map(x=>`<option>${x}</option>`).join('');const filtered=all.filter(x=>(!q||[x.name,x.muscle,x.equipment,x.stat].join(' ').toLowerCase().includes(q))&&(mus==='all'||x.muscle===mus)&&(eq==='all'||x.equipment===eq));grid.innerHTML=filtered.map(x=>`<article class="library-card"><div class="library-card__head"><h3>${x.name}</h3><span class="stat-chip">${x.stat}</span></div><div class="library-card__meta">${x.muscle} • ${x.equipment} • ${x.difficulty}</div><div class="library-card__defaults">${x.sets} sets • ${x.target} • ${x.rest}s rest</div><div class="library-card__actions"><button type="button" onclick="addLibraryExerciseToBuilder('${x.name.replace(/'/g,"\\'")}')">Add to Mission</button>${BUILTIN_EXERCISES.some(b=>b.name===x.name)?'':`<button type="button" onclick="deleteLibraryExercise('${x.name.replace(/'/g,"\\'")}')">Delete</button>`}</div></article>`).join('')||'<div class="builder-empty">No exercises match those filters.</div>';const dl=document.getElementById('exerciseLibraryNames');if(dl)dl.innerHTML=all.map(x=>`<option value="${x.name}"></option>`).join('');}
 function initExerciseLibrary(){['librarySearch','libraryMuscle','libraryEquipment'].forEach(id=>document.getElementById(id)?.addEventListener(id==='librarySearch'?'input':'change',renderExerciseLibrary));const f=document.getElementById('libraryExerciseForm');if(f)f.onsubmit=e=>{e.preventDefault();const obj={name:document.getElementById('libName').value.trim(),muscle:document.getElementById('libMuscle').value.trim(),equipment:document.getElementById('libEquipment').value.trim(),difficulty:document.getElementById('libDifficulty').value,stat:document.getElementById('libStat').value,sets:Number(document.getElementById('libSets').value)||3,target:document.getElementById('libTarget').value.trim()||'8-12 reps',rest:Number(document.getElementById('libRest').value)||0};if(!obj.name)return;const a=getCustomExercises(),i=a.findIndex(x=>x.name.toLowerCase()===obj.name.toLowerCase());if(i>=0)a[i]=obj;else a.push(obj);saveCustomExercises(a);f.reset();document.getElementById('libSets').value=3;document.getElementById('libTarget').value='8-12 reps';document.getElementById('libRest').value=45;renderExerciseLibrary();addSystemMessage(`${obj.name} added to Exercise Library`,'quest');};renderExerciseLibrary();}
 document.addEventListener('DOMContentLoaded',initExerciseLibrary);
 
