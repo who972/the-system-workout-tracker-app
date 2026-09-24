@@ -281,7 +281,7 @@
         <form id="builderForm" class="builder-form">
           <div class="builder-row">
             <input id="builderName" class="form-input" placeholder="Mission name" required>
-            <select id="builderStat" class="form-input"><option value="str">STR</option><option value="end">END</option><option value="agi">AGI</option><option value="vit">VIT</option></select>
+            <select id="builderStat" class="form-input"><option value="Strength">Strength</option><option value="Endurance">Endurance</option><option value="Conditioning">Conditioning</option><option value="Mobility">Mobility</option><option value="Consistency">Consistency</option><option value="Recovery">Recovery</option></select>
             <select id="builderDay" class="form-input"><option value="any">Any day</option><option value="1">Monday</option><option value="2">Tuesday</option><option value="3">Wednesday</option><option value="4">Thursday</option><option value="5">Friday</option><option value="6">Saturday</option><option value="0">Sunday</option></select>
             <input id="builderMinutes" class="form-input" type="number" min="5" max="180" value="30" aria-label="Target minutes">
           </div>
@@ -516,7 +516,7 @@
 
 
 <datalist id="exerciseLibraryNames"></datalist>
-<script src="app.js?v=auth12"></script>
+<script src="app.js?v=auth13"></script>
 <script src="side-system.js?v=11"></script>
 <script>
 if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
