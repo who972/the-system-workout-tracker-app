@@ -22,6 +22,23 @@
 .settings-section{margin-top:28px;padding:24px;background:var(--panel-bg,#0d1017);border:1px solid var(--border-color,#242b38);border-radius:14px}.settings-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}.settings-form,.settings-actions{display:grid;gap:10px}.settings-check{display:flex;gap:8px;align-items:center;font-size:13px}.import-label{display:block;text-align:center;padding:10px 12px;border:1px solid var(--border-color,#333);border-radius:8px;cursor:pointer}.import-label input{display:none}.danger-btn{padding:10px 12px;border-radius:8px;border:1px solid #8b2c2c;background:transparent;color:inherit;cursor:pointer}.backup-status{margin-top:10px;font-size:12px;opacity:.7}@media(max-width:760px){.settings-grid{grid-template-columns:1fr}}
 </style><style>.cloud-actions{display:flex;gap:8px;flex-wrap:wrap}.cloud-badge{display:inline-block;margin:0 0 12px;padding:6px 9px;border:1px solid currentColor;border-radius:999px;font-size:11px;letter-spacing:.08em}.backup-status[data-ok="1"]{font-weight:700}</style></head>
 <body>
+<section id="authGate" class="auth-gate" aria-label="THE SYSTEM account">
+  <div class="auth-card">
+    <div class="auth-mark">TS</div>
+    <p class="auth-kicker">THE SYSTEM</p>
+    <h1>Build the body.<br>Build the system.</h1>
+    <p class="auth-copy">Sign in to continue your training, nutrition, missions, and progress.</p>
+    <div class="auth-tabs"><button id="authShowSignIn" class="active" type="button">Sign In</button><button id="authShowSignUp" type="button">Create Account</button></div>
+    <form id="authGateForm" class="auth-form">
+      <input id="authEmail" class="form-input" type="email" autocomplete="email" placeholder="Email" required>
+      <input id="authPassword" class="form-input" type="password" autocomplete="current-password" placeholder="Password (6+ characters)" required>
+      <button id="authSubmit" class="btn-primary" type="submit">Sign In</button>
+    </form>
+    <button id="authForgot" class="auth-link" type="button">Forgot password?</button>
+    <div id="authGateStatus" class="backup-status"></div>
+  </div>
+</section>
+
 
   <!-- Ambient background glow -->
   <div class="ambient-bg" aria-hidden="true">
