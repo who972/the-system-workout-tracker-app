@@ -992,3 +992,32 @@ document.addEventListener('DOMContentLoaded',()=>{
   if(buttons[0])buttons[0].classList.add('active');
 });
 window.addEventListener('error',e=>{console.error('THE SYSTEM runtime error:',e.error||e.message);});
+
+// --- V3 Nutrition System ---
+const NUTRITION_KEY='theSystemNutritionV1';
+const DEFAULT_MEALS=[
+ {name:'Greek Yogurt Power Bowl',type:'Breakfast',calories:410,protein:35,carbs:48,fat:9},
+ {name:'Egg & Oat Breakfast',type:'Breakfast',calories:460,protein:32,carbs:45,fat:17},
+ {name:'Chicken Rice Bowl',type:'Lunch',calories:560,protein:52,carbs:61,fat:12},
+ {name:'Turkey Wrap & Fruit',type:'Lunch',calories:490,protein:39,carbs:57,fat:12},
+ {name:'Lean Beef & Potato Plate',type:'Dinner',calories:620,protein:51,carbs:63,fat:18},
+ {name:'Chicken Pasta',type:'Dinner',calories:590,protein:49,carbs:70,fat:13},
+ {name:'Protein Shake & Banana',type:'Snack',calories:280,protein:31,carbs:34,fat:3},
+ {name:'Cottage Cheese & Berries',type:'Snack',calories:240,protein:27,carbs:25,fat:4}
+];
+function nutritionState(){try{return JSON.parse(localStorage.getItem(NUTRITION_KEY))||{}}catch(e){return {}}}
+function saveNutrition(s){localStorage.setItem(NUTRITION_KEY,JSON.stringify(s))}
+function nutritionToday(){return new Date().toISOString().slice(0,10)}
+function ensureNutrition(){const s=nutritionState();s.targets=s.targets||{calories:2000,protein:160,carbs:200,fat:65};s.days=s.days||{};s.days[nutritionToday()]=s.days[nutritionToday()]||[];return s}
+function mealMacros(m){return m.calories+' cal • '+m.protein+'g protein • '+(m.carbs||0)+'g carbs • '+(m.fat||0)+'g fat'}
+function addNutritionMeal(m){const s=ensureNutrition();s.days[nutritionToday()].push({...m,id:Date.now()+Math.random()});saveNutrition(s);renderNutrition()}
+function removeNutritionMeal(id){const s=ensureNutrition();s.days[nutritionToday()]=s.days[nutritionToday()].filter(m=>m.id!==id);saveNutrition(s);renderNutrition()}
+function renderNutrition(){const s=ensureNutrition(),t=s.targets,meals=s.days[nutritionToday()]||[];const total=k=>meals.reduce((a,m)=>a+(Number(m[k])||0),0);
+ [['Calories','calories',''],['Protein','protein','g'],['Carbs','carbs','g'],['Fat','fat','g']].forEach(([label,k,u])=>{const e=document.getElementById('nutrition'+label);if(e)e.textContent=total(k)+' / '+t[k]+u;const b=document.getElementById('nutrition'+label+'Bar');if(b)b.style.width=Math.min(100,total(k)/t[k]*100)+'%';});
+ ['Calories','Protein','Carbs','Fat'].forEach(x=>{const e=document.getElementById('target'+x);if(e)e.value=t[x.toLowerCase()]});
+ const plan=document.getElementById('todayMeals');if(plan)plan.innerHTML=meals.length?meals.map(m=>'<div class="meal-item"><div class="meal-item__head"><strong>'+m.type+': '+m.name+'</strong><button type="button" data-remove-meal="'+m.id+'">Remove</button></div><div class="meal-macros">'+mealMacros(m)+'</div></div>').join(''):'<div class="builder-empty">No meals planned yet. Add a recommendation below.</div>';
+ const rec=document.getElementById('mealRecommendations');if(rec)rec.innerHTML=DEFAULT_MEALS.map((m,i)=>'<div class="meal-rec"><div class="meal-rec__head"><strong>'+m.name+'</strong><span>'+m.type+'</span></div><div class="meal-macros">'+mealMacros(m)+'</div><div class="meal-actions"><button class="btn-primary" type="button" data-add-rec="'+i+'">Add to Today</button></div></div>').join('');
+ document.querySelectorAll('[data-add-rec]').forEach(b=>b.onclick=()=>addNutritionMeal(DEFAULT_MEALS[Number(b.dataset.addRec)]));document.querySelectorAll('[data-remove-meal]').forEach(b=>b.onclick=()=>removeNutritionMeal(Number(b.dataset.removeMeal)));
+}
+function initNutrition(){renderNutrition();document.getElementById('nutritionTargetForm')?.addEventListener('submit',e=>{e.preventDefault();const s=ensureNutrition();s.targets={calories:Number(document.getElementById('targetCalories').value)||2000,protein:Number(document.getElementById('targetProtein').value)||160,carbs:Number(document.getElementById('targetCarbs').value)||200,fat:Number(document.getElementById('targetFat').value)||65};saveNutrition(s);renderNutrition()});document.getElementById('customMealForm')?.addEventListener('submit',e=>{e.preventDefault();addNutritionMeal({name:document.getElementById('mealName').value.trim(),type:document.getElementById('mealType').value,calories:Number(document.getElementById('mealCalories').value),protein:Number(document.getElementById('mealProtein').value),carbs:Number(document.getElementById('mealCarbs').value)||0,fat:Number(document.getElementById('mealFat').value)||0});e.target.reset()})}
+document.addEventListener('DOMContentLoaded',initNutrition);
