@@ -1,0 +1,9 @@
+/* Side Missions + Boss Stages */
+.side-system{max-width:920px;margin:16px auto;padding:24px;background:var(--panel-bg,#0d1017);border:1px solid rgba(76,201,240,.35);border-radius:14px}
+.side-system-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-top:14px}.side-column{min-width:0}
+.side-column-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:10px}.side-column-title h3{margin:0}.rank-class-pill,.side-tag{font:700 10px 'JetBrains Mono',monospace;letter-spacing:.1em}
+.rank-class-pill{padding:6px 9px;border:1px solid currentColor;border-radius:999px}
+.side-list,.boss-list{display:grid;gap:10px}.side-card,.boss-card{padding:14px;border:1px solid var(--border-color,#242b38);border-radius:11px;background:rgba(255,255,255,.025)}
+.side-card h3,.boss-card h3{margin:5px 0}.side-card p,.boss-card p{margin:4px 0 10px;opacity:.72;font-size:12px;line-height:1.45}.side-reward{font:700 12px 'JetBrains Mono',monospace;margin-bottom:9px}.side-card button,.boss-card button{width:100%;min-height:42px;border:1px solid rgba(76,201,240,.45);border-radius:8px;background:rgba(76,201,240,.1);color:inherit;font-weight:700}.side-card button:disabled,.boss-card button:disabled{opacity:.45}.is-done{opacity:.65}
+.boss-head{display:flex;justify-content:space-between;gap:12px}.boss-head strong{font-size:32px;line-height:1}.boss-tasks{display:grid;gap:7px;margin:12px 0}.boss-tasks label{font-size:12px;line-height:1.35}.boss-ready{border-color:rgba(255,196,64,.55);box-shadow:0 0 20px rgba(255,196,64,.06)}.boss-passed{border-color:rgba(76,201,240,.55)}.boss-locked{opacity:.55}
+@media(max-width:640px){.side-system{width:calc(100% - 20px);max-width:calc(100% - 20px);margin:12px 10px;padding:14px;box-sizing:border-box}.side-system-grid{grid-template-columns:1fr}}
