@@ -1581,3 +1581,9 @@ body[data-view="nutrition"] #nutritionDashboard{width:auto;max-width:min(920px,c
 [hidden]{display:none!important}
 
 .password-field{position:relative}.password-field .form-input{width:100%;padding-right:68px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:inherit;font:inherit;font-size:12px;font-weight:700;opacity:.75;cursor:pointer;padding:8px}.password-toggle:focus-visible{outline:2px solid currentColor;outline-offset:1px;border-radius:6px}
+
+/* Workout intensity selector */
+.mission-mode-choices{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:12px 0}
+.mission-mode-choices button{padding:10px 6px;border:1px solid var(--border,#334155);border-radius:10px;background:rgba(15,23,42,.7);color:inherit;font-weight:800}
+.mission-mode-choices button small{font-size:.7rem;opacity:.7}
+.mission-mode-choices button.active{outline:2px solid currentColor;background:rgba(255,255,255,.08)}
