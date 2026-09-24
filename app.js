@@ -928,7 +928,7 @@ function initWorkoutBuilder(){const form=document.getElementById('builderForm');
 document.addEventListener('DOMContentLoaded',initWorkoutBuilder);
 
 
-// --- Exercise Library v9 ---
+// --- Exercise Library v10 ---
 const BUILTIN_EXERCISES=[
 {name:'Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:45},
 {name:'Incline Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
@@ -944,7 +944,16 @@ const BUILTIN_EXERCISES=[
 {name:'Dumbbell Rows',muscle:'Back',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
 {name:'Shoulder Press',muscle:'Shoulders',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
 {name:'Biceps Curls',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
-{name:'Triceps Extensions',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45}
+{name:'Triceps Extensions',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
+{name:'Dumbbell Glute Bridge',muscle:'Glutes',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:60},
+{name:'Goblet Squat',muscle:'Legs',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-12 reps',rest:60},
+{name:'Barbell Bench Press',muscle:'Chest',equipment:'Barbell',difficulty:'Intermediate',stat:'Strength',sets:3,target:'8-10 reps',rest:75},
+{name:'Barbell Squat',muscle:'Legs',equipment:'Barbell',difficulty:'Intermediate',stat:'Strength',sets:3,target:'8-10 reps',rest:90},
+{name:'Barbell Hip Thrust',muscle:'Glutes',equipment:'Barbell',difficulty:'Intermediate',stat:'Strength',sets:3,target:'10-12 reps',rest:75},
+{name:'Band Chest Press',muscle:'Chest',equipment:'Resistance Bands',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:45},
+{name:'Band Squat',muscle:'Legs',equipment:'Resistance Bands',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:45},
+{name:'Band Glute Bridge',muscle:'Glutes',equipment:'Resistance Bands',difficulty:'Beginner',stat:'Strength',sets:3,target:'15 reps',rest:45},
+{name:'Cardio Machine',muscle:'Cardio',equipment:'Cardio Machine',difficulty:'Beginner',stat:'Endurance',sets:1,target:'10 min',rest:0}
 ];
 function getCustomExercises(){try{return JSON.parse(localStorage.getItem('systemCustomExercises')||'[]')}catch(e){return []}}
 function saveCustomExercises(x){localStorage.setItem('systemCustomExercises',JSON.stringify(x));}
