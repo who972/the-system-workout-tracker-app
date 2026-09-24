@@ -1,5 +1,5 @@
-const CACHE = "the-system-workout-tracker-v2-screen-nav-1";
-const ASSETS = ["./", "./index.html", "./styles.css", "./app.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "the-system-workout-tracker-v8-progression";
+const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
