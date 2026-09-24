@@ -1579,3 +1579,5 @@ body[data-view="nutrition"] #nutritionDashboard{width:auto;max-width:min(920px,c
 
 /* Respect native hidden state regardless of component display rules */
 [hidden]{display:none!important}
+
+.password-field{position:relative}.password-field .form-input{width:100%;padding-right:68px}.password-toggle{position:absolute;right:8px;top:50%;transform:translateY(-50%);border:0;background:transparent;color:inherit;font:inherit;font-size:12px;font-weight:700;opacity:.75;cursor:pointer;padding:8px}.password-toggle:focus-visible{outline:2px solid currentColor;outline-offset:1px;border-radius:6px}
