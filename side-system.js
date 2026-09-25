@@ -15,7 +15,17 @@ function setTrainingPath(path){if(!TRAINING_PATHS[path])return;const b=loadBuild
 function pathBonus(path,stat){return (TRAINING_PATHS[path]?.boost||[]).includes(stat)?1:0}
 function buildDay(){return today()}
 function classifyTraining(name){const n=String(name||'').toLowerCase();if(/stretch|mobility|yoga|flex/.test(n))return['Mobility','Recovery'];if(/rest|recovery|deload/.test(n))return['Recovery','Consistency'];if(/fat loss|circuit|hiit|conditioning|metcon/.test(n))return['Conditioning','Endurance'];if(/run|walk|bike|cycling|cardio|swim|endurance|rowing machine|rower/.test(n))return['Endurance','Conditioning'];if(/hypertrophy|strength|bench|squat|deadlift|press|curl|lunge|pull.?up|push.?up|dumbbell row|barbell row|cable row|band row/.test(n))return['Strength','Consistency'];return['Strength','Consistency']}
-function awardBuildTraining(name,duration,intensity){const b=loadBuild(),day=buildDay();b.daily=b.daily||{};if(b.daily.date!==day)b.daily={date:day,points:0};const cap=8,remaining=Math.max(0,cap-b.daily.points);if(!remaining)return;const pts=Math.min(remaining,Math.max(1,Math.round((Number(duration)||10)/15))*Math.max(1,Math.min(2,Number(intensity)||1)));const stats=classifyTraining(name);let primary=Math.ceil(pts*.7),secondary=pts-primary;if(pathBonus(b.path,stats[0])&&secondary>0){primary++;secondary--}else if(pathBonus(b.path,stats[1])&&primary>1){primary--;secondary++}b.stats[stats[0]]=Math.min(100,b.stats[stats[0]]+primary);b.stats[stats[1]]=Math.min(100,b.stats[stats[1]]+secondary);b.daily.points+=pts;saveBuild(b);if(typeof addSystemMessage==='function')addSystemMessage('BUILD GROWTH: '+stats[0]+' +'+primary+(secondary?' • '+stats[1]+' +'+secondary:'')+' ('+b.daily.points+'/'+cap+' daily points)','quest');renderSideSystem()}
+function awardBuildTraining(name,duration,intensity){
+ const b=loadBuild(),day=buildDay();b.daily=b.daily||{};if(b.daily.date!==day)b.daily={date:day,points:0};
+ const cap=8,used=Math.max(0,Number(b.daily.points)||0),remaining=Math.max(0,cap-used);if(!remaining)return false;
+ const minutes=Math.max(1,Number(duration)||10),credit=Math.max(.25,Math.min(1,Number(intensity)||1));
+ const requested=Math.max(1,Math.round(minutes/15*2*credit)),pts=Math.min(remaining,requested),stats=classifyTraining(name);
+ let primary=Math.ceil(pts*.7),secondary=pts-primary;
+ if(pathBonus(b.path,stats[0])&&secondary>0){primary++;secondary--}else if(pathBonus(b.path,stats[1])&&primary>1){primary--;secondary++}
+ b.stats[stats[0]]=Math.min(100,(Number(b.stats[stats[0]])||0)+primary);b.stats[stats[1]]=Math.min(100,(Number(b.stats[stats[1]])||0)+secondary);b.daily.points=used+pts;saveBuild(b);
+ if(typeof addSystemMessage==='function')addSystemMessage('BUILD GROWTH: '+stats[0]+' +'+primary+(secondary?' • '+stats[1]+' +'+secondary:'')+' ('+b.daily.points+'/'+cap+' daily points)','quest');
+ renderSideSystem();return true
+}
 function awardBuildMission(id){return false}
 function awardSideGrowth(stat,points=1){if(!BUILD_STATS.includes(stat))return false;const b=loadBuild(),day=buildDay();b.daily=b.daily||{};if(b.daily.date!==day)b.daily={date:day,points:0};const cap=8,remaining=Math.max(0,cap-(Number(b.daily.points)||0)),gain=Math.min(remaining,Math.max(1,Number(points)||1));if(!gain)return false;b.stats[stat]=Math.min(100,(Number(b.stats[stat])||0)+gain);b.daily.points=(Number(b.daily.points)||0)+gain;saveBuild(b);if(typeof addSystemMessage==='function')addSystemMessage('GROWTH MISSION: '+stat+' +'+gain+' ('+b.daily.points+'/'+cap+' daily points)','quest');return true}
 window.SystemBuild={awardTraining:awardBuildTraining,awardMission:awardBuildMission,awardSideGrowth,getBuild:loadBuild,setPath:setTrainingPath};
