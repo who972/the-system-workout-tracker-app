@@ -1819,3 +1819,14 @@ body.system-os-ready .os-module-stage.minimized .os-module-body,body.system-os-r
  body.system-os-ready .os-module-head strong{font-size:14px}
  body.system-os-ready .os-module-body{padding:10px 13px 15px}
 }
+
+
+/* V19 // OS TASKBAR + WINDOW SWITCHING */
+.os-taskbar{position:absolute;z-index:70;left:18px;bottom:12px;display:flex;align-items:center;gap:8px;max-width:34vw;height:38px;padding:0 9px;border:1px solid rgba(0,229,255,.15);background:rgba(5,8,13,.72);backdrop-filter:blur(10px);clip-path:polygon(8px 0,100% 0,100% 100%,0 100%,0 8px)}
+.os-taskbar__label,.os-taskbar__hint{font:700 6px var(--font-mono);letter-spacing:.13em;color:var(--system-steel);white-space:nowrap}
+.os-taskbar__hint{opacity:.52}
+.os-taskbar button{display:flex;align-items:center;gap:6px;min-width:126px;padding:5px 8px;border:1px solid rgba(0,229,255,.16);background:rgba(11,17,26,.78);color:var(--system-steel);font:700 7px var(--font-mono);letter-spacing:.08em}
+.os-taskbar button b{color:var(--system-cyan);font-size:12px}.os-taskbar.has-task{border-color:rgba(0,229,255,.32);box-shadow:0 0 18px rgba(0,229,255,.06)}.os-taskbar.has-task button{color:var(--system-white);border-color:rgba(0,229,255,.32)}
+body.system-os-ready .os-dock{left:50%;right:auto;transform:translateX(-50%)}
+body.system-os-ready .os-module-stage.minimized{right:18px;bottom:58px}
+@media (orientation:landscape) and (max-width:950px){.os-taskbar__label,.os-taskbar__hint{display:none}.os-taskbar{max-width:24vw}.os-taskbar button{min-width:110px}.os-dock button{min-width:55px;padding-inline:5px}}
