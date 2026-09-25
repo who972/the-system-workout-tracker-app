@@ -1252,3 +1252,21 @@ function renderSocialCommand(){
  document.getElementById('challengeForm').onsubmit=e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;const x=getSocial();x.challenges.unshift({id:Date.now(),opponent:name,type:document.getElementById('challengeType').value,days:Number(document.getElementById('challengeLength').value),created:new Date().toISOString(),status:'draft'});saveSocial(x);renderSocialCommand();window.SystemOS?.notify('CHALLENGE CREATED // '+name.toUpperCase(),'SOCIAL // HEAD-TO-HEAD')};
 }
 function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+
+
+/* ===== V19 SYSTEM OS WINDOW SWITCHER + TASKBAR ===== */
+document.addEventListener('DOMContentLoaded',()=>{
+ const os=window.SystemOS,deck=document.getElementById('commandDeck');if(!os||!deck)return;
+ const dock=deck.querySelector('.os-dock');if(!dock)return;
+ const task=document.createElement('div');task.className='os-taskbar';task.innerHTML='<span class="os-taskbar__label">ACTIVE MODULE</span><button id="osTaskCurrent" type="button"><b>◇</b><span>CENTRAL COMMAND</span></button><span class="os-taskbar__hint">ALT + 1–7 // QUICK SWITCH</span>';deck.appendChild(task);
+ const current=document.getElementById('osTaskCurrent');
+ const names={missions:'MISSION CONTROL',exercise:'EXERCISE DATABASE',nutrition:'NUTRITION',telemetry:'HEALTH TELEMETRY',social:'SOCIAL COMMAND',progress:'CAMPAIGN PROGRESS',profile:'SYSTEM CONFIG',player:'PLAYER STATUS',side:'SIDE MISSIONS',boss:'BOSS STAGE',achievements:'ACHIEVEMENTS'};
+ const icons={missions:'◆',exercise:'⌁',nutrition:'◫',telemetry:'⌾',social:'◎',progress:'▥',profile:'⚙',player:'◈',side:'✦',boss:'⚠',achievements:'★'};
+ const baseOpen=os.open,baseClose=os.close;let active=null;
+ os.open=name=>{active=name;baseOpen(name);current.innerHTML='<b>'+(icons[name]||'◇')+'</b><span>'+(names[name]||'SYSTEM MODULE')+'</span>';task.classList.add('has-task')};
+ os.close=()=>{baseClose();active=null;current.innerHTML='<b>◇</b><span>CENTRAL COMMAND</span>';task.classList.remove('has-task')};
+ document.querySelectorAll('[data-os-module]').forEach(b=>b.onclick=e=>{e.preventDefault();os.open(b.dataset.osModule)});
+ current.onclick=()=>{if(active)os.open(active)};
+ const quick=['missions','exercise','nutrition','telemetry','social','progress','profile'];
+ document.addEventListener('keydown',e=>{if(e.altKey&&/^[1-7]$/.test(e.key)){e.preventDefault();os.open(quick[Number(e.key)-1])}});
+});
