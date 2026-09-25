@@ -1603,3 +1603,6 @@ body[data-view="nutrition"] #nutritionDashboard{width:auto;max-width:min(920px,c
 
 /* v11 Missions: collapsible Exercise Library */
 .library-collapse-toggle{width:100%;display:flex;align-items:center;justify-content:space-between;gap:18px;padding:0;border:0;background:transparent;color:inherit;text-align:left;cursor:pointer}.library-collapse-toggle .quest-section__desc{margin-bottom:0}.library-collapse-state{flex:0 0 auto;font-size:.78rem;font-weight:800;letter-spacing:.08em;opacity:.8}.exercise-library-body{margin-top:18px}.exercise-library.is-collapsed .exercise-library-body{display:none}.exercise-library.is-collapsed .library-collapse-toggle{margin-bottom:0}@media(max-width:640px){.library-collapse-toggle{align-items:flex-start}.library-collapse-state{padding-top:6px}}
+
+/* v12 Missions: separate Side Missions and Boss Stages */
+#sideMissionSystem,#bossStageSystem{display:block}#sideMissionSystem .side-list,#bossStageSystem .boss-list{width:100%}#bossStageSystem{margin-top:18px}#bossStageSystem .rank-path-panel{margin:0 0 18px}
