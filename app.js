@@ -1124,3 +1124,9 @@ document.addEventListener('DOMContentLoaded',initNutrition);
 // Password visibility controls
 function initPasswordToggles(){document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{const input=document.getElementById(btn.dataset.passwordToggle);if(!input)return;const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'Hide':'Show';btn.setAttribute('aria-label',(show?'Hide ':'Show ')+(input.placeholder||'password').toLowerCase())}))}
 document.addEventListener('DOMContentLoaded',initPasswordToggles);
+
+
+/* ===== v11 COLLAPSIBLE EXERCISE LIBRARY ===== */
+const EXERCISE_LIBRARY_OPEN_KEY='theSystemExerciseLibraryOpen';
+function initExerciseLibraryCollapse(){const section=document.getElementById('exerciseLibrary'),toggle=document.getElementById('exerciseLibraryToggle'),body=document.getElementById('exerciseLibraryBody');if(!section||!toggle||!body)return;const setOpen=open=>{section.classList.toggle('is-collapsed',!open);toggle.setAttribute('aria-expanded',String(open));const state=toggle.querySelector('.library-collapse-state');if(state)state.textContent=open?'COLLAPSE ▴':'EXPAND ▾';localStorage.setItem(EXERCISE_LIBRARY_OPEN_KEY,open?'1':'0')};setOpen(localStorage.getItem(EXERCISE_LIBRARY_OPEN_KEY)==='1');toggle.onclick=()=>setOpen(toggle.getAttribute('aria-expanded')!=='true')}
+document.addEventListener('DOMContentLoaded',initExerciseLibraryCollapse);
