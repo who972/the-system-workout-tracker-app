@@ -1172,3 +1172,37 @@ function initHologramCommandUnit(){
  document.querySelectorAll('[data-holo]').forEach(b=>b.onclick=()=>open(b.dataset.holo,b));document.getElementById('holoClose')?.addEventListener('click',close);
 }
 document.addEventListener('DOMContentLoaded',initHologramCommandUnit);
+
+
+/* ===== V14 THE SYSTEM OS WINDOW MANAGER ===== */
+function initSystemOS(){
+ document.body.classList.add('system-os-ready');
+ const deck=document.getElementById('commandDeck'); if(!deck)return;
+ const top=document.createElement('div');top.className='os-topbar';top.innerHTML='<span><b>THE SYSTEM OS</b> // CENTRAL COMMAND</span><span class="os-topbar__right"><i id="osNetwork">SYSTEM ONLINE</i><i id="osClock">--:--</i></span>';deck.appendChild(top);
+ const shade=document.createElement('div');shade.className='os-backdrop';document.body.appendChild(shade);
+ const stage=document.createElement('section');stage.className='os-module-stage';stage.setAttribute('aria-hidden','true');stage.innerHTML='<header class="os-module-head"><div><small id="osModuleKicker">SYSTEM // MODULE</small><strong id="osModuleTitle">MODULE</strong></div><div class="os-module-controls"><button id="osModuleMin" type="button" aria-label="Minimize">−</button><button id="osModuleClose" type="button" aria-label="Close">×</button></div></header><div id="osModuleBody" class="os-module-body"></div>';document.body.appendChild(stage);
+ const body=document.getElementById('osModuleBody'),title=document.getElementById('osModuleTitle'),kicker=document.getElementById('osModuleKicker');
+ let parked=null;
+ const map={
+  player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen','profileSettings']},
+  missions:{title:'MISSION CONTROL',kicker:'SYSTEM // MISSIONS',ids:['daily-mission','workoutBuilder','sideSystem']},
+  side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideSystem']},
+  boss:{title:'BOSS STAGE',kicker:'WEEKLY // CHALLENGE',ids:['sideSystem']},
+  telemetry:{title:'HEALTH TELEMETRY',kicker:'BIOMETRIC // HEALTH LINK',ids:['healthConnectPanel','exerciseTracker']},
+  progress:{title:'CAMPAIGN PROGRESS',kicker:'SYSTEM // ANALYTICS',ids:['progressAnalytics','adaptiveProgression']},
+  achievements:{title:'ACHIEVEMENTS',kicker:'SYSTEM // RECORDS',ids:['achievements','progressAnalytics']},
+  profile:{title:'SYSTEM CONFIGURATION',kicker:'PLAYER // SETTINGS',ids:['profileSettings']},
+  nutrition:{title:'NUTRITION MODULE',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']}
+ };
+ function restore(){if(!parked)return;parked.forEach(({el,parent,next})=>{if(next&&next.parentNode===parent)parent.insertBefore(el,next);else parent.appendChild(el)});parked=null}
+ function close(){restore();stage.classList.remove('active','minimized');shade.classList.remove('active');stage.setAttribute('aria-hidden','true')}
+ function open(name){const m=map[name];if(!m)return;restore();body.innerHTML='';parked=[];m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');shade.classList.add('active');stage.setAttribute('aria-hidden','false');body.scrollTop=0}
+ window.SystemOS={open,close};
+ document.getElementById('osModuleClose').onclick=close;document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');shade.classList.toggle('active',!stage.classList.contains('minimized'))};shade.onclick=close;
+ document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('dblclick',()=>open(b.dataset.holo)));
+ document.querySelectorAll('[data-hud-target]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open('missions')},true));
+ document.querySelectorAll('[data-hud-view]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open(b.dataset.hudView==='progress'?'progress':'missions')},true));
+ const clock=()=>{const e=document.getElementById('osClock');if(e)e.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};clock();setInterval(clock,30000);
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('active'))close()});
+}
+document.addEventListener('DOMContentLoaded',initSystemOS);
