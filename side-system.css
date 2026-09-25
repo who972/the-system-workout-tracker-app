@@ -31,3 +31,6 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
 
 /* v34 Boss attempt confirmation */
 .bb-confirm{position:absolute;inset:0;z-index:40;display:grid;place-items:center;padding:22px;background:rgba(0,0,0,.82);backdrop-filter:blur(8px)}.bb-confirm-card{width:min(92vw,520px);padding:26px;border:1px solid rgba(255,255,255,.2);background:var(--bg,#080b10);text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.55)}.bb-confirm-card h2{margin:14px 0 8px;font-size:1.8rem}.bb-confirm-card p{opacity:.78;line-height:1.55}.bb-confirm-actions{display:grid;gap:10px;margin-top:22px}.bb-confirm-actions button{width:100%}
+
+/* v35 Boss victory report */
+.bb-victory .bb-new-rank{margin:18px auto 8px;font-size:clamp(2.4rem,10vw,5rem);font-weight:900;letter-spacing:.08em}.bb-victory .bb-result-stats{margin-top:18px}.bb-victory .bb-analysis{margin-top:4px}
