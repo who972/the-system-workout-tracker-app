@@ -156,6 +156,27 @@ if(e.passed)return '<article class="boss-card boss-passed"><span class="side-tag
 if(!eligible(b,s)){const level=typeof state!=='undefined'?state.level:1,cm=correctiveMission(b.rank),missing=weakestStats(b.rank),i=bossIndex(b.rank),prev=i>0?BOSS_STAGES[i-1]:null,prevMet=!prev||!!s.boss[prev.rank]?.passed,levelMet=level>=b.level,buildMet=!missing.length,locks=[];if(!levelMet)locks.push('Reach Level '+b.level);if(!prevMet)locks.push('Earn '+prev.rank+'-Class promotion');if(!buildMet)locks.push('Stabilize all 6 build attributes');return '<article class="boss-card boss-locked"><span class="side-tag">SYSTEM ANALYSIS</span><h3>'+b.title+'</h3><p>Promotion Trial locked. Complete every requirement below.</p><div class="boss-requirements"><span>'+(levelMet?'✓':'○')+' LEVEL '+b.level+'</span>'+(prev?'<span>'+(prevMet?'✓':'○')+' '+prev.rank+'-CLASS PROMOTION</span>':'')+'<span>'+(buildMet?'✓':'○')+' BALANCED BUILD</span></div>'+(missing.length?'<div class="build-warning"><strong>UNDERDEVELOPED: '+missing.map(x=>x.stat+' '+Math.round(x.value)+'/'+x.need).join(' • ')+'</strong>'+(cm?'<p>SYSTEM DIRECTIVE: '+cm.desc+'</p>':'')+'</div>':'')+'<button disabled>'+locks[0].toUpperCase()+'</button></article>'}
 return '<article class="boss-card boss-ready"><span class="side-tag">BOSS INTEL</span><h3>'+b.title+'</h3><p>Level '+b.level+' • +'+b.reward+' XP • '+b.variants.length+' possible trials</p><p>Attempts: '+(e.attempts||0)+' • Best: '+best+'/5</p><p>Objectives and order are classified until battle begins.</p><button data-start="'+b.rank+'">'+(e.activeVariant!=null?'RESUME BOSS BATTLE':'BEGIN RANK TRIAL')+'</button></article>'}).join('');
 wrap.querySelectorAll('[data-start]').forEach(x=>x.onclick=()=>startBoss(x.dataset.start))}
+function todayWorkoutEvidence(){const day=today(),sessions=typeof workoutHistory==='function'?workoutHistory():[];return sessions.filter(x=>x.date===day)}
+function sessionMinutes(x){return Math.max(0,Number(x?.seconds||0)/60)}
+function sessionText(x){return [x?.mission,...(x?.sets||[]).map(s=>s?.name)].filter(Boolean).join(' ').toLowerCase()}
+function sessionReps(x,re){return (x?.sets||[]).reduce((n,s)=>n+(re.test(String(s?.name||'').toLowerCase())?Math.max(0,Number(s?.reps)||0):0),0)}
+function sessionRounds(x){const sets=x?.sets||[];if(!sets.length)return 0;const names=[...new Set(sets.map(s=>String(s?.name||'').toLowerCase()).filter(Boolean))];if(names.length<3)return 0;return Math.min(...names.map(n=>sets.filter(s=>String(s?.name||'').toLowerCase()===n).length))}
+function missionEvidence(id,evidence){
+ const mins=evidence.reduce((n,x)=>n+sessionMinutes(x),0),text=evidence.map(sessionText).join(' '),has=p=>p.test(text),
+ core=evidence.reduce((n,x)=>n+sessionReps(x,/plank|crunch|sit.?up|dead bug|core|mountain climber/),0),
+ body=evidence.reduce((n,x)=>n+sessionReps(x,/push|squat|lunge|bridge|plank|mountain climber|burpee|sit.?up|crunch/),0);
+ const checks={
+  mobility:()=>mins>=10&&has(/mobility|stretch|yoga|flex/),
+  challenge100:()=>body>=100,
+  cardio25:()=>mins>=25&&has(/cardio|walk|run|bike|rower|rowing machine|swim|endurance/),
+  eliteCircuit:()=>evidence.some(x=>sessionRounds(x)>=4)&&has(/circuit|full body|squat|push|lunge|row|plank|burpee/),
+  masterMobility:()=>mins>=20&&has(/mobility|stretch|yoga|flex/)&&has(/plank|core|dead bug|crunch|sit.?up/),
+  sRankSession:()=>evidence.some(x=>sessionMinutes(x)>=45),
+  nationalTrial:()=>mins>=60&&has(/strength|push|press|squat|lunge|row|deadlift/)&&has(/conditioning|cardio|walk|run|bike|hiit|circuit/),
+  sovereignTrial:()=>evidence.some(x=>sessionMinutes(x)>=45&&/full body|strength|conditioning|circuit/.test(sessionText(x)))
+ };
+ return checks[id]?checks[id]():false
+}
 function completeSideMission(id){const evidence=todayWorkoutEvidence(),s=loadSideSystem(),m=unlockedMissions(s).find(x=>x.id===id);if(!m||s.completed.includes(id))return;
  if(id==='steps'){const h=loadHealthData();if(h.steps<h.stepGoal){alert('SYSTEM: Step Hunter requires '+h.stepGoal.toLocaleString()+' steps. Current progress: '+h.steps.toLocaleString()+'.');return;}}\n const verifiable=['mobility'];if(verifiable.includes(id)&&!missionEvidence(id,evidence)){alert('SYSTEM: Today’s logged training does not yet satisfy '+m.title+'. Complete the mission requirement before claiming XP.');return;}
  if(m.rankMission&&!missionEvidence(id,evidence)){alert('SYSTEM: Today’s logged training does not yet satisfy '+m.title+'. Complete the Rank Mission requirement before claiming XP.');return;} const dailyIds=dailySideMissions().map(x=>x.id),before=s.completed.filter(x=>dailyIds.includes(x)).length,earned=rewardXp(m.xp,s);s.completed.push(id);const dailyCompleted=s.completed.filter(x=>dailyIds.includes(x)).length;let bonus=0;if(before<3&&dailyCompleted>=3&&!s.sideBonus3){s.sideBonus3=true;bonus+=50}if(before<5&&dailyCompleted>=5&&!s.sideBonus5){s.sideBonus5=true;bonus+=100}saveSideSystem(s);
