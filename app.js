@@ -1179,12 +1179,11 @@ function initSystemOS(){
  document.body.classList.add('system-os-ready');
  const deck=document.getElementById('commandDeck'); if(!deck)return;
  const top=document.createElement('div');top.className='os-topbar';top.innerHTML='<span><b>THE SYSTEM OS</b> // CENTRAL COMMAND</span><span class="os-topbar__right"><i id="osNetwork">SYSTEM ONLINE</i><i id="osClock">--:--</i></span>';deck.appendChild(top);
- const shade=document.createElement('div');shade.className='os-backdrop';document.body.appendChild(shade);
- const stage=document.createElement('section');stage.className='os-module-stage';stage.setAttribute('aria-hidden','true');stage.innerHTML='<header class="os-module-head"><div><small id="osModuleKicker">SYSTEM // MODULE</small><strong id="osModuleTitle">MODULE</strong></div><div class="os-module-controls"><button id="osModuleMin" type="button" aria-label="Minimize">−</button><button id="osModuleClose" type="button" aria-label="Close">×</button></div></header><div id="osModuleBody" class="os-module-body"></div>';document.body.appendChild(stage);
+ const stage=document.createElement('section');stage.className='os-module-stage';stage.setAttribute('aria-hidden','true');stage.innerHTML='<div class="os-module-scan"></div><header class="os-module-head"><div><small id="osModuleKicker">SYSTEM // MODULE</small><strong id="osModuleTitle">MODULE</strong></div><div class="os-module-controls"><button id="osModuleMin" type="button" aria-label="Minimize">−</button><button id="osModuleClose" type="button" aria-label="Close">×</button></div></header><div id="osModuleBody" class="os-module-body"></div>';deck.appendChild(stage);
  const body=document.getElementById('osModuleBody'),title=document.getElementById('osModuleTitle'),kicker=document.getElementById('osModuleKicker');
- let parked=null;
+ let parked=null,current=null;
  const map={
-  player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen','profileSettings']},
+  player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen']},
   missions:{title:'MISSION CONTROL',kicker:'SYSTEM // MISSIONS',ids:['daily-mission','workoutBuilder','sideSystem']},
   side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideMissionSystem']},
   boss:{title:'BOSS STAGE',kicker:'WEEKLY // CHALLENGE',ids:['sideMissionSystem']},
@@ -1197,10 +1196,20 @@ function initSystemOS(){
   social:{title:'SOCIAL COMMAND',kicker:'NETWORK // CHALLENGES',ids:['osSocialCommand']}
  };
  function restore(){if(!parked)return;parked.forEach(({el,parent,next})=>{if(next&&next.parentNode===parent)parent.insertBefore(el,next);else parent.appendChild(el)});parked=null}
- function close(){restore();stage.classList.remove('active','minimized');shade.classList.remove('active');stage.setAttribute('aria-hidden','true')}
- function open(name){const m=map[name];if(!m)return;restore();body.innerHTML='';parked=[];if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand();}m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // NETWORK READY</span><strong>'+m.title+'</strong><p>Friends, squads, leaderboards and head-to-head challenge systems will operate from this command module.</p></div></div>';title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');shade.classList.add('active');stage.setAttribute('aria-hidden','false');body.scrollTop=0}
+ function setActive(name,on=true){document.querySelectorAll('[data-os-module],[data-holo]').forEach(x=>x.classList.toggle('os-active',on&&(x.dataset.osModule===name||x.dataset.holo===name)))}
+ function close(){restore();setActive(current,false);current=null;stage.classList.remove('active','minimized');stage.setAttribute('aria-hidden','true');document.body.classList.remove('os-module-open')}
+ function open(name){
+  const m=map[name];if(!m)return;
+  if(current===name&&stage.classList.contains('minimized')){stage.classList.remove('minimized');document.body.classList.add('os-module-open');return}
+  restore();setActive(current,false);body.innerHTML='';parked=[];current=name;
+  if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand()}
+  m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});
+  if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // LINK READY</span><strong>'+m.title+'</strong><p>This SYSTEM module is online and ready for its connected data.</p></div></div>';
+  title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');stage.setAttribute('aria-hidden','false');document.body.classList.add('os-module-open');setActive(name,true);body.scrollTop=0
+ }
  window.SystemOS={open,close};
- document.getElementById('osModuleClose').onclick=close;document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');shade.classList.toggle('active',!stage.classList.contains('minimized'))};shade.onclick=close;
+ document.getElementById('osModuleClose').onclick=close;
+ document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');document.body.classList.toggle('os-module-open',!stage.classList.contains('minimized'))};
  document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open(b.dataset.holo)},true));
  document.querySelectorAll('[data-hud-target]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open('missions')},true));
  document.querySelectorAll('[data-hud-view]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open(b.dataset.hudView==='progress'?'progress':'missions')},true));
