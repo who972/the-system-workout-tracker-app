@@ -1906,3 +1906,37 @@ body.system-os-ready .hud-module--mission:before{background:var(--system-violet)
  body.system-os-ready .hud-module{padding:8px}
  body.system-os-ready .os-topbar{height:17px}
 }
+
+
+/* V21 // SYSTEM BOOT -> BRIEFING -> CENTRAL COMMAND */
+.system-boot{background:
+ repeating-linear-gradient(180deg,transparent 0,transparent 4px,rgba(0,229,255,.018) 5px),
+ radial-gradient(circle at 50% 42%,rgba(0,229,255,.12),transparent 28%),
+ radial-gradient(ellipse at 50% 110%,rgba(41,121,255,.12),transparent 45%),
+ var(--system-void)}
+.system-boot:before,.system-boot:after{content:"";position:absolute;pointer-events:none}
+.system-boot:before{width:min(68vh,560px);aspect-ratio:1;border-radius:50%;border:1px solid rgba(0,229,255,.10);box-shadow:0 0 80px rgba(0,229,255,.05),inset 0 0 60px rgba(0,229,255,.035);animation:bootOrbit 18s linear infinite}
+.system-boot:after{inset:18px;border:1px solid rgba(0,229,255,.055);clip-path:polygon(0 14px,14px 0,30% 0,31% 8px,69% 8px,70% 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,70% 100%,69% calc(100% - 8px),31% calc(100% - 8px),30% 100%,14px 100%,0 calc(100% - 14px))}
+.system-boot__panel{z-index:2;border-color:rgba(0,229,255,.38);background:linear-gradient(155deg,rgba(11,17,26,.92),rgba(5,8,13,.94));box-shadow:0 0 65px rgba(0,229,255,.09),inset 0 0 40px rgba(0,229,255,.025)}
+.system-boot__emblem{position:relative;border-color:var(--system-cyan);color:var(--system-white);box-shadow:0 0 35px rgba(0,229,255,.18),inset 0 0 28px rgba(0,229,255,.10);animation:bootEmblem 2.4s ease-in-out infinite}
+.system-boot__emblem:before,.system-boot__emblem:after{content:"";position:absolute;border-radius:50%;border:1px dashed rgba(0,229,255,.2)}
+.system-boot__emblem:before{inset:-13px;animation:hudSpin 9s linear infinite}.system-boot__emblem:after{inset:-24px;border-color:rgba(41,121,255,.15);animation:hudSpin 14s linear infinite reverse}
+.system-boot__online{color:var(--system-green);text-shadow:0 0 10px rgba(57,255,136,.28)}
+.system-boot button{border-color:rgba(0,229,255,.55);background:linear-gradient(90deg,rgba(0,229,255,.13),rgba(41,121,255,.17));box-shadow:0 0 20px rgba(0,229,255,.08)}
+.system-boot button:hover{box-shadow:0 0 28px rgba(0,229,255,.18);background:linear-gradient(90deg,rgba(0,229,255,.2),rgba(41,121,255,.22))}
+.system-boot__panel.panel-exit{animation:bootPanelExit .36s ease forwards}
+.system-boot__panel.panel-enter{opacity:0;transform:translateY(16px) scale(.985)}
+.system-boot__panel.panel-enter.panel-enter-active{animation:bootPanelEnter .42s ease forwards}
+.system-boot.system-deploy{animation:systemDeploy .78s cubic-bezier(.65,0,.35,1) forwards}
+.system-boot.system-deploy .system-boot__panel{animation:briefingDeploy .6s ease forwards}
+body.system-entering>.command-deck{filter:brightness(.2);transform:scale(1.035)}
+.command-deck.command-arrival{animation:commandArrival 1.25s cubic-bezier(.16,1,.3,1)}
+.briefing-grid article{position:relative;overflow:hidden}.briefing-grid article:before{content:"";position:absolute;left:0;top:0;width:26px;height:1px;background:var(--system-cyan);box-shadow:0 0 8px rgba(0,229,255,.6)}
+.briefing-boss:before{background:var(--system-red)!important;box-shadow:0 0 8px rgba(255,59,78,.6)!important}
+@keyframes bootOrbit{to{transform:rotate(360deg)}}
+@keyframes bootEmblem{0%,100%{transform:scale(.98);filter:brightness(.9)}50%{transform:scale(1.025);filter:brightness(1.2)}}
+@keyframes bootPanelExit{to{opacity:0;transform:translateY(-18px) scale(.985);filter:blur(2px)}}
+@keyframes bootPanelEnter{to{opacity:1;transform:none}}
+@keyframes systemDeploy{0%{opacity:1}62%{opacity:1;filter:brightness(1.2)}78%{background:rgba(0,229,255,.16)}100%{opacity:0;visibility:hidden;filter:brightness(2)}}
+@keyframes briefingDeploy{0%{opacity:1;transform:scale(1)}70%{opacity:.85;transform:scale(1.025)}100%{opacity:0;transform:scale(1.08);filter:blur(5px)}}
+@keyframes commandArrival{0%{opacity:.05;transform:scale(1.045);filter:brightness(2) blur(4px)}30%{opacity:1;filter:brightness(1.35)}100%{transform:none;filter:none}}
