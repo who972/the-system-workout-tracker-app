@@ -133,8 +133,15 @@
     <div class="hud-module hud-module--mission"><span class="hud-module__tag">PRIMARY // MISSION</span><strong id="hudMissionName">TODAY'S TRAINING</strong><small id="hudMissionFocus">30 MIN // ACTIVE</small><button type="button" data-hud-target="daily-mission">OPEN MISSION</button></div>
     <div class="hud-module"><span class="hud-module__tag">SYSTEM // TELEMETRY</span><div class="telemetry-row"><span>STEPS</span><b id="hudSteps">--</b></div><div class="telemetry-row"><span>ACTIVE</span><b id="hudActive">--</b></div><div class="telemetry-row"><span>HEALTH LINK</span><b>READY</b></div></div>
   </aside>
-  <div class="hud-bottom">
-    <button data-hud-view="missions">SIDE MISSIONS</button><button data-hud-view="missions">BOSS STAGE</button><button data-hud-view="progress">ANALYTICS</button><button id="hudBriefing" type="button">DAILY BRIEFING</button>
+  <div class="hud-bottom os-dock" aria-label="System dock">
+    <button data-os-module="missions"><b>◆</b><span>MISSIONS</span></button>
+    <button data-os-module="exercise"><b>⌁</b><span>DATABASE</span></button>
+    <button data-os-module="nutrition"><b>◫</b><span>NUTRITION</span></button>
+    <button data-os-module="telemetry"><b>⌾</b><span>HEALTH</span></button>
+    <button data-os-module="social"><b>◎</b><span>SOCIAL</span></button>
+    <button data-os-module="progress"><b>▥</b><span>PROGRESS</span></button>
+    <button data-os-module="profile"><b>⚙</b><span>CONFIG</span></button>
+    <button id="hudBriefing" type="button"><b>◈</b><span>BRIEFING</span></button>
   </div>
 </section>
 
