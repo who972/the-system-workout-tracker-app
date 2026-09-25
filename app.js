@@ -1192,11 +1192,13 @@ function initSystemOS(){
   progress:{title:'CAMPAIGN PROGRESS',kicker:'SYSTEM // ANALYTICS',ids:['progressAnalytics','adaptiveProgression']},
   achievements:{title:'ACHIEVEMENTS',kicker:'SYSTEM // RECORDS',ids:['achievementGrid']},
   profile:{title:'SYSTEM CONFIGURATION',kicker:'PLAYER // SETTINGS',ids:['profileSettings']},
-  nutrition:{title:'NUTRITION MODULE',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']}
+  nutrition:{title:'NUTRITION MODULE',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']},
+  exercise:{title:'EXERCISE DATABASE',kicker:'SYSTEM // TRAINING ARCHIVE',ids:['exerciseLibrary']},
+  social:{title:'SOCIAL COMMAND',kicker:'NETWORK // CHALLENGES',ids:[]}
  };
  function restore(){if(!parked)return;parked.forEach(({el,parent,next})=>{if(next&&next.parentNode===parent)parent.insertBefore(el,next);else parent.appendChild(el)});parked=null}
  function close(){restore();stage.classList.remove('active','minimized');shade.classList.remove('active');stage.setAttribute('aria-hidden','true')}
- function open(name){const m=map[name];if(!m)return;restore();body.innerHTML='';parked=[];m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');shade.classList.add('active');stage.setAttribute('aria-hidden','false');body.scrollTop=0}
+ function open(name){const m=map[name];if(!m)return;restore();body.innerHTML='';parked=[];m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // NETWORK READY</span><strong>'+m.title+'</strong><p>Friends, squads, leaderboards and head-to-head challenge systems will operate from this command module.</p></div></div>';title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');shade.classList.add('active');stage.setAttribute('aria-hidden','false');body.scrollTop=0}
  window.SystemOS={open,close};
  document.getElementById('osModuleClose').onclick=close;document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');shade.classList.toggle('active',!stage.classList.contains('minimized'))};shade.onclick=close;
  document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open(b.dataset.holo)},true));
@@ -1217,3 +1219,13 @@ document.addEventListener('DOMContentLoaded',ensureMissionFx);
 const _osStartWorkoutMode=startWorkoutMode;
 startWorkoutMode=function(){ensureMissionFx();const f=document.getElementById('missionLaunchFlash');f.classList.remove('active');void f.offsetWidth;f.classList.add('active');setTimeout(()=>{_osStartWorkoutMode();f.classList.remove('active')},650)};
 function showMissionDebrief(seconds,xp,prs){ensureMissionFx();document.getElementById('missionDebriefTime').textContent=fmt(seconds)+' TRAINING TIME';document.getElementById('missionDebriefXp').textContent='+'+xp+' XP';document.getElementById('missionDebriefPr').textContent=prs&&prs.length?'NEW PR // '+prs.join(' • '):'ALL OBJECTIVES CLEARED';document.getElementById('missionDebrief').classList.add('active')}
+
+
+/* ===== V16 CENTRAL COMMAND v2 CONTROLLER ===== */
+document.addEventListener('DOMContentLoaded',()=>{
+ const os=window.SystemOS;if(!os)return;
+ const map={missions:'missions',exercise:'exercise',nutrition:'nutrition',telemetry:'telemetry',social:'social',progress:'progress',profile:'profile'};
+ document.querySelectorAll('[data-os-module]').forEach(b=>b.onclick=e=>{e.preventDefault();os.open(map[b.dataset.osModule])});
+ const stack=document.createElement('div');stack.className='os-toast-stack';document.body.appendChild(stack);
+ window.SystemOS.notify=(message,label='SYSTEM // NOTIFICATION')=>{const n=document.createElement('div');n.className='os-toast';n.innerHTML='<small>'+label+'</small><strong>'+message+'</strong>';stack.appendChild(n);setTimeout(()=>n.remove(),3200)};
+});
