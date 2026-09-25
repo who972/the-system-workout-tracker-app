@@ -220,21 +220,22 @@ function rankRewardSummary(rank){const r=RANK_REWARDS[rank]||RANK_REWARDS.E;retu
 const ONBOARDING_KEY='systemOnboardingV2';
 const ASSESSMENT_KEY='systemAwakeningAssessmentV1';
 const ASSESSMENT_RANKS=['D','C'];
-const ASSESSMENT_LEVEL={E:1,D:5,C:10};
+const ASSESSMENT_LEVEL={E:1,D:10,C:20};
 const ASSESSMENT_BONUS={E:0,D:0,C:0};
 function onboardingData(){try{return JSON.parse(localStorage.getItem(ONBOARDING_KEY)||'null')}catch(e){return null}}
 function onboardingPath(goal){return {'fat-loss':'Fat Loss','muscle':'Muscle Building','strength':'Strength','endurance':'Endurance','balanced':'Balanced'}[goal]||'Balanced'}
 function shouldOnboard(){return !!(typeof getCloudSession==='function'&&getCloudSession()?.access_token)&&!onboardingData()}
 function resumePendingAssessment(){const ob=onboardingData();if(ob?.assessmentPending&&!localStorage.getItem(ASSESSMENT_KEY))showAwakeningAssessment(()=>{const fresh=onboardingData()||{};fresh.assessmentPending=false;localStorage.setItem(ONBOARDING_KEY,JSON.stringify(fresh));renderPlayerStatus()})}
-function seedAssessmentStats(rank){
+function seedAssessmentStats(rank,scores){
  const b=loadBuild(),req=RANK_STANDARDS[rank]||{};
- BUILD_STATS.forEach(x=>b.stats[x]=x==='Consistency'?0:Math.max(b.stats[x]||0,req[x]||0));
+ BUILD_STATS.forEach(x=>{if(x==='Consistency'){b.stats[x]=0;return}const measured=Math.max(0,Math.min(100,Number(scores?.[x])||0));b.stats[x]=Math.max(Number(b.stats[x])||0,measured)});
+ b.assessmentStandards={rank,met:Object.fromEntries(BUILD_STATS.filter(x=>x!=='Consistency').map(x=>[x,(Number(b.stats[x])||0)>=(Number(req[x])||0)]))};
  saveBuild(b);
 }
-function applyAssessmentPlacement(rank){
+function applyAssessmentPlacement(rank,scores){
  const s=loadSideSystem(),target=rankIndex(rank);
  BOSS_STAGES.forEach(b=>{if(rankIndex(b.rank)<=target&&ASSESSMENT_RANKS.includes(b.rank))s.boss[b.rank]={...(s.boss[b.rank]||{}),passed:true,assessment:true,passedAt:new Date().toISOString(),attempts:0,history:[]}});
- saveSideSystem(s);seedAssessmentStats(rank);
+ saveSideSystem(s);seedAssessmentStats(rank,scores);
  if(typeof state!=='undefined'){state.level=Math.max(state.level||1,ASSESSMENT_LEVEL[rank]||1);if(typeof saveState==='function')saveState()}
 }
 function assessmentTrial(rank){
@@ -256,7 +257,7 @@ function showAwakeningAssessment(done){
  ];
  function capture(){if(step===0){data.sit=Number(document.getElementById('awSit')?.value)||0;data.push=Number(document.getElementById('awPush')?.value)||0}if(step===1)data.walk=Number(document.getElementById('awWalk')?.value)||0;if(step===2)data.march=Number(document.getElementById('awMarch')?.value)||0}
  function calculate(){const pushFactor={wall:.6,incline:.78,knee:.9,standard:1}[data.pushType]||.6,push=Math.min(100,awakeningScore(data.push,20)*pushFactor),sit=awakeningScore(data.sit,30),walkBase=awakeningScore(data.walk,8),marchBase=awakeningScore(data.march,5),effort=e=>({1:1,2:.92,3:.82}[e]||.92);return {Strength:Math.round(sit*.6+push*.4),Endurance:Math.round(walkBase*effort(data.walkEffort)),Conditioning:Math.round(marchBase*effort(data.marchEffort)),Mobility:{1:25,2:55,3:80}[data.mobility]||55,Consistency:0,Recovery:{1:25,2:55,3:80}[data.energy]||55}}
- function finish(){const scores=calculate(),rank=awakeningClass(scores),b=loadBuild();BUILD_STATS.forEach(x=>b.stats[x]=scores[x]);const recommended=awakeningPath(scores);b.path=selectedPath||recommended;b.assessment={version:2,date:new Date().toISOString(),scores:{...scores},class:rank,raw:{...data}};saveBuild(b);applyAssessmentPlacement(rank);localStorage.setItem(ASSESSMENT_KEY,JSON.stringify({rank,scores,raw:data,recommendedPath:recommended,selectedPath:b.path,bonus:0,completedAt:new Date().toISOString()}));el.classList.remove('active');if(typeof addSystemMessage==='function')addSystemMessage('THE AWAKENING TRIAL COMPLETE — '+rank+'-CLASS • Previous training recognized.','level');if(typeof renderAll==='function')renderAll();renderSideSystem();if(done)done(rank)}
+ function finish(){const scores=calculate(),rank=awakeningClass(scores),b=loadBuild();BUILD_STATS.forEach(x=>b.stats[x]=scores[x]);const recommended=awakeningPath(scores);b.path=selectedPath||recommended;b.assessment={version:2,date:new Date().toISOString(),scores:{...scores},class:rank,raw:{...data}};saveBuild(b);applyAssessmentPlacement(rank,scores);localStorage.setItem(ASSESSMENT_KEY,JSON.stringify({rank,scores,raw:data,recommendedPath:recommended,selectedPath:b.path,bonus:0,completedAt:new Date().toISOString()}));el.classList.remove('active');if(typeof addSystemMessage==='function')addSystemMessage('THE AWAKENING TRIAL COMPLETE — '+rank+'-CLASS • Previous training recognized.','level');if(typeof renderAll==='function')renderAll();renderSideSystem();if(done)done(rank)}
  function render(){el.innerHTML='<div class="ob-card"><p><b>Safety:</b> Use a stable chair and clear space. Stop immediately for pain, dizziness, chest pain, faintness, or unusual shortness of breath.</p>'+screens[step]()+'<div class="ob-actions">'+(step?'<button id="awBack">BACK</button>':'')+'<button id="awNext" class="btn-primary">'+(step===4?'ACCEPT CLASSIFICATION':'CONTINUE')+'</button></div></div>';el.classList.add('active');el.querySelectorAll('[data-push-type]').forEach(x=>x.onclick=()=>{data.pushType=x.dataset.pushType;render()});el.querySelectorAll('[data-walk-effort]').forEach(x=>x.onclick=()=>{data.walkEffort=Number(x.dataset.walkEffort);render()});el.querySelectorAll('[data-march-effort]').forEach(x=>x.onclick=()=>{data.marchEffort=Number(x.dataset.marchEffort);render()});el.querySelectorAll('[data-aw-path]').forEach(x=>x.onclick=()=>{selectedPath=x.dataset.awPath;render()});el.querySelectorAll('[data-mob]').forEach(x=>x.onclick=()=>{data.mobility=Number(x.dataset.mob);render()});el.querySelectorAll('[data-energy]').forEach(x=>x.onclick=()=>{data.energy=Number(x.dataset.energy);render()});document.getElementById('awBack')?.addEventListener('click',()=>{capture();step--;render()});document.getElementById('awNext').onclick=()=>{capture();if(step<4){step++;render()}else finish()}}
  render();
 }
