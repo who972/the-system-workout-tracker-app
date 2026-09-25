@@ -1270,3 +1270,19 @@ document.addEventListener('DOMContentLoaded',()=>{
  const quick=['missions','exercise','nutrition','telemetry','social','progress','profile'];
  document.addEventListener('keydown',e=>{if(e.altKey&&/^[1-7]$/.test(e.key)){e.preventDefault();os.open(quick[Number(e.key)-1])}});
 });
+
+
+/* ===== V22 MISSION CONTROL // TACTICAL LAUNCH ===== */
+function initMissionControlV22(){
+ const start=document.getElementById('start-mission-btn'),live=document.getElementById('workoutMode');if(!start||!live)return;
+ let confirm=document.getElementById('missionLaunchConfirm');
+ if(!confirm){confirm=document.createElement('section');confirm.id='missionLaunchConfirm';confirm.className='mission-launch-confirm';confirm.setAttribute('aria-hidden','true');confirm.innerHTML='<div class="mlc-card"><header><div><small>SYSTEM // MISSION CONTROL</small><h2>MISSION BRIEFING</h2></div><button id="mlcClose" type="button">×</button></header><div class="mlc-grid"><article><span>PRIMARY OBJECTIVE</span><strong id="mlcName">TRAINING MISSION</strong><small id="mlcFocus">SYSTEM ASSIGNED</small></article><article><span>LOADOUT</span><strong id="mlcLoadout">FULL PROTOCOL</strong><small id="mlcSets">0 SETS</small></article><article><span>REWARD</span><strong id="mlcXp">+0 XP</strong><small>MISSION COMPLETION</small></article><article><span>STATUS</span><strong class="mlc-ready">READY</strong><small>TRAINING LINK AVAILABLE</small></article></div><div class="mlc-objectives" id="mlcObjectives"></div><button id="mlcLaunch" class="mlc-launch" type="button">LAUNCH MISSION</button></div>';document.body.appendChild(confirm)}
+ const original=start.onclick;
+ function openBrief(){const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m);document.getElementById('mlcName').textContent=m.name;document.getElementById('mlcFocus').textContent=(m.focus||'TRAINING').toUpperCase();document.getElementById('mlcLoadout').textContent=(m.mode||'full').toUpperCase()+' PROTOCOL';document.getElementById('mlcSets').textContent=sets.length+' SETS // '+m.exercises.length+' EXERCISES';document.getElementById('mlcXp').textContent='+'+m.xp+' XP';document.getElementById('mlcObjectives').innerHTML=m.exercises.map((e,i)=>'<div><b>0'+(i+1)+'</b><span><strong>'+escapeHtml(e[0])+'</strong><small>'+e[1]+' SETS // '+escapeHtml(String(e[2]))+'</small></span></div>').join('');confirm.classList.add('active');confirm.setAttribute('aria-hidden','false');document.body.classList.add('mission-brief-open')}
+ start.onclick=openBrief;
+ document.getElementById('mlcClose').onclick=()=>{confirm.classList.remove('active');confirm.setAttribute('aria-hidden','true');document.body.classList.remove('mission-brief-open')};
+ document.getElementById('mlcLaunch').onclick=()=>{confirm.classList.add('launching');setTimeout(()=>{confirm.classList.remove('active','launching');confirm.setAttribute('aria-hidden','true');document.body.classList.remove('mission-brief-open');(original||startWorkoutMode)()},280)};
+ live.insertAdjacentHTML('afterbegin','<div class="combat-hud"><span><i></i> MISSION ACTIVE</span><b id="combatProtocol">TRAINING PROTOCOL</b><span>LINK // STABLE</span></div>');
+ const oldRender=renderLiveSet;renderLiveSet=function(){oldRender();const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m),p=getMissionProgress(),done=Object.values(p).filter(v=>v.done).length,left=Math.max(0,sets.length-done),proto=document.getElementById('combatProtocol');if(proto)proto.textContent=left+' OBJECTIVE'+(left===1?'':'S')+' REMAINING'};
+}
+document.addEventListener('DOMContentLoaded',initMissionControlV22);
