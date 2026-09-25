@@ -62,13 +62,16 @@ const ACHIEVEMENTS = [
 
   // Gold
   { id: 'day_14',        tier: 'gold',   icon: '🌟', title: 'Unstoppable',        desc: '14-day workout streak',               requirement: s => s.bestStreak >= 14 },
-  { id: 'level_25',      tier: 'gold',   icon: '👑', title: 'Level 25 Veteran',   desc: 'Reach Level 25',                      requirement: s => s.level >= 25 },
+  { id: 'level_20',      tier: 'gold',   icon: '🔷', title: 'C-Rank Hunter',     desc: 'Reach Level 20 and earn C-Class promotion', requirement: s => s.level >= 20 && hasRankPromotion('C') },
+  { id: 'level_30',      tier: 'gold',   icon: '👑', title: 'B-Rank Hunter',     desc: 'Reach Level 30 and earn B-Class promotion', requirement: s => s.level >= 30 && hasRankPromotion('B') },
   { id: 'hundred_quests',tier: 'gold',   icon: '📜', title: 'Quest Master',       desc: 'Complete 100 quests total',           requirement: s => s.totalQuestsCompleted >= 100 },
   { id: 'all_daily',     tier: 'gold',   icon: '✨', title: 'Daily Conqueror',   desc: 'Complete all daily quests in one day', requirement: s => s.allDailyCompleted },
 
   // S-Rank
   { id: 'day_30',        tier: 'srank',  icon: '💥', title: 'Iron Will',          desc: '30-day workout streak',               requirement: s => s.bestStreak >= 30 },
+  { id: 'level_40',      tier: 'srank',  icon: '⚔️', title: 'A-Rank Hunter',     desc: 'Reach Level 40 and earn A-Class promotion', requirement: s => s.level >= 40 && hasRankPromotion('A') },
   { id: 'level_50',      tier: 'srank',  icon: '🔥', title: 'S-Rank Hunter',     desc: 'Reach Level 50 and earn S-Class promotion', requirement: s => s.level >= 50 && hasRankPromotion('S') },
+  { id: 'level_70',      tier: 'srank',  icon: '🌠', title: 'National Level Hunter', desc: 'Reach Level 70 and clear the National-Level Trial', requirement: s => s.level >= 70 && hasRankPromotion('S+') },
   { id: 'week_complete', tier: 'srank',  icon: '🏆', title: 'Weekly Dominator',  desc: 'Complete all weekly objectives',      requirement: s => s.allWeeklyCompleted },
 
   // Shadow Sovereign
