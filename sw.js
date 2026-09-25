@@ -1,4 +1,4 @@
-const CACHE = "the-system-os-v16-central-command";
+const CACHE = "the-system-os-v17-social-command";
 const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
