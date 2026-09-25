@@ -1151,3 +1151,24 @@ function renderCommandHud(){
 }
 document.addEventListener('DOMContentLoaded',()=>{renderCommandHud();document.getElementById('hudBriefing')?.addEventListener('click',()=>document.getElementById('replayDailyBriefing')?.click())});
 const _systemRenderAll=renderAll;renderAll=function(){_systemRenderAll();renderCommandHud()};
+
+/* ===== V13 ORBITAL HOLOGRAM CONTROLLER ===== */
+function initHologramCommandUnit(){
+ const core=document.querySelector('.system-core'),win=document.getElementById('holoWindow'),title=document.getElementById('holoTitle'),kicker=document.getElementById('holoKicker'),body=document.getElementById('holoBody');
+ if(!core||!win)return;
+ const modules={
+  player:()=>({k:'PLAYER // STATUS',t:'PLAYER PROFILE',b:'<div class="holo-data"><div>LEVEL<b>'+((state&&state.level)||1)+'</b></div><div>RANK<b>'+((typeof getRank==='function'?getRank(state.level).name:'E-Rank'))+'</b></div><div>XP<b>'+((state&&state.xp)||0)+'</b></div><div>STREAK<b>'+((state&&state.currentStreak)||0)+' DAYS</b></div></div><button class="holo-link" data-holo-view="profile">OPEN PROFILE</button>'}),
+  missions:()=>({k:'MISSION // CONTROL',t:'TODAY’S MISSION',b:'<strong>'+((typeof WORKOUT_PLAN!=="undefined"&&WORKOUT_PLAN[new Date().getDay()])?WORKOUT_PLAN[new Date().getDay()].name:'TRAINING MISSION')+'</strong><br>Objectives ready for deployment.<button class="holo-link" data-holo-target="daily-mission">ENTER MISSION</button>'}),
+  telemetry:()=>({k:'SYSTEM // TELEMETRY',t:'LIVE DATA',b:'<div class="holo-data"><div>STEPS<b>'+((document.getElementById("hudSteps")?.textContent)||"--")+'</b></div><div>ACTIVE<b>'+((document.getElementById("hudActive")?.textContent)||"--")+'</b></div><div>HEALTH LINK<b>READY</b></div><div>SYNC<b>ONLINE</b></div></div>'}),
+  side:()=>({k:'OPTIONAL // OBJECTIVES',t:'SIDE MISSIONS',b:'Bonus objectives provide additional XP without replacing the primary mission.<button class="holo-link" data-holo-view="missions">VIEW SIDE MISSIONS</button>'}),
+  boss:()=>({k:'WEEKLY // CHALLENGE',t:'BOSS STAGE',b:'High-value weekly challenge. Complete objectives to claim the Boss Stage reward.<button class="holo-link" data-holo-view="missions">ENTER BOSS STAGE</button>'}),
+  progress:()=>({k:'CAMPAIGN // ANALYTICS',t:'PROGRESS',b:'<div class="holo-data"><div>MISSIONS<b>'+((state&&state.totalQuestsCompleted)||0)+'</b></div><div>LEVEL<b>'+((state&&state.level)||1)+'</b></div></div><button class="holo-link" data-holo-view="progress">OPEN ANALYTICS</button>'}),
+  achievements:()=>({k:'SYSTEM // RECORDS',t:'ACHIEVEMENTS',b:'Unlocked achievements, rank milestones and personal records.<button class="holo-link" data-holo-view="progress">VIEW AWARDS</button>'}),
+  profile:()=>({k:'SYSTEM // CONFIG',t:'PROFILE & SETTINGS',b:'Player identity, account sync and system configuration.<button class="holo-link" data-holo-view="profile">OPEN SETTINGS</button>'})
+ };
+ function close(){core.classList.remove('is-projecting');win.setAttribute('aria-hidden','true');document.querySelectorAll('[data-holo]').forEach(x=>x.classList.remove('active'))}
+ function open(name,btn){const m=modules[name]?.();if(!m)return;kicker.textContent=m.k;title.textContent=m.t;body.innerHTML=m.b;core.classList.add('is-projecting');win.setAttribute('aria-hidden','false');document.querySelectorAll('[data-holo]').forEach(x=>x.classList.toggle('active',x===btn));bindInside()}
+ function bindInside(){body.querySelectorAll('[data-holo-view]').forEach(b=>b.onclick=()=>{document.querySelector('.app-nav [data-view="'+b.dataset.holoView+'"]')?.click();close()});body.querySelectorAll('[data-holo-target]').forEach(b=>b.onclick=()=>{document.getElementById(b.dataset.holoTarget)?.scrollIntoView({behavior:'smooth',block:'start'});close()})}
+ document.querySelectorAll('[data-holo]').forEach(b=>b.onclick=()=>open(b.dataset.holo,b));document.getElementById('holoClose')?.addEventListener('click',close);
+}
+document.addEventListener('DOMContentLoaded',initHologramCommandUnit);
