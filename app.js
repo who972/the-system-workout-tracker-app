@@ -1313,3 +1313,30 @@ function renderSocialCommandV25(){
  document.getElementById('challengeForm').onsubmit=e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;const x=getSocial(),type=document.getElementById('challengeType').value;x.challenges.unshift({id:Date.now(),opponent:name,type,days:Number(document.getElementById('challengeLength').value),created:new Date().toISOString(),status:'draft',startScore:challengeMetric(type),opponentScore:0});saveSocial(x);renderSocialCommandV25();window.SystemOS?.notify('DUEL LINK CREATED // '+name.toUpperCase(),'SOCIAL // HEAD-TO-HEAD')};
 }
 const _v25Social=renderSocialCommand;renderSocialCommand=renderSocialCommandV25;
+
+
+/* ===== V26 SOCIAL CLOUD NETWORK ===== */
+const SOCIAL_CLOUD_TABLE='social_profiles',SOCIAL_CHALLENGE_TABLE='social_challenges';
+function socialCloudUser(){return getCloudSession()?.user||null}
+function socialHandle(){const u=socialCloudUser(),me=getSystemSettings();return (me.name||u?.email?.split('@')[0]||'Player').trim()}
+async function syncSocialProfile(){
+ const u=socialCloudUser();if(!u?.id)return false;const rank=getRank(state.level);
+ await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:u.id,display_name:socialHandle(),xp:socialScore(),level:state.level,rank:rank.name,missions:Number(state.totalQuestsCompleted||0),streak:Number(state.currentStreak||0),updated_at:new Date().toISOString()})});return true
+}
+async function fetchSocialNetwork(){
+ const u=socialCloudUser();if(!u?.id)return null;
+ try{await syncSocialProfile();const [profiles,challenges]=await Promise.all([cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id,display_name,xp,level,rank,missions,streak,updated_at&order=xp.desc&limit=100'),cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?or=(challenger_id.eq.'+encodeURIComponent(u.id)+',opponent_id.eq.'+encodeURIComponent(u.id)+')&select=*&order=created_at.desc&limit=50')]);return{profiles,challenges}}catch(e){window.SystemOS?.notify('NETWORK LINK UNAVAILABLE // USING LOCAL DATA','SOCIAL // CLOUD');return null}
+}
+async function renderSocialCloud(){
+ const root=document.getElementById('osSocialCommand');if(!root)return;renderSocialCommandV25();const u=socialCloudUser();
+ const head=root.querySelector('.social-network-head');if(head)head.insertAdjacentHTML('beforeend','<div class="social-cloud-state '+(u?'online':'offline')+'"><i></i><span>'+(u?'CLOUD LINK':'LOCAL MODE')+'</span></div>');
+ if(!u){root.querySelector('.duel-note').textContent='SIGN IN REQUIRED FOR LIVE NETWORK // LOCAL SIMULATION ACTIVE';return}
+ const net=await fetchSocialNetwork();if(!net||!document.body.contains(root))return;
+ const profiles=net.profiles||[],mine=profiles.findIndex(p=>p.user_id===u.id),rankCard=root.querySelector('.social-rank-card');
+ if(rankCard){const podium=profiles.slice(0,3).map((p,i)=>'<div class="podium p'+(i+1)+(p.user_id===u.id?' self':'')+'"><i>#'+(i+1)+'</i><strong>'+escapeHtml(p.display_name)+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+'</small><b>'+Number(p.xp||0).toLocaleString()+' XP</b></div>').join(''),rows=profiles.slice(3).map((p,i)=>'<div class="leader-row '+(p.user_id===u.id?'self':'')+'"><div class="leader-rank">#'+(i+4)+'</div><div class="leader-name"><strong>'+escapeHtml(p.display_name)+(p.user_id===u.id?' // YOU':'')+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+'</small></div><div class="leader-xp">'+Number(p.xp||0).toLocaleString()+' XP</div></div>').join('');rankCard.querySelector('.leader-podium').innerHTML=podium;rankCard.querySelector('.leader-table').innerHTML=rows}
+ const stats=root.querySelectorAll('.social-network-stat b');if(stats[0])stats[0].textContent='#'+(mine>=0?mine+1:'--');if(stats[1])stats[1].textContent=profiles.length;if(stats[2])stats[2].textContent=net.challenges.length;
+ const note=root.querySelector('.duel-note');if(note)note.textContent='CLOUD NETWORK ONLINE // LIVE ACCOUNT LINK';
+ const form=document.getElementById('challengeForm');if(form)form.onsubmit=async e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;try{const matches=await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?display_name=ilike.'+encodeURIComponent(name)+'&select=user_id,display_name&limit=1');if(!matches.length)throw new Error('Player not found on the network.');if(matches[0].user_id===u.id)throw new Error('You cannot challenge yourself. Humanity has invented mirrors for that.');const type=document.getElementById('challengeType').value,days=Number(document.getElementById('challengeLength').value);await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({challenger_id:u.id,opponent_id:matches[0].user_id,challenger_name:socialHandle(),opponent_name:matches[0].display_name,type,duration_days:days,status:'pending',challenger_start:challengeMetric(type),opponent_start:0,created_at:new Date().toISOString()})});window.SystemOS?.notify('CHALLENGE TRANSMITTED // '+matches[0].display_name.toUpperCase(),'SOCIAL // NETWORK');renderSocialCloud()}catch(err){window.SystemOS?.notify(err.message.toUpperCase(),'SOCIAL // NETWORK ERROR')}};
+}
+renderSocialCommand=renderSocialCloud;
+const _v26Push=pushCloudBackup;pushCloudBackup=async function(){const r=await _v26Push();try{await syncSocialProfile()}catch(e){}return r};
