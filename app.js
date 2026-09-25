@@ -178,12 +178,10 @@ function loadState() {
     if (saved.dailyDate !== today) {
       // Streak logic: if yesterday was last workout, continue streak; else reset
       if (saved.lastWorkoutDate) {
-        const lastDate = new Date(saved.lastWorkoutDate);
         const yesterday = new Date();
         yesterday.setDate(yesterday.getDate() - 1);
-        const lastStr = lastDate.toISOString().split('T')[0];
-        const yStr = yesterday.toISOString().split('T')[0];
-        if (lastStr !== yStr) {
+        const yStr = yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+        if (saved.lastWorkoutDate !== yStr) {
           state.currentStreak = 0;
         }
       }
@@ -303,12 +301,10 @@ function updateStreak() {
   if (state.lastWorkoutDate !== today) {
     // New day - check if streak continues
     if (state.lastWorkoutDate) {
-      const lastDate = new Date(state.lastWorkoutDate);
       const yesterday = new Date();
       yesterday.setDate(yesterday.getDate() - 1);
-      const lastStr = lastDate.toISOString().split('T')[0];
-      const yStr = yesterday.toISOString().split('T')[0];
-      if (lastStr === yStr) {
+      const yStr = yesterday.getFullYear()+'-'+String(yesterday.getMonth()+1).padStart(2,'0')+'-'+String(yesterday.getDate()).padStart(2,'0');
+      if (state.lastWorkoutDate === yStr) {
         state.currentStreak++;
       } else {
         state.currentStreak = 1;
@@ -475,7 +471,7 @@ function logCustomWorkout(name, duration, intensity) {
     }
   }
 
-  updateWorkoutStreak(Math.min(1, Math.max(.4, Number(duration||0)/30)));
+  updateWorkoutStreak(Number(duration||0)>=10?Math.min(1,Number(duration||0)/30):0);
   if (window.SystemBuild && typeof window.SystemBuild.awardTraining === 'function') window.SystemBuild.awardTraining(name, duration, intensity);
   recordHistory('custom_' + Date.now(), xp);
   checkAchievements();
