@@ -1134,3 +1134,20 @@ document.addEventListener('DOMContentLoaded',initExerciseLibraryCollapse);
 /* ===== HOME HUD QUICK COMMANDS ===== */
 function initHudCommands(){document.querySelectorAll('[data-hud-target]').forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.hudTarget)?.scrollIntoView({behavior:'smooth',block:'start'})));document.querySelectorAll('[data-hud-view]').forEach(btn=>btn.addEventListener('click',()=>{const nav=document.querySelector('.app-nav [data-view="'+btn.dataset.hudView+'"]');if(nav)nav.click()}))}
 document.addEventListener('DOMContentLoaded',initHudCommands);
+
+/* ===== V12 COMMAND HUD DATA BRIDGE ===== */
+function renderCommandHud(){
+  if(typeof state==='undefined')return;
+  const rank=typeof getRank==='function'?getRank(state.level):{name:'E-Rank'};
+  const need=typeof xpNeededForLevel==='function'?xpNeededForLevel(state.level):100;
+  const pct=Math.min(100,Math.round((state.xp/Math.max(1,need))*100));
+  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+  set('hudPlayerLevel','LV. '+state.level);set('hudPlayerRank',(rank.name||'E-RANK').toUpperCase());set('hudXpText',state.xp+' / '+need+' XP');
+  const fill=document.getElementById('hudXpFill');if(fill)fill.style.width=pct+'%';
+  set('hudStreak',state.currentStreak||0);set('hudWorkouts',state.totalQuestsCompleted||0);
+  const plan=typeof WORKOUT_PLAN!=='undefined'?WORKOUT_PLAN[new Date().getDay()]:null;
+  if(plan){set('hudMissionName',plan.name.toUpperCase());set('hudMissionFocus',plan.focus+' // 30 MIN');}
+  const qs=state.dailyQuests||[],done=qs.filter(q=>q.completed).length,daily=qs.length?Math.round(done/qs.length*100):0;set('hudCorePercent',daily+'%');
+}
+document.addEventListener('DOMContentLoaded',()=>{renderCommandHud();document.getElementById('hudBriefing')?.addEventListener('click',()=>document.getElementById('replayDailyBriefing')?.click())});
+const _systemRenderAll=renderAll;renderAll=function(){_systemRenderAll();renderCommandHud()};
