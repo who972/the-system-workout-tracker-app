@@ -1963,3 +1963,24 @@ body.mission-brief-open{overflow:hidden}.mission-launch-confirm{position:fixed;z
 .progression-event[data-type="achievement"] .progression-glyph{border-color:var(--system-violet);color:var(--system-violet);box-shadow:0 0 30px rgba(139,92,255,.2)}.progression-event[data-type="rank"] .progression-glyph{border-color:var(--system-violet);color:var(--system-violet)}.progression-event[data-type="boss"]{background:radial-gradient(circle at 50% 48%,rgba(255,59,78,.14),transparent 30%),rgba(5,8,13,.96)}.progression-event[data-type="boss"] .progression-rings{border-color:rgba(255,59,78,.28);box-shadow:0 0 90px rgba(255,59,78,.09)}.progression-event[data-type="boss"] .progression-glyph{border-color:var(--system-red);color:var(--system-red);box-shadow:0 0 34px rgba(255,59,78,.25)}.progression-event[data-type="boss"] .progression-card h1{color:var(--system-red);text-shadow:0 0 28px rgba(255,59,78,.28)}
 .command-deck.progression-pulse{animation:hudProgressPulse .9s ease}
 @keyframes progressionIn{from{opacity:0;filter:brightness(2)}to{opacity:1;filter:none}}@keyframes progressionGlyph{50%{transform:scale(1.08);filter:brightness(1.35)}}@keyframes hudProgressPulse{0%,100%{filter:none}35%{filter:brightness(1.45);box-shadow:inset 0 0 100px rgba(0,229,255,.10)}}
+
+
+/* V24 // BOSS STAGE ENCOUNTER */
+.boss-battle-mode{background:
+ linear-gradient(rgba(255,59,78,.025) 1px,transparent 1px),
+ linear-gradient(90deg,rgba(255,59,78,.025) 1px,transparent 1px),
+ radial-gradient(circle at 50% 38%,rgba(255,59,78,.12),transparent 28%),
+ radial-gradient(ellipse at 50% 115%,rgba(139,92,255,.08),transparent 48%),
+ #05080d!important;background-size:32px 32px,32px 32px,auto,auto,auto}
+.boss-battle-mode:before{content:"";position:absolute;inset:20px;pointer-events:none;border:1px solid rgba(255,59,78,.09);clip-path:polygon(0 14px,14px 0,28% 0,29% 7px,71% 7px,72% 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,72% 100%,71% calc(100% - 7px),29% calc(100% - 7px),28% 100%,14px 100%,0 calc(100% - 14px))}
+.boss-battle-mode.boss-intro{animation:bossArenaEntry .9s cubic-bezier(.16,1,.3,1)}
+.bb-top{position:relative;z-index:2;border-bottom:1px solid rgba(255,59,78,.18);background:linear-gradient(90deg,rgba(255,59,78,.055),transparent)}
+.bb-top .side-tag,.bb-count{color:var(--system-red)!important}.bb-hud{position:relative;z-index:2;border-color:rgba(255,59,78,.16)!important;background:rgba(11,17,26,.72)!important}.bb-hud span:first-child{color:var(--system-red);text-shadow:0 0 10px rgba(255,59,78,.32)}
+.bb-hp{position:relative;z-index:2;padding:10px 14px;border:1px solid rgba(255,59,78,.18);background:rgba(11,17,26,.7);box-shadow:inset 0 0 28px rgba(255,59,78,.025)}.bb-hp-track{height:10px!important;border:1px solid rgba(255,59,78,.28)!important;background:rgba(0,0,0,.5)!important}.bb-hp-track i{background:linear-gradient(90deg,#8d1423,var(--system-red))!important;box-shadow:0 0 16px rgba(255,59,78,.48);transition:width .55s cubic-bezier(.16,1,.3,1)}
+.bb-arena{position:relative;z-index:2;border:1px solid rgba(255,59,78,.14);background:radial-gradient(circle at 50% 45%,rgba(255,59,78,.055),transparent 42%),rgba(11,17,26,.48);box-shadow:inset 0 0 70px rgba(255,59,78,.025)}
+.bb-arena h1{max-width:850px;text-shadow:0 0 24px rgba(255,59,78,.14)}.bb-attack{color:var(--system-red)!important;font-weight:800;letter-spacing:.14em;text-shadow:0 0 10px rgba(255,59,78,.3)}
+.bb-main{border-color:rgba(255,59,78,.58)!important;background:linear-gradient(90deg,rgba(255,59,78,.13),rgba(139,92,255,.12))!important;box-shadow:0 0 22px rgba(255,59,78,.08)}.bb-main:hover{box-shadow:0 0 30px rgba(255,59,78,.2)}.bb-end{border-color:rgba(130,147,166,.24)!important}
+.bb-flash.hit{color:var(--system-white)!important;text-shadow:0 0 18px var(--system-red);animation:bossHitV24 .65s ease!important}
+.bb-result{position:relative;z-index:2}.bb-victory{background:radial-gradient(circle at 50% 42%,rgba(57,255,136,.10),transparent 35%)}.bb-defeat{background:radial-gradient(circle at 50% 42%,rgba(255,59,78,.09),transparent 35%)}.bb-new-rank{color:var(--system-violet)!important;text-shadow:0 0 24px rgba(139,92,255,.4)}
+.boss-ready{position:relative;overflow:hidden;border-color:rgba(255,59,78,.28)!important;box-shadow:inset 0 0 34px rgba(255,59,78,.025)}.boss-ready:before{content:"BOSS STAGE";position:absolute;right:12px;top:9px;font:700 7px var(--font-mono);letter-spacing:.2em;color:rgba(255,59,78,.48)}.boss-ready button{border-color:rgba(255,59,78,.45)!important}.boss-passed{border-color:rgba(57,255,136,.25)!important}
+@keyframes bossArenaEntry{0%{opacity:0;transform:scale(1.045);filter:brightness(2) blur(5px)}35%{opacity:1;filter:brightness(1.45)}100%{transform:none;filter:none}}@keyframes bossHitV24{0%{opacity:0;transform:scale(.8)}20%{opacity:1;transform:scale(1.16)}100%{opacity:0;transform:scale(1)}}
