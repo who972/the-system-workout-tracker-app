@@ -360,7 +360,7 @@ function completeQuest(questId) {
 
   // Weekly training days (once per day)
   const wDays = state.weeklyGoals.find(g => g.id === 'w_days');
-  if (qualifies && wDays && !wDays.completed) {
+  if (wDays && !wDays.completed) {
     const today = getTodayStr();
     const trainedToday = state.history.some(h => h.date === today);
     if (!trainedToday) {
@@ -1286,3 +1286,19 @@ function initMissionControlV22(){
  const oldRender=renderLiveSet;renderLiveSet=function(){oldRender();const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m),p=getMissionProgress(),done=Object.values(p).filter(v=>v.done).length,left=Math.max(0,sets.length-done),proto=document.getElementById('combatProtocol');if(proto)proto.textContent=left+' OBJECTIVE'+(left===1?'':'S')+' REMAINING'};
 }
 document.addEventListener('DOMContentLoaded',initMissionControlV22);
+
+
+/* ===== V23 PROGRESSION EVENT SYSTEM ===== */
+function ensureProgressionFx(){
+ if(document.getElementById('progressionEvent'))return;
+ const e=document.createElement('section');e.id='progressionEvent';e.className='progression-event';e.setAttribute('aria-hidden','true');e.innerHTML='<div class="progression-rings"></div><div class="progression-card"><small id="progressionKicker">SYSTEM // PROGRESSION</small><div id="progressionGlyph" class="progression-glyph">↑</div><h1 id="progressionTitle">LEVEL UP</h1><strong id="progressionValue">LEVEL 2</strong><p id="progressionCopy">SYSTEM CAPABILITY INCREASED</p><button id="progressionClose" type="button">CONTINUE</button></div>';document.body.appendChild(e);document.getElementById('progressionClose').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')}
+}
+function showProgressionEvent(type,title,value,copy){
+ ensureProgressionFx();const e=document.getElementById('progressionEvent'),glyph={level:'↑',rank:'◆',achievement:'★',boss:'⚠',xp:'+'}[type]||'◇';e.dataset.type=type;document.getElementById('progressionKicker').textContent=type==='boss'?'SYSTEM // CRITICAL EVENT':'SYSTEM // PROGRESSION';document.getElementById('progressionGlyph').textContent=glyph;document.getElementById('progressionTitle').textContent=title;document.getElementById('progressionValue').textContent=value;document.getElementById('progressionCopy').textContent=copy;e.classList.remove('active');void e.offsetWidth;e.classList.add('active');e.setAttribute('aria-hidden','false');document.getElementById('commandDeck')?.classList.add('progression-pulse');setTimeout(()=>document.getElementById('commandDeck')?.classList.remove('progression-pulse'),900)
+}
+document.addEventListener('DOMContentLoaded',ensureProgressionFx);
+const _v23LevelUp=showLevelUpModal;
+showLevelUpModal=function(newLevel,rank){const oldRank=getRank(Math.max(1,newLevel-1));const promoted=oldRank.name!==rank.name;showProgressionEvent(promoted?'rank':'level',promoted?'RANK PROMOTION':'LEVEL UP',promoted?rank.name.toUpperCase():'LEVEL '+newLevel,promoted?rank.title.toUpperCase():'SYSTEM CAPABILITY INCREASED // '+rank.title.toUpperCase())};
+const _v23CheckAchievements=checkAchievements;
+checkAchievements=function(){const before=new Set(state.achievements.filter(a=>a.unlocked).map(a=>a.id));_v23CheckAchievements();const fresh=state.achievements.find(a=>a.unlocked&&!before.has(a.id));if(fresh){const def=ACHIEVEMENTS.find(a=>a.id===fresh.id);if(def)showProgressionEvent('achievement','ACHIEVEMENT UNLOCKED',def.title.toUpperCase(),def.desc.toUpperCase())}};
+window.SystemProgression={show:showProgressionEvent,bossUnlocked:(name='BOSS STAGE')=>showProgressionEvent('boss','BOSS STAGE UNLOCKED',name.toUpperCase(),'HIGH-VALUE CHALLENGE AVAILABLE // PREPARE FOR DEPLOYMENT')};
