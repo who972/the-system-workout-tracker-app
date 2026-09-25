@@ -134,38 +134,9 @@ function renderRankPath(){const el=ensureRankPath();if(!el)return;const s=loadSi
  const btn=document.getElementById('rankPathToggle'),track=document.getElementById('rankPathTrack');btn.onclick=()=>{const open=track.classList.toggle('open');btn.textContent=open?'HIDE PATH':'VIEW PATH'}
 }
 
-function adaptiveMissions(){return []}
-function todayWorkoutEvidence(){return typeof workoutHistory==='function'?workoutHistory().filter(x=>x.date===today()):[]}
-function sessionMinutes(x){return Math.max(0,Number(x?.seconds||0)/60)}
-function sessionText(x){return [x?.mission,...(x?.sets||[]).map(s=>s.name)].join(' ').toLowerCase()}
-function sessionReps(x,pattern){return (x?.sets||[]).filter(s=>pattern.test(String(s.name||'').toLowerCase())).reduce((n,s)=>n+(Number(s.reps)||0),0)}
-function missionEvidence(id,evidence){
- const mins=evidence.reduce((n,x)=>n+sessionMinutes(x),0),text=evidence.map(sessionText).join(' ');
- const has=p=>p.test(text),core=evidence.reduce((n,x)=>n+sessionReps(x,/plank|crunch|sit.?up|dead bug|core|mountain climber/),0),body=evidence.reduce((n,x)=>n+sessionReps(x,/push|squat|lunge|bridge|plank|mountain climber|burpee|sit.?up|crunch/),0);
- const checks={
-  walk20:()=>mins>=20&&has(/walk/),core50:()=>core>=50,mobility:()=>mins>=10&&has(/mobility|stretch|yoga|flex/),weekend:()=>[0,6].includes(new Date().getDay())&&evidence.length>0,
-  challenge100:()=>body>=100,cardio25:()=>mins>=25&&has(/cardio|walk|run|bike|rower|rowing machine|swim|endurance/),
-  eliteCircuit:()=>has(/circuit|full body/)&&mins>=20,masterMobility:()=>mins>=20&&has(/mobility|stretch|yoga|flex/)&&has(/plank|core|dead bug|crunch|sit.?up/),
-  sRankSession:()=>mins>=45,nationalTrial:()=>mins>=60&&has(/strength|push|press|squat|lunge|row|deadlift/)&&has(/conditioning|cardio|walk|run|bike|hiit|circuit/),
-  sovereignTrial:()=>mins>=45&&has(/full body|strength|conditioning|circuit/)
- };
- return checks[id]?checks[id]():evidence.length>0;
-}
-function adaptiveEvidence(m,evidence){
- if(!m||!evidence.length)return false;const mins=evidence.reduce((n,x)=>n+sessionMinutes(x),0),text=evidence.map(sessionText).join(' '),has=p=>p.test(text);
- if(m.stat==='Strength')return has(/strength|hypertrophy|push|press|squat|lunge|row|deadlift/);
- if(m.stat==='Endurance')return mins>=20&&has(/endurance|cardio|walk|run|bike|rower|rowing machine|swim/);
- if(m.stat==='Conditioning')return mins>=20&&has(/conditioning|fat loss|circuit|hiit|mountain climber|high knees/);
- if(m.stat==='Mobility')return mins>=10&&has(/mobility|stretch|yoga|flex/);
- if(m.stat==='Recovery')return mins>=10&&has(/recovery|mobility|stretch|walk/);
- if(m.stat==='Consistency')return evidence.length>0;
- return false;
-}
-function completeAdaptiveMission(id){const evidence=todayWorkoutEvidence(),s=loadSideSystem();s.adaptiveDone=s.adaptiveDone||[];if(s.adaptiveDone.includes(id))return;const m=adaptiveMissions().find(x=>x.id===id);if(!m)return;if(!adaptiveEvidence(m,evidence)){alert('SYSTEM: Today’s logged training does not yet satisfy this mission. Complete the required training before claiming XP.');return;}s.adaptiveDone.push(id);saveSideSystem(s);if(typeof addXp==='function')addXp(m.xp,'adaptive-mission');if(typeof addSystemMessage==='function')addSystemMessage(m.tag+' COMPLETE: '+m.title+' — +'+m.xp+' XP','quest');if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();renderSideSystem()}
-function ensureAdaptivePanel(){let el=document.getElementById('adaptiveMissionPanel');if(el)return el;const root=document.getElementById('sideMissionSystem');if(!root)return null;el=document.createElement('section');el.id='adaptiveMissionPanel';el.className='adaptive-mission-panel';const grid=root.querySelector('.side-system-grid');root.insertBefore(el,grid||null);return el}
 function renderAdaptiveMissions(){const el=document.getElementById('adaptiveMissionPanel');if(el)el.remove()}
 function renderSideSystem(){renderPlayerStatus();const root=document.getElementById('sideMissionSystem');if(!root)return;const s=loadSideSystem(),missions=document.getElementById('sideMissionList');renderRankPath();
-renderAdaptiveMissions();const available=unlockedMissions(s),count=available.filter(m=>s.completed.includes(m.id)).length;missions.innerHTML='<div class="side-board-progress"><strong>DAILY SIDE MISSIONS • '+count+'/5</strong><span>3/5: +50 XP • 5/5: +100 XP</span></div>'+available.map(m=>{const h=m.id==='steps'?loadHealthData():null,hs=h?healthProviderStatus():null,stepUI=h?'<div class="step-provider"><div class="step-progress"><strong>'+h.steps.toLocaleString()+' / '+h.stepGoal.toLocaleString()+' STEPS</strong><div class="step-track"><i style="width:'+Math.min(100,Math.round(h.steps/h.stepGoal*100))+'%"></i></div></div>'+(hs.connected?'<button type="button" data-health-sync>SYNC HEALTH CONNECT</button>':'<label>Today’s steps <input data-step-input type="number" min="0" step="100" value="'+h.steps+'"></label>')+'<label>Goal <input data-step-goal type="number" min="1000" step="500" value="'+h.stepGoal+'"></label><small>Source: '+hs.label+(hs.connected?' • Permission-based Android sync':' • Automatic sync activates in the Android app')+'</small></div>':'';return '<article class="side-card '+(s.completed.includes(m.id)?'is-done':'')+'"><div><span class="side-tag">'+(m.tag||'SIDE MISSION')+(m.stat?' • '+m.stat.toUpperCase():'')+'</span><h3>'+m.title+'</h3><p>'+m.desc+'</p>'+stepUI+'<details class="side-ideas"><summary>IDEAS</summary><ul>'+(m.ideas||[]).map(x=>'<li>'+x+'</li>').join('')+'</ul></details></div><div class="side-reward">+'+m.xp+' XP</div><button data-side="'+m.id+'" '+(s.completed.includes(m.id)?'disabled':'')+'>'+(s.completed.includes(m.id)?'COMPLETE':'CLAIM COMPLETE')+'</button></article>'}).join('');
+renderAdaptiveMissions();const available=unlockedMissions(s),dailyIds=dailySideMissions().map(x=>x.id),count=s.completed.filter(id=>dailyIds.includes(id)).length;missions.innerHTML='<div class="side-board-progress"><strong>DAILY SIDE MISSIONS • '+count+'/5</strong><span>3/5: +50 XP • 5/5: +100 XP</span></div>'+available.map(m=>{const h=m.id==='steps'?loadHealthData():null,hs=h?healthProviderStatus():null,stepUI=h?'<div class="step-provider"><div class="step-progress"><strong>'+h.steps.toLocaleString()+' / '+h.stepGoal.toLocaleString()+' STEPS</strong><div class="step-track"><i style="width:'+Math.min(100,Math.round(h.steps/h.stepGoal*100))+'%"></i></div></div>'+(hs.connected?'<button type="button" data-health-sync>SYNC HEALTH CONNECT</button>':'<label>Today’s steps <input data-step-input type="number" min="0" step="100" value="'+h.steps+'"></label>')+'<label>Goal <input data-step-goal type="number" min="1000" step="500" value="'+h.stepGoal+'"></label><small>Source: '+hs.label+(hs.connected?' • Permission-based Android sync':' • Automatic sync activates in the Android app')+'</small></div>':'';return '<article class="side-card '+(s.completed.includes(m.id)?'is-done':'')+'"><div><span class="side-tag">'+(m.tag||'SIDE MISSION')+(m.stat?' • '+m.stat.toUpperCase():'')+'</span><h3>'+m.title+'</h3><p>'+m.desc+'</p>'+stepUI+'<details class="side-ideas"><summary>IDEAS</summary><ul>'+(m.ideas||[]).map(x=>'<li>'+x+'</li>').join('')+'</ul></details></div><div class="side-reward">+'+m.xp+' XP</div><button data-side="'+m.id+'" '+(s.completed.includes(m.id)?'disabled':'')+'>'+(s.completed.includes(m.id)?'COMPLETE':'CLAIM COMPLETE')+'</button></article>'}).join('');
 missions.querySelectorAll('[data-side]').forEach(x=>x.onclick=()=>completeSideMission(x.dataset.side));
 const stepInput=missions.querySelector('[data-step-input]'),stepGoal=missions.querySelector('[data-step-goal]');
 if(stepInput)stepInput.onchange=()=>setManualSteps(stepInput.value);
