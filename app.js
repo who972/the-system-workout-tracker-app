@@ -56,24 +56,24 @@ const ACHIEVEMENTS = [
 
   // Silver
   { id: 'day_7',         tier: 'silver', icon: '⚡', title: 'Consistent',         desc: '7-day workout streak',                requirement: s => s.bestStreak >= 7 },
-  { id: 'level_10',      tier: 'silver', icon: '💎', title: 'D-Rank Hunter',     desc: 'Reach Level 10',                      requirement: s => s.level >= 10 },
+  { id: 'level_10',      tier: 'silver', icon: '💎', title: 'D-Rank Hunter',     desc: 'Reach Level 10 and earn D-Class promotion', requirement: s => s.level >= 10 && hasRankPromotion('D') },
   { id: 'fifty_quests',  tier: 'silver', icon: '📋', title: 'Quest Adept',        desc: 'Complete 50 quests total',            requirement: s => s.totalQuestsCompleted >= 50 },
   { id: 'weekly_1',      tier: 'silver', icon: '🎯', title: 'Weekly Warrior',    desc: 'Complete a weekly objective',         requirement: s => s.weeklyCompleted >= 1 },
 
   // Gold
   { id: 'day_14',        tier: 'gold',   icon: '🌟', title: 'Unstoppable',        desc: '14-day workout streak',               requirement: s => s.bestStreak >= 14 },
-  { id: 'level_25',      tier: 'gold',   icon: '👑', title: 'B-Rank Hunter',     desc: 'Reach Level 25',                      requirement: s => s.level >= 25 },
+  { id: 'level_25',      tier: 'gold',   icon: '👑', title: 'Level 25 Veteran',   desc: 'Reach Level 25',                      requirement: s => s.level >= 25 },
   { id: 'hundred_quests',tier: 'gold',   icon: '📜', title: 'Quest Master',       desc: 'Complete 100 quests total',           requirement: s => s.totalQuestsCompleted >= 100 },
   { id: 'all_daily',     tier: 'gold',   icon: '✨', title: 'Daily Conqueror',   desc: 'Complete all daily quests in one day', requirement: s => s.allDailyCompleted },
 
   // S-Rank
   { id: 'day_30',        tier: 'srank',  icon: '💥', title: 'Iron Will',          desc: '30-day workout streak',               requirement: s => s.bestStreak >= 30 },
-  { id: 'level_50',      tier: 'srank',  icon: '🔥', title: 'S-Rank Hunter',     desc: 'Reach Level 50',                      requirement: s => s.level >= 50 },
+  { id: 'level_50',      tier: 'srank',  icon: '🔥', title: 'S-Rank Hunter',     desc: 'Reach Level 50 and earn S-Class promotion', requirement: s => s.level >= 50 && hasRankPromotion('S') },
   { id: 'week_complete', tier: 'srank',  icon: '🏆', title: 'Weekly Dominator',  desc: 'Complete all weekly objectives',      requirement: s => s.allWeeklyCompleted },
 
   // Shadow Sovereign
   { id: 'day_60',        tier: 'shadow', icon: '🌑', title: 'Eternal Shadow',    desc: '60-day workout streak',               requirement: s => s.bestStreak >= 60 },
-  { id: 'level_90',      tier: 'shadow', icon: '👁️', title: 'Shadow Sovereign',  desc: 'Reach Level 90',                      requirement: s => s.level >= 90 },
+  { id: 'level_90',      tier: 'shadow', icon: '👁️', title: 'Shadow Sovereign',  desc: 'Reach Level 90 and clear the Sovereign Trial', requirement: s => s.level >= 90 && hasRankPromotion('Shadow') },
   { id: 'two_hundred',   tier: 'shadow', icon: '💀', title: 'Legend',            desc: 'Complete 200 quests total',           requirement: s => s.totalQuestsCompleted >= 200 },
 ];
 
@@ -103,6 +103,16 @@ const safeStorage = {
   setItem(k, v) { try { if (_ls) _ls.setItem(k, v); else _memStore[k] = v; } catch(e) { _memStore[k] = v; } },
   removeItem(k) { try { if (_ls) _ls.removeItem(k); else delete _memStore[k]; } catch(e) { delete _memStore[k]; } }
 };
+
+function hasRankPromotion(rank) {
+  if (rank === 'E') return true;
+  try {
+    const system = JSON.parse(safeStorage.getItem('systemMission:sideBossV3') || '{}');
+    return !!system?.boss?.[rank]?.passed;
+  } catch (e) {
+    return false;
+  }
+}
 
 function getTodayStr() {
   const d = new Date();
