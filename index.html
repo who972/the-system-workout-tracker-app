@@ -336,12 +336,14 @@
   </section>
 
 
-  <!-- Exercise Library v9 -->
-  <section class="exercise-library missions-secondary" id="exerciseLibrary">
-    <div class="quest-section__header"><div><h2 class="quest-section__title">Exercise Library</h2><p class="quest-section__desc">Browse built-in exercises or add your own. Library exercises can be loaded directly into the Workout Builder.</p></div><span class="quest-section__meta">V9 LIBRARY</span></div>
+  <!-- Exercise Library v11: collapsed by default, preference persisted in app.js -->
+  <section class="exercise-library missions-secondary is-collapsed" id="exerciseLibrary">
+    <button id="exerciseLibraryToggle" class="library-collapse-toggle" type="button" aria-expanded="false" aria-controls="exerciseLibraryBody"><div><span class="analytics-kicker">MISSION TOOLS</span><h2 class="quest-section__title">Exercise Library</h2><p class="quest-section__desc">Browse built-in exercises or add your own.</p></div><span class="library-collapse-state">EXPAND ▾</span></button>
+    <div id="exerciseLibraryBody" class="exercise-library-body">
     <div class="library-toolbar"><input id="librarySearch" class="form-input" placeholder="Search exercises"><select id="libraryMuscle" class="form-input"><option value="all">All muscle groups</option></select><select id="libraryEquipment" class="form-input"><option value="all">All equipment</option></select></div>
     <div id="exerciseLibraryGrid" class="exercise-library-grid"></div>
     <details class="library-add"><summary>+ Add Custom Exercise</summary><form id="libraryExerciseForm" class="builder-form"><div class="builder-row"><input id="libName" class="form-input" placeholder="Exercise name" required><input id="libMuscle" class="form-input" placeholder="Muscle group" required><input id="libEquipment" class="form-input" placeholder="Equipment" value="Bodyweight" required><select id="libDifficulty" class="form-input"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select><select id="libStat" class="form-input"><option value="str">STR</option><option value="end">END</option><option value="agi">AGI</option><option value="vit">VIT</option></select><input id="libSets" class="form-input" type="number" min="1" max="20" value="3" aria-label="Default sets"><input id="libTarget" class="form-input" value="8-12 reps" aria-label="Default target"><input id="libRest" class="form-input" type="number" min="0" max="600" value="45" aria-label="Default rest seconds"></div><button class="btn-primary" type="submit">Save Exercise</button></form></details>
+    </div>
   </section>
 
   <!-- Exercise Logger -->
