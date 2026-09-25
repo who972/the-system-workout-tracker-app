@@ -4,9 +4,9 @@
   "description": "Gamified workout tracking, live training, progression, analytics and custom missions.",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#0a0c10",
-  "theme_color": "#0a0c10",
-  "orientation": "portrait-primary",
+  "background_color": "#02070c",
+  "theme_color": "#02070c",
+  "orientation": "landscape",
   "icons": [
     {
       "src": "icon.svg",
