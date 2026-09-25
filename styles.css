@@ -1660,3 +1660,25 @@ html,body{background:#02070c}
 .holo-window h2{margin:4px 0 9px;font:700 clamp(13px,1.7vw,20px) var(--font-display);letter-spacing:.08em;color:#e7fcff}.holo-window__body{font:9px/1.45 var(--font-mono);color:#9bc4ce;max-height:115px;overflow:auto}.holo-window__body strong{color:#e9fdff}.holo-data{display:grid;grid-template-columns:1fr 1fr;gap:5px}.holo-data div{padding:5px;border:1px solid rgba(103,232,249,.14);background:rgba(8,44,58,.28)}.holo-data b{display:block;color:#dffcff;font-size:12px}.holo-link{display:block;width:100%;margin-top:8px;padding:6px;border:1px solid rgba(103,232,249,.3);background:rgba(6,45,61,.5);color:#85edff;font:700 8px var(--font-mono);letter-spacing:.1em}.holo-window__scan{position:absolute;z-index:5;left:0;right:0;height:1px;background:#9bf6ff;box-shadow:0 0 10px #67e8f9;animation:holoScan 1.8s linear infinite;pointer-events:none;opacity:.45}
 @keyframes holoProject{from{opacity:0;transform:scale(.15,.8);filter:brightness(2)}65%{opacity:1;transform:scale(1.04,1)}to{transform:scale(1)}}@keyframes holoScan{from{top:0}to{top:100%}}
 @media (orientation:landscape) and (max-height:620px){.system-core{width:min(37vw,330px)}.core-orbit-menu button{width:46px;height:46px;margin:-23px}.core-orbit-menu button span{top:49px;font-size:6px}.holo-window__body{max-height:82px}.holo-window{padding:9px 11px}.system-core.is-projecting .system-core__center{width:70%}}
+
+
+/* ===== V14 THE SYSTEM OS APP SHELL ===== */
+body.system-os-ready{height:100dvh;overflow:hidden}
+body.system-os-ready>.ambient-bg,body.system-os-ready>.header,body.system-os-ready>.app-nav{display:none!important}
+body.system-os-ready>.command-deck{height:100dvh;min-height:100dvh;margin:0;padding:22px 28px 62px;box-sizing:border-box;border:0}
+body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(script){display:none!important}
+.os-topbar{position:absolute;z-index:20;left:18px;right:18px;top:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font:700 9px var(--font-mono);letter-spacing:.16em;color:#72dced}
+.os-topbar b{color:#dffcff}.os-topbar__right{display:flex;gap:18px}
+.os-module-stage{position:fixed;z-index:1500;inset:5vh 5vw;display:none;grid-template-rows:auto 1fr;border:1px solid rgba(103,232,249,.55);background:linear-gradient(180deg,rgba(3,20,31,.97),rgba(1,8,14,.985));box-shadow:0 0 70px rgba(34,211,238,.18),inset 0 0 45px rgba(34,211,238,.04);clip-path:polygon(0 18px,18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px))}
+.os-module-stage.active{display:grid;animation:holoProject .24s ease}
+.os-module-head{display:flex;align-items:center;justify-content:space-between;padding:13px 17px;border-bottom:1px solid rgba(103,232,249,.2);background:rgba(5,34,48,.48)}
+.os-module-head small{display:block;font:700 8px var(--font-mono);letter-spacing:.17em;color:#67e8f9}.os-module-head strong{font:700 18px var(--font-display);letter-spacing:.08em;color:#e8fcff}
+.os-module-controls{display:flex;gap:7px}.os-module-controls button{width:34px;height:30px;border:1px solid rgba(103,232,249,.3);background:rgba(3,22,32,.7);color:#8feeff;font:700 14px var(--font-mono)}
+.os-module-body{position:relative;overflow:auto;padding:18px}.os-module-body>*{display:block!important;max-width:none!important;margin:0!important}
+.os-module-body .system-hud,.os-module-body .card,.os-module-body .analytics-section,.os-module-body .side-system,.os-module-body .settings-section{border-color:rgba(103,232,249,.2)!important;background:rgba(4,18,28,.72)!important}
+.os-module-stage.minimized{inset:auto 18px 18px auto;width:260px;height:48px;display:block;overflow:hidden}.os-module-stage.minimized .os-module-body{display:none}.os-module-stage.minimized .os-module-head{height:48px;box-sizing:border-box}
+.os-backdrop{position:fixed;z-index:1400;inset:0;display:none;background:rgba(0,5,9,.52);backdrop-filter:blur(2px)}.os-backdrop.active{display:block}
+body.system-os-ready .system-core-wrap{padding-top:14px}
+body.system-os-ready .command-deck:after{animation:osPulse 3.4s ease-in-out infinite}
+@keyframes osPulse{0%,100%{opacity:.35}50%{opacity:1}}
+@media (orientation:landscape) and (max-height:620px){body.system-os-ready>.command-deck{padding:12px 18px 48px}.os-module-stage{inset:3vh 3vw}.os-module-body{padding:12px}.os-topbar{top:6px}}
