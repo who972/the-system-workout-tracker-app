@@ -517,9 +517,10 @@
 
 <datalist id="exerciseLibraryNames"></datalist>
 <script src="app.js?v=auth27"></script>
-<script src="side-system.js?v=36"></script>
+<script src="health-connect.js?v=1"></script>
+<script src="side-system.js?v=37"></script>
 <script>
-if("serviceWorker" in navigator){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
+if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.net"){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 (function(){
   const views={
     home:["playerCard","daily-mission"],

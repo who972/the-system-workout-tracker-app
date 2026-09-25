@@ -1,0 +1,4 @@
+<resources>
+    <string name="app_name">THE SYSTEM</string>
+    <string name="steps_privacy">THE SYSTEM — Steps privacy\n\nWith your permission, THE SYSTEM reads today\'s total steps from Health Connect when you tap Sync Health Connect. This updates your daily steps and Step Hunter progress. We request read access to Steps only. We do not write health records or read in the background.\n\nThe daily total is saved locally in the app. The native integration does not upload Health Connect records. If you choose the workout tracker\'s backup/export or cloud sync features, the saved daily total is included with your other app data.\n\nYou can revoke Steps access in Health Connect settings at any time and continue entering steps manually. Clearing this app\'s storage removes locally saved data.</string>
+</resources>
