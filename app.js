@@ -360,7 +360,7 @@ function completeQuest(questId) {
 
   // Weekly training days (once per day)
   const wDays = state.weeklyGoals.find(g => g.id === 'w_days');
-  if (wDays && !wDays.completed) {
+  if (qualifies && wDays && !wDays.completed) {
     const today = getTodayStr();
     const trainedToday = state.history.some(h => h.date === today);
     if (!trainedToday) {
@@ -434,6 +434,9 @@ function recordHistory(questId, xpEarned) {
 
 // --- Custom Workout ---
 function logCustomWorkout(name, duration, intensity) {
+  duration = Math.max(1, Number(duration)||0);
+  intensity = Math.max(.25, Math.min(1, Number(intensity)||1));
+  const qualifies = duration >= 10;
   const xp = Math.floor(duration * intensity * 3);
   state.totalQuestsCompleted++;
 
@@ -443,7 +446,7 @@ function logCustomWorkout(name, duration, intensity) {
 
   // Custom workout counts as one workout session for weekly goal
   const wWorkouts = state.weeklyGoals.find(g => g.id === 'w_workouts');
-  if (wWorkouts && !wWorkouts.completed) {
+  if (qualifies && wWorkouts && !wWorkouts.completed) {
     wWorkouts.progress++;
     if (wWorkouts.progress >= wWorkouts.target) {
       wWorkouts.completed = true;
@@ -471,8 +474,11 @@ function logCustomWorkout(name, duration, intensity) {
     }
   }
 
-  updateWorkoutStreak(Number(duration||0)>=10?Math.min(1,Number(duration||0)/30):0);
-  if (window.SystemBuild && typeof window.SystemBuild.awardTraining === 'function') window.SystemBuild.awardTraining(name, duration, intensity);
+  updateWorkoutStreak(qualifies?Math.min(1,duration/30):0);
+  if (qualifies && window.SystemBuild && typeof window.SystemBuild.awardTraining === 'function') window.SystemBuild.awardTraining(name, duration, intensity);
+  const sessions=workoutHistory();
+  sessions.push({date:getTodayStr(),mission:name||'Custom Workout',seconds:Math.round(duration*60),xp,workoutMode:'custom',trainingCredit:qualifies?Math.min(1,duration/30):0,prs:[],sets:[]});
+  localStorage.setItem('systemWorkoutSessions',JSON.stringify(sessions.slice(-365)));
   recordHistory('custom_' + Date.now(), xp);
   checkAchievements();
   saveState();
