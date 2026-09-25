@@ -83,40 +83,43 @@
 }
 
 [data-theme='dark'] {
-  --color-bg: #06070d;
-  --color-surface: #0d0e16;
-  --color-surface-2: #12131e;
-  --color-surface-offset: #181927;
-  --color-border: #2a2d44;
-  --color-divider: #1e1f30;
+  /* SYSTEM OS // official palette */
+  --color-bg: #05080D;
+  --color-surface: #0B111A;
+  --color-surface-2: #101923;
+  --color-surface-offset: #141E2A;
+  --color-border: #213446;
+  --color-divider: #172636;
 
-  --color-text: #c8cae0;
-  --color-text-muted: #7a7d98;
-  --color-text-faint: #4a4d68;
-  --color-text-inverse: #06070d;
+  --color-text: #EAF7FF;
+  --color-text-muted: #8293A6;
+  --color-text-faint: #526579;
+  --color-text-inverse: #05080D;
 
-  --color-cyan: #4cc9f0;
-  --color-cyan-glow: rgba(76, 201, 240, 0.35);
-  --color-cyan-bright: #7dd3fc;
-  --color-violet: #9d4edd;
-  --color-violet-glow: rgba(157, 78, 221, 0.3);
-  --color-gold: #ffd60a;
-  --color-gold-glow: rgba(255, 214, 10, 0.35);
+  --color-cyan: #00E5FF;
+  --color-cyan-glow: rgba(0, 229, 255, 0.34);
+  --color-cyan-bright: #74F4FF;
+  --color-violet: #8B5CFF;
+  --color-violet-glow: rgba(139, 92, 255, 0.28);
+  --color-gold: #FFB020;
+  --color-gold-glow: rgba(255, 176, 32, 0.30);
 
-  --tier-bronze: #cd7f32;
-  --tier-silver: #c0c0c0;
-  --tier-gold: #ffd700;
-  --tier-srank: #ff4444;
-  --tier-shadow: #9d4edd;
+  --tier-bronze: #B77A45;
+  --tier-silver: #AAB7C4;
+  --tier-gold: #FFB020;
+  --tier-srank: #FF3B4E;
+  --tier-shadow: #8B5CFF;
 
-  --color-success: #4cc9f0;
-  --color-danger: #ef4444;
+  --color-success: #39FF88;
+  --color-warning: #FFB020;
+  --color-danger: #FF3B4E;
+  --color-system-blue: #2979FF;
 
-  --glow-cyan: 0 0 20px rgba(76, 201, 240, 0.5), 0 0 40px rgba(76, 201, 240, 0.2), 0 0 60px rgba(76, 201, 240, 0.08);
-  --glow-gold: 0 0 20px rgba(255, 214, 10, 0.5), 0 0 40px rgba(255, 214, 10, 0.2);
+  --glow-cyan: 0 0 12px rgba(0,229,255,.38), 0 0 28px rgba(0,229,255,.16), 0 0 56px rgba(0,229,255,.06);
+  --glow-gold: 0 0 14px rgba(255,176,32,.36), 0 0 32px rgba(255,176,32,.12);
 
-  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.5);
-  --shadow-lg: 0 12px 48px rgba(0, 0, 0, 0.6);
+  --shadow-card: 0 10px 30px rgba(0,0,0,.42);
+  --shadow-lg: 0 18px 60px rgba(0,0,0,.62);
 }
 
 /* --- Base --- */
@@ -1710,3 +1713,64 @@ body.workout-open .workout-main-btn{border:1px solid rgba(103,232,249,.6);backgr
 
 /* ===== V17 SOCIAL COMMAND ===== */
 .social-command{display:grid;grid-template-columns:1.15fr .85fr;gap:12px}.social-card{padding:15px;border:1px solid rgba(103,232,249,.18);background:rgba(4,20,30,.62)}.social-card--wide{grid-column:1/-1}.social-head{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.social-head span{font:700 8px var(--font-mono);letter-spacing:.16em;color:#67e8f9}.social-head b{font:700 10px var(--font-mono)}.leader-row{display:grid;grid-template-columns:34px 1fr auto;gap:10px;align-items:center;padding:9px 0;border-bottom:1px solid rgba(103,232,249,.1)}.leader-row:last-child{border:0}.leader-rank{font:900 16px var(--font-mono);color:#67e8f9}.leader-name strong,.leader-name small{display:block}.leader-name small{font:8px var(--font-mono);opacity:.55}.leader-xp{text-align:right;font:700 10px var(--font-mono)}.social-actions{display:grid;grid-template-columns:1fr 1fr;gap:8px}.social-actions button,.challenge-form button{min-height:40px;border:1px solid rgba(103,232,249,.35);background:rgba(8,145,178,.1);color:#dffcff;font-weight:800}.challenge-form{display:grid;gap:8px}.challenge-form input,.challenge-form select{padding:10px;border:1px solid rgba(103,232,249,.2);background:#031019;color:#dffcff}.challenge-list{display:grid;gap:8px;margin-top:10px}.challenge-item{padding:10px;border-left:2px solid #67e8f9;background:rgba(103,232,249,.045)}.challenge-item strong,.challenge-item small{display:block}.challenge-item small{margin-top:4px;opacity:.6}.social-empty{padding:18px;text-align:center;opacity:.6;font:10px var(--font-mono)}@media(max-width:800px){.social-command{grid-template-columns:1fr}.social-card--wide{grid-column:auto}}
+
+
+/* SYSTEM OS // Palette Lock v14 */
+:root{
+  --system-void:#05080D;
+  --system-graphite:#0B111A;
+  --system-gunmetal:#141E2A;
+  --system-cyan:#00E5FF;
+  --system-blue:#2979FF;
+  --system-violet:#8B5CFF;
+  --system-green:#39FF88;
+  --system-amber:#FFB020;
+  --system-red:#FF3B4E;
+  --system-white:#EAF7FF;
+  --system-steel:#8293A6;
+}
+html[data-theme="dark"] body{
+  background:
+    radial-gradient(circle at 50% 32%,rgba(0,229,255,.055),transparent 34%),
+    radial-gradient(circle at 82% 78%,rgba(139,92,255,.04),transparent 30%),
+    var(--system-void);
+}
+html[data-theme="dark"] .command-deck,
+html[data-theme="dark"] .system-core-wrap{color:var(--system-white)}
+html[data-theme="dark"] .hud-module,
+html[data-theme="dark"] .holo-window,
+html[data-theme="dark"] .player-card,
+html[data-theme="dark"] .system-panel,
+html[data-theme="dark"] .quest-section,
+html[data-theme="dark"] .analytics-card,
+html[data-theme="dark"] .builder-card,
+html[data-theme="dark"] .library-card{
+  background:linear-gradient(145deg,rgba(11,17,26,.94),rgba(20,30,42,.72));
+  border-color:rgba(0,229,255,.16);
+}
+html[data-theme="dark"] .hud-module__tag,
+html[data-theme="dark"] .system-boot__eyebrow,
+html[data-theme="dark"] .analytics-kicker{color:var(--system-cyan)}
+html[data-theme="dark"] .hud-meter i,
+html[data-theme="dark"] .xp-bar-fill,
+html[data-theme="dark"] .quest-item__progress-fill{background:linear-gradient(90deg,var(--system-blue),var(--system-cyan))}
+html[data-theme="dark"] .os-dock button:hover,
+html[data-theme="dark"] .os-dock button:focus-visible,
+html[data-theme="dark"] .core-orbit-menu button:hover,
+html[data-theme="dark"] .core-orbit-menu button:focus-visible{
+  color:var(--system-cyan);
+  border-color:rgba(0,229,255,.7);
+  box-shadow:0 0 18px rgba(0,229,255,.2);
+}
+html[data-theme="dark"] .quest-item--completed,
+html[data-theme="dark"] .system-log__entry--quest{color:var(--system-green)}
+html[data-theme="dark"] .mission-xp,
+html[data-theme="dark"] .daily-bonus__text--complete{color:var(--system-violet)}
+html[data-theme="dark"] .hud-module--mission button,
+html[data-theme="dark"] .core-action{
+  border-color:var(--system-cyan);
+  color:var(--system-cyan);
+  box-shadow:0 0 18px rgba(0,229,255,.12);
+}
+html[data-theme="dark"] [data-holo="boss"]{color:var(--system-red)}
+html[data-theme="dark"] .system-log__entry--warning{color:var(--system-amber);border-left-color:var(--system-amber)}
