@@ -24,7 +24,7 @@ function buildEligible(rank){return weakestStats(rank).length===0}
 function correctiveMission(rank){const w=weakestStats(rank)[0];if(!w)return null;const map={Strength:'Complete a strength-focused training session.',Endurance:'Complete 20+ minutes of steady endurance work.',Conditioning:'Complete a full-body conditioning circuit.',Mobility:'Complete 15 minutes of mobility work.',Consistency:'Complete your scheduled training sessions this week.',Recovery:'Complete a recovery session and prioritize rest.'};return{stat:w.stat,desc:map[w.stat],gap:w.gap}}
 const RANK_REWARDS={
  E:{label:'AWAKENED',desc:'Core daily Side Missions'},
- D:{label:'HUNTER',desc:'Challenge Missions unlocked',bonus:10},
+ D:{label:'HUNTER',desc:'Challenge Missions + 10% Side Mission XP',bonus:10},
  C:{label:'VETERAN',desc:'Advanced Missions + 15% Side Mission XP',bonus:15},
  B:{label:'ELITE',desc:'Elite Missions + 20% Side Mission XP',bonus:20},
  A:{label:'MASTER',desc:'Master Missions + 25% Side Mission XP',bonus:25},
@@ -115,7 +115,11 @@ function loadSideSystem(){let s={};try{s=JSON.parse(localStorage.getItem(SIDE_SY
 function saveSideSystem(s){localStorage.setItem(SIDE_SYSTEM_KEY,JSON.stringify(s))}
 function currentClass(s){let c='E';for(const b of BOSS_STAGES)if(s.boss[b.rank]?.passed)c=b.rank;return c}
 function rankIndex(rank){return ['E','D','C','B','A','S','S+','Shadow'].indexOf(rank)}
-function unlockedMissions(s){return dailySideMissions()}
+function unlockedMissions(s){
+ const daily=dailySideMissions(),cur=currentClass(s),ci=rankIndex(cur);
+ const rankMission=RANK_MISSIONS.filter(m=>rankIndex(m.rank)<=ci).slice(-1)[0];
+ return rankMission?[...daily,{...rankMission,category:'rank',ideas:['Complete this challenge through your logged training.'],rankMission:true}]:daily
+}
 function rewardXp(base,s){const r=RANK_REWARDS[currentClass(s)]||RANK_REWARDS.E;return Math.round(base*(1+(r.bonus||0)/100))}
 function bossIndex(rank){return BOSS_STAGES.findIndex(b=>b.rank===rank)}
 function eligible(b,s){const i=bossIndex(b.rank),level=typeof state!=='undefined'?state.level:1;return level>=b.level&&(i===0||!!s.boss[BOSS_STAGES[i-1].rank]?.passed)&&buildEligible(b.rank)}
@@ -173,11 +177,11 @@ return '<article class="boss-card boss-ready"><span class="side-tag">BOSS INTEL<
 wrap.querySelectorAll('[data-start]').forEach(x=>x.onclick=()=>startBoss(x.dataset.start))}
 function completeSideMission(id){const evidence=todayWorkoutEvidence(),s=loadSideSystem(),m=unlockedMissions(s).find(x=>x.id===id);if(!m||s.completed.includes(id))return;
  if(id==='steps'){const h=loadHealthData();if(h.steps<h.stepGoal){alert('SYSTEM: Step Hunter requires '+h.stepGoal.toLocaleString()+' steps. Current progress: '+h.steps.toLocaleString()+'.');return;}}\n const verifiable=['mobility'];if(verifiable.includes(id)&&!missionEvidence(id,evidence)){alert('SYSTEM: Today’s logged training does not yet satisfy '+m.title+'. Complete the mission requirement before claiming XP.');return;}
- const before=s.completed.length,earned=rewardXp(m.xp,s);s.completed.push(id);let bonus=0;if(before<3&&s.completed.length>=3&&!s.sideBonus3){s.sideBonus3=true;bonus+=50}if(before<5&&s.completed.length>=5&&!s.sideBonus5){s.sideBonus5=true;bonus+=100}saveSideSystem(s);
+ if(m.rankMission&&!missionEvidence(id,evidence)){alert('SYSTEM: Today’s logged training does not yet satisfy '+m.title+'. Complete the Rank Mission requirement before claiming XP.');return;} const dailyIds=dailySideMissions().map(x=>x.id),before=s.completed.filter(x=>dailyIds.includes(x)).length,earned=rewardXp(m.xp,s);s.completed.push(id);const dailyCompleted=s.completed.filter(x=>dailyIds.includes(x)).length;let bonus=0;if(before<3&&dailyCompleted>=3&&!s.sideBonus3){s.sideBonus3=true;bonus+=50}if(before<5&&dailyCompleted>=5&&!s.sideBonus5){s.sideBonus5=true;bonus+=100}saveSideSystem(s);
  if(m.id==='growth'&&typeof window!=='undefined'&&window.SystemBuild?.awardSideGrowth)window.SystemBuild.awardSideGrowth(m.stat,1);
  if(typeof addXp==='function'){addXp(earned,'side-mission');if(bonus)addXp(bonus,'side-mission-bonus')}
- if(typeof addSystemMessage==='function'){addSystemMessage('Side Mission Complete: '+m.title+' — +'+earned+' XP','quest');if(bonus)addSystemMessage('SIDE MISSION MILESTONE: '+s.completed.length+'/5 — +'+bonus+' BONUS XP','quest')}
- if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();renderSideSystem();if(bonus)setTimeout(()=>alert('SIDE MISSION MILESTONE\n'+s.completed.length+'/5 COMPLETE\n+'+bonus+' BONUS XP'),100)}
+ if(typeof addSystemMessage==='function'){addSystemMessage('Side Mission Complete: '+m.title+' — +'+earned+' XP','quest');if(bonus)addSystemMessage('SIDE MISSION MILESTONE: '+dailyCompleted+'/5 — +'+bonus+' BONUS XP','quest')}
+ if(typeof saveState==='function')saveState();if(typeof renderAll==='function')renderAll();renderSideSystem();if(bonus)setTimeout(()=>alert('SIDE MISSION MILESTONE\n'+dailyCompleted+'/5 COMPLETE\n+'+bonus+' BONUS XP'),100)}
 function startBoss(rank){const b=BOSS_STAGES.find(x=>x.rank===rank),s=loadSideSystem();if(!b||!eligible(b,s))return;ensureAttempt(b,s);openBossBattle(rank)}
 function ensureBattleUI(){let el=document.getElementById('bossBattleMode');if(el)return el;el=document.createElement('div');el.id='bossBattleMode';el.className='boss-battle-mode';el.innerHTML='<div class="bb-top"><div><span class="side-tag">SYSTEM • RANK TRIAL</span><h2 id="bbTitle">BOSS STAGE</h2></div><button id="bbExit">✕</button></div><div class="bb-hud"><span id="bbRank"></span><span id="bbAttempt"></span><span id="bbClock">00:00</span></div><div class="bb-hp"><div><span>BOSS HP</span><strong id="bbHpText">100 / 100</strong></div><div class="bb-hp-track"><i id="bbHpBar"></i></div></div><main class="bb-arena"><span id="bbCount" class="side-tag"></span><p id="bbFocus"></p><h1 id="bbObjective"></h1><div id="bbAttack" class="bb-attack"></div><div id="bbTimerPanel" class="bb-timer" hidden><strong id="bbTimer">00:00</strong><button id="bbTimerStart">START TIMER</button></div><button id="bbComplete" class="bb-main">COMPLETE OBJECTIVE</button><button id="bbEnd" class="bb-end">END ATTEMPT</button></main><div id="bbFlash" class="bb-flash"></div>';document.body.appendChild(el);document.getElementById('bbExit').onclick=closeBossBattle;return el}
 function openBossBattle(rank){const el=ensureBattleUI();el.dataset.rank=rank;el.classList.add('active');document.body.classList.add('boss-mode-open');const s=loadSideSystem(),e=s.boss[rank];battleStartedAt=e?.startedAt?new Date(e.startedAt).getTime():Date.now();clearInterval(bossClock);bossClock=setInterval(updateBattleClock,1000);updateBattleClock();renderBossBattle()}
