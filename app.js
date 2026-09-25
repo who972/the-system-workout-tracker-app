@@ -319,6 +319,10 @@ function updateStreak() {
   }
 }
 
+function updateWorkoutStreak() {
+  updateStreak();
+}
+
 // --- Quest Completion ---
 function completeQuest(questId) {
   const quest = state.dailyQuests.find(q => q.id === questId);
@@ -367,8 +371,7 @@ function completeQuest(questId) {
     }
   }
 
-  // Streak update
-  updateStreak();
+  // Daily quests do not advance the workout streak.
 
   // History
   recordHistory(questId, quest.xp);
@@ -464,7 +467,7 @@ function logCustomWorkout(name, duration, intensity) {
     }
   }
 
-  updateStreak();
+  updateWorkoutStreak();
   if (window.SystemBuild && typeof window.SystemBuild.awardTraining === 'function') window.SystemBuild.awardTraining(name, duration, intensity);
   recordHistory('custom_' + Date.now(), xp);
   checkAchievements();
@@ -530,7 +533,7 @@ function logExercise(name,sets,reps,weight){
   const xp=Math.max(10,Math.floor(sets*reps*2+(weight||0)*0.5)); addXp(xp,'exercise');
   if(window.SystemBuild?.awardTraining) window.SystemBuild.awardTraining(name,Math.max(5,sets*2),1);
   addSystemMessage(`${name} logged: ${sets} × ${reps}${weight?' @ '+weight+' lb':''} — +${xp} XP${isPR?' — NEW PR':''}`,'quest');
-  updateStreak(); recordHistory('exercise_'+Date.now(), xp); saveState(); renderAll(); if(typeof renderAnalytics==='function')renderAnalytics();
+  updateWorkoutStreak(); recordHistory('exercise_'+Date.now(), xp); saveState(); renderAll(); if(typeof renderAnalytics==='function')renderAnalytics();
 }
 function renderExercises(){
   const el=document.getElementById('exerciseRecords'); if(!el) return;
@@ -900,7 +903,7 @@ function renderLiveSet(){const m=missionForMode(adaptiveSystemMission()),sets=fl
 function completeLiveSet(){const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m),x=sets[liveIndex],p=getMissionProgress(),id=x.ei+'-'+x.si;p[id]={done:true,reps:Number(document.getElementById('liveReps').value)||0,weight:Number(document.getElementById('liveWeight').value)||0};saveMissionProgress(p);if(liveIndex>=sets.length-1){finishWorkout();return;}liveIndex++;if(x.rest>0)startRest(x.rest);else renderLiveSet();}
 function startRest(sec){const panel=document.getElementById('restPanel');panel.hidden=false;let left=sec;document.getElementById('restClock').textContent=fmt(left);clearInterval(restTimer);restTimer=setInterval(()=>{left--;document.getElementById('restClock').textContent=fmt(left);if(left<=0)endRest();},1000);}
 function endRest(){clearInterval(restTimer);document.getElementById('restPanel').hidden=true;renderLiveSet();}
-function finishWorkout(){const m=missionForMode(adaptiveSystemMission()),p=getMissionProgress(),records=getMissionRecords();let prs=[];m.exercises.forEach((e,i)=>{let br=0,bw=0;for(let s=0;s<e[1];s++){const x=p[i+'-'+s]||{};br=Math.max(br,x.reps||0);bw=Math.max(bw,x.weight||0);}const old=records[e[0]]||{bestReps:0,bestWeight:0};if(br>old.bestReps||bw>old.bestWeight)prs.push(e[0]);records[e[0]]={bestReps:Math.max(br,old.bestReps),bestWeight:Math.max(bw,old.bestWeight)};});localStorage.setItem(missionRecordsKey(),JSON.stringify(records));const existing=(()=>{try{return JSON.parse(localStorage.getItem('systemMissionResult:'+systemMissionKey())||'null')}catch(e){return null}})(),isUpgrade=m.mode==='full'&&existing&&existing.mode!=='full',xpAward=isUpgrade?Math.max(0,m.xp-(Number(existing.xp)||0)):m.xp;localStorage.setItem('systemMissionResult:'+systemMissionKey(),JSON.stringify({mode:m.mode||'full',credit:m.credit||1,xp:m.xp,completedAt:new Date().toISOString()}));if(m.mode==='full')localStorage.setItem('systemMission:'+systemMissionKey(),'true');const seconds=Math.round((Date.now()-workoutStartedAt)/1000),hist=workoutHistory();hist.push({date:systemMissionKey(),mission:m.name,seconds,xp:m.xp,workoutMode:m.mode||'full',trainingCredit:m.credit||1,prs:[...prs],makeupFor:m.makeupFor||null,sourceDay:m.sourceDay,sets:flatSets(m).map(x=>{const r=p[x.ei+'-'+x.si]||{};return {name:x.name,reps:r.reps||0,weight:r.weight||0};})});localStorage.setItem('systemWorkoutSessions',JSON.stringify(hist.slice(-365)));localStorage.removeItem('workoutStartedAt:'+systemMissionKey());localStorage.removeItem(workoutModeKey());addXp(xpAward,'daily mission');if(window.SystemBuild?.awardTraining)window.SystemBuild.awardTraining(m.name,Math.max(5,Math.round(seconds/60)),m.credit||1);updateStreak();recordHistory('system_mission_'+systemMissionKey()+(isUpgrade?'_upgrade':''),xpAward);addSystemMessage(`${m.name} complete — ${fmt(seconds)} • +${xpAward} XP${prs.length?' • New PR: '+prs.join(', '):''}`,'quest');saveState();closeWorkout();renderAll();renderSystemMission();renderAnalytics();setTimeout(()=>alert(`MISSION COMPLETE\n${fmt(seconds)} training time\n+${xpAward} XP${prs.length?'\nNEW PR: '+prs.join(', '):''}`),100);}
+function finishWorkout(){const m=missionForMode(adaptiveSystemMission()),p=getMissionProgress(),records=getMissionRecords();let prs=[];m.exercises.forEach((e,i)=>{let br=0,bw=0;for(let s=0;s<e[1];s++){const x=p[i+'-'+s]||{};br=Math.max(br,x.reps||0);bw=Math.max(bw,x.weight||0);}const old=records[e[0]]||{bestReps:0,bestWeight:0};if(br>old.bestReps||bw>old.bestWeight)prs.push(e[0]);records[e[0]]={bestReps:Math.max(br,old.bestReps),bestWeight:Math.max(bw,old.bestWeight)};});localStorage.setItem(missionRecordsKey(),JSON.stringify(records));const existing=(()=>{try{return JSON.parse(localStorage.getItem('systemMissionResult:'+systemMissionKey())||'null')}catch(e){return null}})(),isUpgrade=m.mode==='full'&&existing&&existing.mode!=='full',xpAward=isUpgrade?Math.max(0,m.xp-(Number(existing.xp)||0)):m.xp;localStorage.setItem('systemMissionResult:'+systemMissionKey(),JSON.stringify({mode:m.mode||'full',credit:m.credit||1,xp:m.xp,completedAt:new Date().toISOString()}));if(m.mode==='full')localStorage.setItem('systemMission:'+systemMissionKey(),'true');const seconds=Math.round((Date.now()-workoutStartedAt)/1000),hist=workoutHistory();hist.push({date:systemMissionKey(),mission:m.name,seconds,xp:m.xp,workoutMode:m.mode||'full',trainingCredit:m.credit||1,prs:[...prs],makeupFor:m.makeupFor||null,sourceDay:m.sourceDay,sets:flatSets(m).map(x=>{const r=p[x.ei+'-'+x.si]||{};return {name:x.name,reps:r.reps||0,weight:r.weight||0};})});localStorage.setItem('systemWorkoutSessions',JSON.stringify(hist.slice(-365)));localStorage.removeItem('workoutStartedAt:'+systemMissionKey());localStorage.removeItem(workoutModeKey());addXp(xpAward,'daily mission');if(window.SystemBuild?.awardTraining)window.SystemBuild.awardTraining(m.name,Math.max(5,Math.round(seconds/60)),m.credit||1);updateWorkoutStreak();recordHistory('system_mission_'+systemMissionKey()+(isUpgrade?'_upgrade':''),xpAward);addSystemMessage(`${m.name} complete — ${fmt(seconds)} • +${xpAward} XP${prs.length?' • New PR: '+prs.join(', '):''}`,'quest');saveState();closeWorkout();renderAll();renderSystemMission();renderAnalytics();setTimeout(()=>alert(`MISSION COMPLETE\n${fmt(seconds)} training time\n+${xpAward} XP${prs.length?'\nNEW PR: '+prs.join(', '):''}`),100);}
 function closeWorkout(){clearInterval(liveTimer);clearInterval(restTimer);document.getElementById('workoutMode').classList.remove('active');document.getElementById('workoutMode').setAttribute('aria-hidden','true');document.body.classList.remove('workout-open');}
 document.addEventListener('DOMContentLoaded',()=>{renderSystemMission();renderAnalytics();document.getElementById('completeLiveSet').onclick=completeLiveSet;document.getElementById('exitWorkoutBtn').onclick=closeWorkout;document.getElementById('skipRestBtn').onclick=endRest;});
 
