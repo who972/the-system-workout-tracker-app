@@ -213,8 +213,12 @@ function loadState() {
     }
 
     state.achievements = ACHIEVEMENTS.map(a => {
-      const saved = state.achievements?.find(s => s.id === a.id);
-      return { id: a.id, unlocked: saved?.unlocked || false };
+      const prior = state.achievements?.find(x => x.id === a.id);
+      const isRankAchievement = ['level_10','level_20','level_30','level_40','level_50','level_70','level_90'].includes(a.id);
+      // Pre-launch migration: rank badges must reflect actual Boss promotion state,
+      // not stale level-only unlocks from older builds.
+      const unlocked = isRankAchievement ? !!a.requirement(state) : !!prior?.unlocked;
+      return { id: a.id, unlocked };
     });
 
     return state;
