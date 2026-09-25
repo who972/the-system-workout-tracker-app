@@ -1186,11 +1186,11 @@ function initSystemOS(){
  const map={
   player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen','profileSettings']},
   missions:{title:'MISSION CONTROL',kicker:'SYSTEM // MISSIONS',ids:['daily-mission','workoutBuilder','sideSystem']},
-  side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideSystem']},
-  boss:{title:'BOSS STAGE',kicker:'WEEKLY // CHALLENGE',ids:['sideSystem']},
-  telemetry:{title:'HEALTH TELEMETRY',kicker:'BIOMETRIC // HEALTH LINK',ids:['healthConnectPanel','exerciseTracker']},
+  side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideMissionSystem']},
+  boss:{title:'BOSS STAGE',kicker:'WEEKLY // CHALLENGE',ids:['sideMissionSystem']},
+  telemetry:{title:'HEALTH TELEMETRY',kicker:'BIOMETRIC // HEALTH LINK',ids:['exerciseTracker']},
   progress:{title:'CAMPAIGN PROGRESS',kicker:'SYSTEM // ANALYTICS',ids:['progressAnalytics','adaptiveProgression']},
-  achievements:{title:'ACHIEVEMENTS',kicker:'SYSTEM // RECORDS',ids:['achievements','progressAnalytics']},
+  achievements:{title:'ACHIEVEMENTS',kicker:'SYSTEM // RECORDS',ids:['achievementGrid']},
   profile:{title:'SYSTEM CONFIGURATION',kicker:'PLAYER // SETTINGS',ids:['profileSettings']},
   nutrition:{title:'NUTRITION MODULE',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']}
  };
