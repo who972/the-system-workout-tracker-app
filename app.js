@@ -1130,3 +1130,7 @@ document.addEventListener('DOMContentLoaded',initPasswordToggles);
 const EXERCISE_LIBRARY_OPEN_KEY='theSystemExerciseLibraryOpen';
 function initExerciseLibraryCollapse(){const section=document.getElementById('exerciseLibrary'),toggle=document.getElementById('exerciseLibraryToggle'),body=document.getElementById('exerciseLibraryBody');if(!section||!toggle||!body)return;const setOpen=open=>{section.classList.toggle('is-collapsed',!open);toggle.setAttribute('aria-expanded',String(open));const state=toggle.querySelector('.library-collapse-state');if(state)state.textContent=open?'COLLAPSE ▴':'EXPAND ▾';localStorage.setItem(EXERCISE_LIBRARY_OPEN_KEY,open?'1':'0')};setOpen(localStorage.getItem(EXERCISE_LIBRARY_OPEN_KEY)==='1');toggle.onclick=()=>setOpen(toggle.getAttribute('aria-expanded')!=='true')}
 document.addEventListener('DOMContentLoaded',initExerciseLibraryCollapse);
+
+/* ===== HOME HUD QUICK COMMANDS ===== */
+function initHudCommands(){document.querySelectorAll('[data-hud-target]').forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.hudTarget)?.scrollIntoView({behavior:'smooth',block:'start'})));document.querySelectorAll('[data-hud-view]').forEach(btn=>btn.addEventListener('click',()=>{const nav=document.querySelector('.app-nav [data-view="'+btn.dataset.hudView+'"]');if(nav)nav.click()}))}
+document.addEventListener('DOMContentLoaded',initHudCommands);
