@@ -8,7 +8,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@300,400,500,700&display=swap" rel="stylesheet" />
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="styles.css?v=auth10" />
+  <link rel="stylesheet" href="styles.css?v=hud1" />
   <link rel="stylesheet" href="side-system.css?v=11" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#0a0c10" />
@@ -80,7 +80,7 @@
 
 
   <!-- Player Card -->
-  <section class="player-card" id="playerCard">
+  <section class="player-card system-hud" id="playerCard"><div class="hud-scanline" aria-hidden="true"></div><div class="hud-label"><span>SYSTEM // CENTRAL DISPLAY</span><i>ONLINE</i></div>
     <div class="player-card__top">
       <div class="player-card__rank-badge" id="rankBadge">
         <span class="rank-badge__letter" id="rankLetter">E</span>
@@ -136,10 +136,11 @@
         <span class="player-stat__value" id="statVit">0</span>
       </div>
     </div>
+    <div class="hud-command-row"><button type="button" data-hud-target="daily-mission">START TRAINING</button><button type="button" data-hud-view="missions">VIEW MISSIONS</button><button type="button" data-hud-view="progress">PLAYER STATUS</button></div>
   </section>
 
 
-<section id="daily-mission" class="card system-mission-card">
+<section id="daily-mission" class="card system-mission-card hud-mission-panel">
   <div class="section-header">
     <div>
       <div class="eyebrow">SYSTEM MISSION</div>
@@ -523,7 +524,7 @@
 
 
 <datalist id="exerciseLibraryNames"></datalist>
-<script src="app.js?v=auth27"></script>
+<script src="app.js?v=hud1"></script>
 <script src="health-connect.js?v=1"></script>
 <script src="side-system.js?v=37"></script>
 <script>
