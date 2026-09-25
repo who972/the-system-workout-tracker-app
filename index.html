@@ -295,13 +295,18 @@
 
   <section class="side-system missions-secondary" id="sideMissionSystem">
     <div class="quest-section__header">
-      <div><p class="analytics-kicker">OPTIONAL OBJECTIVES</p><h2 class="quest-section__title">Side Missions &amp; Boss Stages</h2><p class="quest-section__desc">Earn bonus XP with optional missions. Reach the required level, then defeat the Boss Stage to earn your next rank class.</p></div>
-      <span class="quest-section__meta">RANK TRIALS</span>
+      <div><p class="analytics-kicker">OPTIONAL OBJECTIVES</p><h2 class="quest-section__title">Side Missions</h2><p class="quest-section__desc">Complete daily optional objectives for bonus XP, milestone rewards, and build growth.</p></div>
+      <span class="quest-section__meta">RESET DAILY</span>
     </div>
-    <div class="side-system-grid">
-      <div class="side-column"><div class="side-column-title"><h3>Side Missions</h3><span>Reset daily</span></div><div id="sideMissionList" class="side-list"></div></div>
-      <div class="side-column"><div class="side-column-title"><h3>Boss Stages</h3><span id="currentRankClass" class="rank-class-pill">E-CLASS</span></div><div id="bossStageList" class="boss-list"></div></div>
+    <div id="sideMissionList" class="side-list"></div>
+  </section>
+
+  <section class="boss-system missions-secondary" id="bossStageSystem">
+    <div class="quest-section__header">
+      <div><p class="analytics-kicker">PROMOTION TRIALS</p><h2 class="quest-section__title">Boss Stages</h2><p class="quest-section__desc">Meet the level and build requirements, then defeat the Boss Stage to earn your next rank class.</p></div>
+      <span id="currentRankClass" class="rank-class-pill">E-CLASS</span>
     </div>
+    <div id="bossStageList" class="boss-list"></div>
   </section>
 
   <!-- Training & Body Progress -->
