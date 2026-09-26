@@ -358,24 +358,8 @@ function completeQuest(questId) {
     }
   }
 
-  // Weekly training days (once per day)
-  const wDays = state.weeklyGoals.find(g => g.id === 'w_days');
-  if (wDays && !wDays.completed) {
-    const today = getTodayStr();
-    const trainedToday = state.history.some(h => h.date === today);
-    if (!trainedToday) {
-      wDays.progress++;
-      if (wDays.progress >= wDays.target) {
-        wDays.completed = true;
-        state.weeklyCompleted++;
-        addSystemMessage(`Weekly Objective Complete: ${wDays.title} — +${wDays.xpReward} XP`, 'achievement');
-        addXp(wDays.xpReward, 'weekly');
-        checkAllWeeklyComplete();
-      }
-    }
-  }
-
-  // Daily quests do not advance the workout streak.
+  // Weekly training-day credit is awarded only by a completed workout.
+  // Daily quests intentionally do not advance training-day or workout streak counters.
 
   // History
   recordHistory(questId, quest.xp);
@@ -1282,7 +1266,7 @@ function initMissionControlV22(){
  start.onclick=openBrief;
  document.getElementById('mlcClose').onclick=()=>{confirm.classList.remove('active');confirm.setAttribute('aria-hidden','true');document.body.classList.remove('mission-brief-open')};
  document.getElementById('mlcLaunch').onclick=()=>{confirm.classList.add('launching');setTimeout(()=>{confirm.classList.remove('active','launching');confirm.setAttribute('aria-hidden','true');document.body.classList.remove('mission-brief-open');(original||startWorkoutMode)()},280)};
- live.insertAdjacentHTML('afterbegin','<div class="combat-hud"><span><i></i> MISSION ACTIVE</span><b id="combatProtocol">TRAINING PROTOCOL</b><span>LINK // STABLE</span></div>');
+ if(!live.querySelector('.combat-hud'))live.insertAdjacentHTML('afterbegin','<div class="combat-hud"><span><i></i> MISSION ACTIVE</span><b id="combatProtocol">TRAINING PROTOCOL</b><span>LINK // STABLE</span></div>');
  const oldRender=renderLiveSet;renderLiveSet=function(){oldRender();const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m),p=getMissionProgress(),done=Object.values(p).filter(v=>v.done).length,left=Math.max(0,sets.length-done),proto=document.getElementById('combatProtocol');if(proto)proto.textContent=left+' OBJECTIVE'+(left===1?'':'S')+' REMAINING'};
 }
 document.addEventListener('DOMContentLoaded',initMissionControlV22);
