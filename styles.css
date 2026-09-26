@@ -2028,3 +2028,24 @@ body.mission-brief-open{overflow:hidden}.mission-launch-confirm{position:fixed;z
 
 /* V37 // HEALTH CONNECT */
 .health-connect-panel{margin:8px 0 12px;padding:10px;border:1px solid rgba(0,229,255,.16);background:linear-gradient(135deg,rgba(0,229,255,.04),rgba(41,121,255,.025))}.health-connect-head{display:flex;justify-content:space-between;align-items:center;font:700 7px var(--font-mono);letter-spacing:.1em;color:var(--system-cyan)}.health-connect-head b{padding:3px 6px;border:1px solid rgba(255,176,32,.2);color:var(--system-amber)}.health-connect-head b.online{border-color:rgba(57,255,136,.25);color:var(--system-green)}.health-connect-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin:9px 0}.health-connect-grid article{padding:8px;border:1px solid rgba(0,229,255,.08);background:rgba(5,8,13,.45)}.health-connect-grid small{display:block;font:6px var(--font-mono);color:var(--system-steel)}.health-connect-grid strong{display:block;margin-top:3px;font:700 13px var(--font-display);color:var(--system-white)}#healthConnectAction{padding:7px 12px;border:1px solid rgba(0,229,255,.3);background:rgba(0,229,255,.07);color:var(--system-cyan);font:700 7px var(--font-mono);letter-spacing:.08em}#healthConnectAction:disabled{opacity:.4}
+
+
+/* V38 // CENTRAL COMMAND ORBIT LEGIBILITY
+   Push module controls outward so icons and labels read as distinct commands. */
+body.system-os-ready .core-orbit-menu button{
+  --orbit-radius:clamp(88px,8.2vw,126px);
+  transform:rotate(var(--a)) translateX(var(--orbit-radius)) rotate(calc(-1 * var(--a)));
+}
+body.system-os-ready .core-orbit-menu button span{
+  top:calc(100% + 5px);
+  font-size:7px;
+  letter-spacing:.1em;
+  text-shadow:0 0 8px rgba(0,229,255,.45);
+}
+body.system-os-ready .core-orbit-menu button:hover{
+  transform:rotate(var(--a)) translateX(var(--orbit-radius)) rotate(calc(-1 * var(--a))) scale(1.08);
+}
+@media (orientation:landscape) and (max-height:620px){
+  body.system-os-ready .core-orbit-menu button{--orbit-radius:clamp(76px,7.5vw,108px)}
+  body.system-os-ready .core-orbit-menu button span{font-size:6.5px;top:calc(100% + 4px)}
+}
