@@ -1594,6 +1594,10 @@ function initPlanetaryCommandOrbit(){
  menu.dataset.planetaryReady='1';
  const nodes=[...menu.querySelectorAll('button[data-holo]')];
  if(!nodes.length)return;
+ // Separate stacking planes let modules genuinely pass behind AND in front of the core.
+ const backPlane=menu;
+ let frontPlane=core.querySelector('.core-orbit-front');
+ if(!frontPlane){frontPlane=document.createElement('div');frontPlane.className='core-orbit-menu core-orbit-front';frontPlane.setAttribute('aria-hidden','true');core.appendChild(frontPlane)}
  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  let phase=-Math.PI/2,last=performance.now(),raf=0,paused=false;
  const speed=(Math.PI*2)/18;
@@ -1614,9 +1618,12 @@ function initPlanetaryCommandOrbit(){
    node.style.setProperty('--orbit-scale',scale.toFixed(3));
    node.style.setProperty('--orbit-opacity',opacity.toFixed(3));
    node.style.setProperty('--orbit-glow',(.04+t*.38).toFixed(3));
-   node.style.setProperty('--orbit-z',depth>=0?String(100+Math.round(t*40)):String(5+Math.round(t*10)));
-   node.classList.toggle('orbit-front',depth>=0);
-   node.classList.toggle('orbit-back',depth<0);
+   const isFront=depth>=0;
+   node.style.setProperty('--orbit-z',String(10+Math.round(t*20)));
+   node.classList.toggle('orbit-front',isFront);
+   node.classList.toggle('orbit-back',!isFront);
+   const plane=isFront?frontPlane:backPlane;
+   if(node.parentElement!==plane)plane.appendChild(node);
   });
  }
  function frame(now){
