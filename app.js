@@ -1476,3 +1476,35 @@ syncSocialProfile=async function(){
 // Keep cloud competitive stats fresh immediately after a workout instead of waiting for Social Command to open.
 const _v33FinishWorkout=finishWorkout;
 finishWorkout=function(){const result=_v33FinishWorkout();if(socialCloudUser()?.id)setTimeout(()=>syncSocialProfile().catch(()=>{}),250);return result};
+
+
+/* ===== V34 SOCIAL LIFECYCLE INTEGRITY ===== */
+function pairMatch(a,b,u,v){return (a===u&&b===v)||(a===v&&b===u)}
+async function existingFriendLink(otherId){
+ const u=socialCloudUser();if(!u?.id)return null;const rows=await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE+'?or=(and(requester_id.eq.'+encodeURIComponent(u.id)+',addressee_id.eq.'+encodeURIComponent(otherId)+'),and(requester_id.eq.'+encodeURIComponent(otherId)+',addressee_id.eq.'+encodeURIComponent(u.id)+'))&select=*&order=created_at.desc&limit=1');return rows[0]||null
+}
+sendFriendRequest=async function(userId,name){
+ const u=socialCloudUser();if(!u?.id||userId===u.id)return;
+ try{const old=await existingFriendLink(userId);if(old&&['pending','accepted'].includes(old.status)){window.SystemOS?.notify(old.status==='accepted'?'FRIEND LINK ALREADY ACTIVE':'FRIEND REQUEST ALREADY PENDING','SOCIAL // FRIEND LINK');return}
+ await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({requester_id:u.id,addressee_id:userId,requester_name:socialHandle(),addressee_name:name,status:'pending'})});window.SystemOS?.notify('FRIEND REQUEST SENT // '+name.toUpperCase(),'SOCIAL // FRIEND LINK');renderSocialCommand()}catch(e){window.SystemOS?.notify((e.message||'FRIEND LINK FAILED').toUpperCase(),'SOCIAL // NETWORK')}
+};
+const _v34RenderSocialCloud=renderSocialCloud;
+renderSocialCloud=async function(){
+ await _v34RenderSocialCloud();const u=socialCloudUser(),form=document.getElementById('challengeForm');if(!u?.id||!form)return;
+ form.onsubmit=async e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;try{
+  const matches=await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?display_name=ilike.'+encodeURIComponent(name)+'&select=user_id,display_name&limit=1');if(!matches.length)throw new Error('Player not found on the network.');const opp=matches[0];if(opp.user_id===u.id)throw new Error('You cannot challenge yourself.');
+  const pending=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?or=(and(challenger_id.eq.'+encodeURIComponent(u.id)+',opponent_id.eq.'+encodeURIComponent(opp.user_id)+'),and(challenger_id.eq.'+encodeURIComponent(opp.user_id)+',opponent_id.eq.'+encodeURIComponent(u.id)+'))&status=in.(pending,active)&select=id,status&limit=1');if(pending.length)throw new Error('A duel with this player is already pending or active.');
+  const type=document.getElementById('challengeType').value,days=Number(document.getElementById('challengeLength').value);await syncSocialProfile();await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({challenger_id:u.id,opponent_id:opp.user_id,challenger_name:socialHandle(),opponent_name:opp.display_name,type,duration_days:days,status:'pending',challenger_start:challengeMetric(type),opponent_start:0,created_at:new Date().toISOString()})});window.SystemOS?.notify('CHALLENGE TRANSMITTED // '+opp.display_name.toUpperCase(),'SOCIAL // NETWORK');renderSocialCommand()
+ }catch(err){window.SystemOS?.notify(String(err.message||'DUEL FAILED').toUpperCase(),'SOCIAL // NETWORK ERROR')}}
+};
+async function finalizeExpiredDuels(challenges){
+ const expired=(challenges||[]).filter(x=>x.status==='active'&&Date.now()>=duelEndsAt(x));if(!expired.length)return false;
+ await Promise.all(expired.map(x=>patchChallenge(x.id,{status:'completed'}).catch(()=>null)));return true
+}
+const _v34FetchSocial=fetchSocialNetwork;
+fetchSocialNetwork=async function(){let net=await _v34FetchSocial();if(net&&await finalizeExpiredDuels(net.challenges)){net=await _v34FetchSocial()}return net};
+
+const _v34JoinSquad=joinSquad;
+joinSquad=async function(id){const u=socialCloudUser();if(!u?.id)return;const c=await fetchCommunityNetwork();if(c?.members.some(m=>m.squad_id===id&&m.user_id===u.id)){window.SystemOS?.notify('SQUAD LINK ALREADY ACTIVE','SOCIAL // SQUAD');return}return _v34JoinSquad(id)};
+const _v34SquadChallenge=squadChallenge;
+squadChallenge=async function(id,type,days){const u=socialCloudUser(),c=await fetchCommunityNetwork();if(!u||!c)return;const mine=c.squads.find(s=>s.owner_id===u.id);if(!mine||mine.id===id)return;const existing=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?or=(and(challenger_squad_id.eq.'+encodeURIComponent(mine.id)+',opponent_squad_id.eq.'+encodeURIComponent(id)+'),and(challenger_squad_id.eq.'+encodeURIComponent(id)+',opponent_squad_id.eq.'+encodeURIComponent(mine.id)+'))&status=in.(pending,active)&select=id&limit=1');if(existing.length){window.SystemOS?.notify('SQUAD OPERATION ALREADY PENDING OR ACTIVE','SOCIAL // SQUAD OPS');return}return _v34SquadChallenge(id,type,days)};
