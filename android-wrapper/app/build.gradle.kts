@@ -4,11 +4,11 @@ plugins {
 }
 android {
     namespace = "com.thesystem.workouttracker"
-    compileSdk = 35
+    compileSdk = 36
     defaultConfig {
         applicationId = "com.thesystem.workouttracker"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 36
         versionCode = 37
         versionName = "0.37"
     }
