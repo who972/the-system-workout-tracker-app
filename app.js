@@ -1340,3 +1340,33 @@ async function renderSocialCloud(){
 }
 renderSocialCommand=renderSocialCloud;
 const _v26Push=pushCloudBackup;pushCloudBackup=async function(){const r=await _v26Push();try{await syncSocialProfile()}catch(e){}return r};
+
+
+/* ===== V27 SOCIAL COMMAND // LIVE DUELS ===== */
+function duelProfileMetric(p,type){return Number(type==='workouts'?p?.missions:type==='streak'?p?.streak:p?.xp)||0}
+function duelEndsAt(x){const start=new Date(x.accepted_at||x.created_at).getTime();return start+(Number(x.duration_days)||1)*86400000}
+function duelState(x){if(x.status!=='active')return x.status;return Date.now()>=duelEndsAt(x)?'completed':'active'}
+function duelDelta(current,start){return Math.max(0,Number(current||0)-Number(start||0))}
+async function patchChallenge(id,body){await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(body)})}
+async function respondToChallenge(id,accept){
+ const u=socialCloudUser();if(!u?.id)return;
+ const rows=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id)+'&select=*');const x=rows[0];if(!x||x.opponent_id!==u.id||x.status!=='pending')return;
+ if(!accept){await patchChallenge(id,{status:'declined'});window.SystemOS?.notify('CHALLENGE DECLINED','SOCIAL // DUEL');return renderSocialCloud()}
+ await syncSocialProfile();const p=(await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?user_id=eq.'+encodeURIComponent(u.id)+'&select=xp,missions,streak&limit=1'))[0]||{};
+ await patchChallenge(id,{status:'active',opponent_start:duelProfileMetric(p,x.type),accepted_at:new Date().toISOString()});window.SystemOS?.notify('DUEL ACCEPTED // OPERATION ACTIVE','SOCIAL // DUEL');renderSocialCloud()
+}
+async function cancelChallenge(id){const u=socialCloudUser();if(!u?.id)return;const rows=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id)+'&select=challenger_id,status');const x=rows[0];if(x?.challenger_id===u.id&&x.status==='pending'){await patchChallenge(id,{status:'cancelled'});renderSocialCloud()}}
+function liveDuelCard(x,profiles,u){
+ const mine=x.challenger_id===u.id,otherId=mine?x.opponent_id:x.challenger_id,otherName=mine?x.opponent_name:x.challenger_name,me=profiles.find(p=>p.user_id===u.id)||{},other=profiles.find(p=>p.user_id===otherId)||{},stateNow=duelState(x),myStart=mine?x.challenger_start:x.opponent_start,theirStart=mine?x.opponent_start:x.challenger_start,myScore=duelDelta(duelProfileMetric(me,x.type),myStart),theirScore=duelDelta(duelProfileMetric(other,x.type),theirStart),total=Math.max(1,myScore+theirScore),pct=Math.round(myScore/total*100),end=duelEndsAt(x),remaining=Math.max(0,end-Date.now()),hours=Math.ceil(remaining/36e5);
+ if(x.status==='pending'){const incoming=x.opponent_id===u.id;return '<article class="challenge-item network-request '+(incoming?'incoming':'outgoing')+'"><div class="duel-versus"><span>'+escapeHtml(x.challenger_name)+'</span><b>VS</b><span>'+escapeHtml(x.opponent_name)+'</span></div><div class="duel-meta"><strong>'+challengeLabel(x.type)+' // '+x.duration_days+' DAY CHALLENGE</strong><small>'+(incoming?'INCOMING CHALLENGE':'AWAITING RESPONSE')+'</small></div><div class="duel-actions">'+(incoming?'<button data-duel-accept="'+x.id+'">ACCEPT</button><button data-duel-decline="'+x.id+'">DECLINE</button>':'<button data-duel-cancel="'+x.id+'">CANCEL</button>')+'</div></article>'}
+ if(!['active','completed'].includes(stateNow))return '';
+ const finished=stateNow==='completed',result=myScore===theirScore?'DRAW':myScore>theirScore?'VICTORY':'DEFEAT';
+ return '<article class="challenge-item duel-item live-duel '+(finished?'duel-finished':'')+'"><div class="duel-versus"><span>YOU</span><b>VS</b><span>'+escapeHtml(otherName)+'</span></div><div class="duel-meta"><strong>'+challengeLabel(x.type)+' // '+(finished?result:'LIVE OPERATION')+'</strong><small>'+(finished?'FINAL SCORE':hours+'H REMAINING • '+x.duration_days+' DAY DUEL')+'</small></div><div class="duel-score"><b>'+myScore.toLocaleString()+'</b><div><i style="width:'+pct+'%"></i></div><b>'+theirScore.toLocaleString()+'</b></div></article>'
+}
+async function renderSocialCloudV27(){
+ const root=document.getElementById('osSocialCommand');if(!root)return;await renderSocialCloud();const u=socialCloudUser();if(!u||!document.body.contains(root))return;
+ const net=await fetchSocialNetwork();if(!net)return;const profiles=net.profiles||[],challenges=net.challenges||[];
+ const consoleCard=root.querySelector('.duel-console');if(consoleCard){const form=consoleCard.querySelector('#challengeForm');form?.insertAdjacentHTML('beforebegin','<div class="player-search"><label>PLAYER DISCOVERY<input id="networkPlayerSearch" placeholder="Search network callsign"></label><div id="playerSearchResults"></div></div>');const search=document.getElementById('networkPlayerSearch'),results=document.getElementById('playerSearchResults');let t;search.oninput=()=>{clearTimeout(t);t=setTimeout(()=>{const q=search.value.trim().toLowerCase();results.innerHTML=q.length<2?'':profiles.filter(p=>p.user_id!==u.id&&p.display_name.toLowerCase().includes(q)).slice(0,6).map(p=>'<button type="button" data-player-pick="'+escapeHtml(p.display_name)+'"><span>'+escapeHtml(p.display_name)+'</span><small>LV '+p.level+' • '+escapeHtml(p.rank)+' • '+Number(p.xp).toLocaleString()+' XP</small></button>').join('')||'<small class="no-player">NO MATCHING PLAYER</small>';results.querySelectorAll('[data-player-pick]').forEach(b=>b.onclick=()=>{document.getElementById('challengePlayer').value=b.dataset.playerPick;search.value=b.dataset.playerPick;results.innerHTML=''})},220)}}
+ const list=root.querySelector('.challenge-list'),head=root.querySelector('.social-card--wide .social-head b');if(list){const cards=challenges.map(x=>liveDuelCard(x,profiles,u)).filter(Boolean);list.innerHTML=cards.join('')||'<div class="social-empty">NO ACTIVE NETWORK OPERATIONS</div>';if(head)head.textContent=cards.length+' OPERATIONS';list.querySelectorAll('[data-duel-accept]').forEach(b=>b.onclick=()=>respondToChallenge(b.dataset.duelAccept,true));list.querySelectorAll('[data-duel-decline]').forEach(b=>b.onclick=()=>respondToChallenge(b.dataset.duelDecline,false));list.querySelectorAll('[data-duel-cancel]').forEach(b=>b.onclick=()=>cancelChallenge(b.dataset.duelCancel))}
+}
+renderSocialCommand=renderSocialCloudV27;
