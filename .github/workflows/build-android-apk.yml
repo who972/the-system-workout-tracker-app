@@ -43,6 +43,8 @@ jobs:
           rm -rf "$WEB"
           mkdir -p "$WEB"
           cp index.html app.js styles.css side-system.js health-connect.js manifest.webmanifest icon.svg sw.js "$WEB"/
+          grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
+          echo "Verified V42 orbit runtime in packaged app.js"
           echo "Packaged web assets:"
           find "$WEB" -maxdepth 1 -type f -printf "%f\n" | sort
 
@@ -65,7 +67,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v39-debug-apk
+          name: the-system-v42-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
