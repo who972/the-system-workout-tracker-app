@@ -2062,3 +2062,21 @@ body.system-os-ready .core-orbit-menu button:hover{
 .system-core.orbit-paused .core-orbit-menu:after{content:"ORBIT HOLD";position:absolute;left:50%;top:7%;transform:translateX(-50%);font:700 6px var(--font-mono);letter-spacing:.2em;color:rgba(0,229,255,.7);pointer-events:none}
 @media (orientation:landscape) and (max-height:620px){.core-orbit-menu button{margin:-23px}.core-orbit-menu:before{left:-18%;right:-18%}}
 @media (prefers-reduced-motion:reduce){.core-orbit-menu button{transition:none}}
+
+
+/* ===== V40 TRUE ORBIT DEPTH FIX ===== */
+.system-core{isolation:isolate;overflow:visible!important}
+.core-orbit-menu{z-index:auto!important;perspective:none!important;overflow:visible!important;pointer-events:none}
+.core-orbit-menu:before{z-index:20}
+.system-core__center{z-index:50!important}
+.core-orbit-menu button{
+ position:absolute!important;
+ pointer-events:auto;
+ transform:translate3d(var(--orbit-x),var(--orbit-y),var(--orbit-depth)) scale(var(--orbit-scale))!important;
+ opacity:var(--orbit-opacity)!important;
+ z-index:var(--orbit-z)!important;
+ transition:border-color .2s,color .2s,box-shadow .2s,filter .2s!important;
+}
+.core-orbit-menu button.orbit-back{filter:brightness(.48) saturate(.65) blur(.15px)}
+.core-orbit-menu button.orbit-front{filter:brightness(1.08) saturate(1.12)}
+.core-orbit-menu button.orbit-front:hover,.core-orbit-menu button.orbit-front.active{filter:brightness(1.22) saturate(1.18)}
