@@ -2080,3 +2080,11 @@ body.system-os-ready .core-orbit-menu button:hover{
 .core-orbit-menu button.orbit-back{filter:brightness(.48) saturate(.65) blur(.15px)}
 .core-orbit-menu button.orbit-front{filter:brightness(1.08) saturate(1.12)}
 .core-orbit-menu button.orbit-front:hover,.core-orbit-menu button.orbit-front.active{filter:brightness(1.22) saturate(1.18)}
+
+
+/* ===== V43 ORBIT SPLIT STACKING PLANES ===== */
+.core-orbit-menu:not(.core-orbit-front){z-index:20!important}
+.system-core__center{z-index:50!important}
+.core-orbit-menu.core-orbit-front{z-index:80!important;position:absolute;inset:0;pointer-events:none;overflow:visible!important;transform-style:preserve-3d}
+.core-orbit-menu.core-orbit-front:before,.core-orbit-menu.core-orbit-front:after{display:none!important}
+.core-orbit-menu.core-orbit-front button{pointer-events:auto}
