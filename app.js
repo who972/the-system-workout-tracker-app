@@ -1439,3 +1439,40 @@ window.SystemDiagnostics=async function(){
  ];let cloud=false;try{if(socialCloudUser()){await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id&limit=1');cloud=true}}catch(e){}
  checks.push(['Social Cloud',cloud]);return checks.map(([name,ok])=>({name,ok}))
 };
+
+
+/* ===== V33 SESSION + SOCIAL LIFECYCLE HARDENING ===== */
+let cloudRefreshPromise=null;
+function cloudSessionExpired(s=getCloudSession()){if(!s?.access_token)return true;const exp=Number(s.expires_at||0);if(exp)return Date.now()>=exp*1000-60000;try{const p=JSON.parse(atob(s.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Date.now()>=Number(p.exp||0)*1000-60000}catch(e){return false}}
+async function refreshCloudSession(){
+ const s=getCloudSession();if(!s?.refresh_token)throw new Error('Session expired. Sign in again.');
+ if(cloudRefreshPromise)return cloudRefreshPromise;
+ cloudRefreshPromise=(async()=>{const r=await fetch(SYSTEM_CLOUD.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SYSTEM_CLOUD.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:s.refresh_token})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.msg||data.message||data.error_description||'Session expired. Sign in again.');localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(data));return data})().finally(()=>cloudRefreshPromise=null);return cloudRefreshPromise
+}
+const _v33CloudRequest=cloudRequest;
+cloudRequest=async function(path,opts={}){
+ const authPath=path.startsWith('/auth/v1/');
+ let s=getCloudSession();if(!authPath&&s?.refresh_token&&cloudSessionExpired(s)){try{await refreshCloudSession()}catch(e){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();throw e}}
+ try{return await _v33CloudRequest(path,opts)}catch(e){
+  const msg=String(e.message||'');s=getCloudSession();
+  if(!authPath&&s?.refresh_token&&/jwt|token|expired|unauthorized|401/i.test(msg)){try{await refreshCloudSession();return await _v33CloudRequest(path,opts)}catch(x){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();throw x}}
+  throw e
+ }
+};
+async function validateCloudSession(){
+ const s=getCloudSession();if(!s?.access_token)return false;
+ try{if(cloudSessionExpired(s)&&s.refresh_token)await refreshCloudSession();await _v33CloudRequest('/auth/v1/user');return true}catch(e){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();renderCloudAccount();return false}
+}
+document.addEventListener('DOMContentLoaded',()=>{if(getCloudSession()?.access_token)validateCloudSession()});
+
+// Canonical multiplayer "missions" metric is completed workout sessions, not daily quest cards.
+function socialMissionCount(){return workoutHistory().length}
+const _v33SyncSocialProfile=syncSocialProfile;
+syncSocialProfile=async function(){
+ const u=socialCloudUser();if(!u?.id)return false;const rank=getRank(state.level);
+ await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:u.id,display_name:socialHandle(),xp:socialScore(),level:state.level,rank:rank.name,missions:socialMissionCount(),streak:Number(state.currentStreak||0),updated_at:new Date().toISOString()})});return true
+};
+
+// Keep cloud competitive stats fresh immediately after a workout instead of waiting for Social Command to open.
+const _v33FinishWorkout=finishWorkout;
+finishWorkout=function(){const result=_v33FinishWorkout();if(socialCloudUser()?.id)setTimeout(()=>syncSocialProfile().catch(()=>{}),250);return result};
