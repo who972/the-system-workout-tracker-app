@@ -343,21 +343,6 @@ function completeQuest(questId) {
   // Check all daily complete
   checkAllDailyComplete();
 
-  // If all daily quests done, increment weekly workout session
-  if (state.allDailyCompleted) {
-    const wWorkouts = state.weeklyGoals.find(g => g.id === 'w_workouts');
-    if (wWorkouts && !wWorkouts.completed) {
-      wWorkouts.progress++;
-      if (wWorkouts.progress >= wWorkouts.target) {
-        wWorkouts.completed = true;
-        state.weeklyCompleted++;
-        addSystemMessage(`Weekly Objective Complete: ${wWorkouts.title} — +${wWorkouts.xpReward} XP`, 'achievement');
-        addXp(wWorkouts.xpReward, 'weekly');
-        checkAllWeeklyComplete();
-      }
-    }
-  }
-
   // Weekly training-day credit is awarded only by a completed workout.
   // Daily quests intentionally do not advance training-day or workout streak counters.
 
@@ -1427,7 +1412,12 @@ function creditWeeklyTrainingDay(){
  const key='weeklyTrainingCredit:'+getTodayStr();if(localStorage.getItem(key))return;
  localStorage.setItem(key,'1');g.progress++;if(g.progress>=g.target){g.completed=true;state.weeklyCompleted++;addSystemMessage('Weekly Objective Complete: '+g.title+' — +'+g.xpReward+' XP','achievement');addXp(g.xpReward,'weekly');checkAllWeeklyComplete()}
 }
-const _v31FinishWorkout=finishWorkout;finishWorkout=function(){creditWeeklyTrainingDay();return _v31FinishWorkout()};
+function creditWeeklyWorkout(){
+ const g=state.weeklyGoals.find(x=>x.id==='w_workouts');if(!g||g.completed)return;
+ const key='weeklyWorkoutCredit:'+systemMissionKey();if(localStorage.getItem(key))return;
+ localStorage.setItem(key,'1');g.progress++;if(g.progress>=g.target){g.completed=true;state.weeklyCompleted++;addSystemMessage('Weekly Objective Complete: '+g.title+' — +'+g.xpReward+' XP','achievement');addXp(g.xpReward,'weekly');checkAllWeeklyComplete()}
+}
+const _v31FinishWorkout=finishWorkout;finishWorkout=function(){creditWeeklyTrainingDay();creditWeeklyWorkout();return _v31FinishWorkout()};
 
 // Mission briefing remains attached after Mission Control rerenders.
 const _v31RenderMission=renderSystemMission;renderSystemMission=function(){_v31RenderMission();const b=document.getElementById('start-mission-btn');if(b&&!b.disabled&&typeof initMissionControlV22==='function'){const prior=b.onclick;b.onclick=null;setTimeout(()=>initMissionControlV22(),0)}};
