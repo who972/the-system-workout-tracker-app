@@ -1,2 +1,8 @@
 .DS_Store
 Thumbs.db
+
+# Android / Gradle build output
+android-wrapper/.gradle/
+android-wrapper/local.properties
+android-wrapper/app/build/
+android-wrapper/build/
