@@ -1179,7 +1179,7 @@ function initSystemOS(){
  window.SystemOS={open,close};
  document.getElementById('osModuleClose').onclick=close;
  document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');document.body.classList.toggle('os-module-open',!stage.classList.contains('minimized'))};
- document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open(b.dataset.holo)},true));
+ document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const name=b.dataset.holo;if(name==='boss'||name==='side')open(name);else{const holo=document.getElementById('holoWindow');if(holo&&holo.getAttribute('aria-hidden')==='false')return;open(name)}},true));
  document.querySelectorAll('[data-hud-target]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open('missions')},true));
  document.querySelectorAll('[data-hud-view]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open(b.dataset.hudView==='progress'?'progress':'missions')},true));
  const clock=()=>{const e=document.getElementById('osClock');if(e)e.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};clock();setInterval(clock,30000);
