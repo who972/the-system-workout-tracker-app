@@ -2088,3 +2088,9 @@ body.system-os-ready .core-orbit-menu button:hover{
 .core-orbit-menu.core-orbit-front{z-index:80!important;position:absolute;inset:0;pointer-events:none;overflow:visible!important;transform-style:preserve-3d}
 .core-orbit-menu.core-orbit-front:before,.core-orbit-menu.core-orbit-front:after{display:none!important}
 .core-orbit-menu.core-orbit-front button{pointer-events:auto}
+
+
+/* ===== V44 MANUAL ORBIT CONTROL ===== */
+.system-core{touch-action:pan-y;cursor:grab}
+.system-core.orbit-dragging{cursor:grabbing}
+.system-core.orbit-dragging .core-orbit-menu button{transition:none!important}
