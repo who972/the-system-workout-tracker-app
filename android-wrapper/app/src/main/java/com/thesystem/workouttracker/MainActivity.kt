@@ -6,6 +6,7 @@ import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
+import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -30,7 +31,7 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { granted ->
-        val ok = granted.contains(HealthConnectClient.permissionForRead(StepsRecord::class))
+        val ok = granted.contains(HealthPermission.getReadPermission(StepsRecord::class))
         permissionReply?.postMessage(JSONObject().put("id", pendingPermissionId).put("result", JSONObject().put("granted", ok)).toString())
         permissionReply = null
         pendingPermissionId = ""
@@ -62,7 +63,7 @@ class MainActivity : ComponentActivity() {
         when (json.optString("method")) {
             "requestStepPermission" -> {
                 lifecycleScope.launch {
-                    val permission = HealthConnectClient.permissionForRead(StepsRecord::class)
+                    val permission = HealthPermission.getReadPermission(StepsRecord::class)
                     if (health.permissionController.getGrantedPermissions().contains(permission)) {
                         reply.postMessage(JSONObject().put("id", id).put("result", JSONObject().put("granted", true)).toString())
                     } else {
