@@ -46,14 +46,26 @@ jobs:
           echo "Packaged web assets:"
           find "$WEB" -maxdepth 1 -type f -printf "%f\n" | sort
 
+      - name: Restore persistent signing key
+        shell: bash
+        env:
+          SYSTEM_KEYSTORE_BASE64: ${{ secrets.SYSTEM_KEYSTORE_BASE64 }}
+        run: |
+          test -n "$SYSTEM_KEYSTORE_BASE64"
+          printf '%s' "$SYSTEM_KEYSTORE_BASE64" | base64 --decode > android-wrapper/system-debug.keystore
+
       - name: Build debug APK
         working-directory: android-wrapper
+        env:
+          SYSTEM_KEYSTORE_PASSWORD: ${{ secrets.SYSTEM_KEYSTORE_PASSWORD }}
+          SYSTEM_KEY_ALIAS: ${{ secrets.SYSTEM_KEY_ALIAS }}
+          SYSTEM_KEY_PASSWORD: ${{ secrets.SYSTEM_KEY_PASSWORD }}
         run: gradle :app:assembleDebug --stacktrace
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v37-debug-apk
+          name: the-system-v38-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
