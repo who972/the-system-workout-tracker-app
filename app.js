@@ -1566,3 +1566,22 @@ async function renderCombatRecordV36(){
 }
 const _v36RenderSocial=renderSocialCommand;
 renderSocialCommand=async function(){await _v36RenderSocial();await renderCombatRecordV36()};
+
+
+/* ===== V37 HEALTH CONNECT TELEMETRY ===== */
+const HEALTH_TELEMETRY_KEY='systemHealthTelemetryV37';
+function healthTelemetry(){try{return JSON.parse(localStorage.getItem(HEALTH_TELEMETRY_KEY)||'{}')}catch(e){return{}}}
+function saveHealthTelemetry(v){const x={...healthTelemetry(),...v,syncedAt:new Date().toISOString()};localStorage.setItem(HEALTH_TELEMETRY_KEY,JSON.stringify(x));return x}
+function renderHealthTelemetry(v=healthTelemetry()){
+ const linked=v.status==='connected',steps=Number(v.steps||0),hs=document.getElementById('hudSteps'),ha=document.getElementById('hudActive');if(hs)hs.textContent=linked?steps.toLocaleString():'--';if(ha)ha.textContent=linked&&v.activeMinutes!=null?Number(v.activeMinutes)+' MIN':'--';
+ const host=document.getElementById('exerciseTracker');if(!host)return;let root=document.getElementById('healthConnectPanel');if(!root){root=document.createElement('section');root.id='healthConnectPanel';root.className='health-connect-panel';host.prepend(root)}
+ const native=!!window.AndroidHealthConnect;root.innerHTML='<div class="health-connect-head"><span>HEALTH CONNECT // ANDROID</span><b class="'+(linked?'online':'standby')+'">'+(linked?'LINK ONLINE':native?'LINK READY':'NATIVE LINK REQUIRED')+'</b></div><div class="health-connect-grid"><article><small>STEPS TODAY</small><strong>'+steps.toLocaleString()+'</strong></article><article><small>ACTIVE TIME</small><strong>'+(v.activeMinutes==null?'--':Number(v.activeMinutes)+' MIN')+'</strong></article><article><small>LAST SYNC</small><strong>'+(v.syncedAt?new Date(v.syncedAt).toLocaleTimeString():'--')+'</strong></article></div><button id="healthConnectAction" '+(!native?'disabled':'')+'>'+(linked?'SYNC HEALTH DATA':'CONNECT HEALTH CONNECT')+'</button>';
+ document.getElementById('healthConnectAction')?.addEventListener('click',syncHealthConnect)
+}
+async function syncHealthConnect(){
+ const h=window.AndroidHealthConnect;if(!h){renderHealthTelemetry({status:'native-required'});return}
+ try{let v=healthTelemetry();if(v.status!=='connected'){const ok=await h.requestStepPermission();if(!ok){renderHealthTelemetry(saveHealthTelemetry({status:'permission-denied'}));return}}
+ const r=await h.getTodaySteps(),steps=Number(r?.steps??r?.value??r??0);renderHealthTelemetry(saveHealthTelemetry({status:'connected',steps}))}catch(e){renderHealthTelemetry(saveHealthTelemetry({status:'error'}))}
+}
+document.addEventListener('DOMContentLoaded',()=>{renderHealthTelemetry();if(window.AndroidHealthConnect&&healthTelemetry().status==='connected')syncHealthConnect()});
+window.addEventListener('focus',()=>{if(window.AndroidHealthConnect&&healthTelemetry().status==='connected')syncHealthConnect()});
