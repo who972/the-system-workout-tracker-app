@@ -16,12 +16,27 @@ android {
         jvmTarget = "17"
     }
 
+    signingConfigs {
+        create("systemDebug") {
+            storeFile = rootProject.file("system-debug.keystore")
+            storePassword = System.getenv("SYSTEM_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("SYSTEM_KEY_ALIAS")
+            keyPassword = System.getenv("SYSTEM_KEY_PASSWORD")
+        }
+    }
+
     defaultConfig {
         applicationId = "com.thesystem.workouttracker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 37
-        versionName = "0.37"
+        versionCode = 38
+        versionName = "0.38"
+    }
+
+    buildTypes {
+        getByName("debug") {
+            signingConfig = signingConfigs.getByName("systemDebug")
+        }
     }
 }
 
