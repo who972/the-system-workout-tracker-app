@@ -1508,3 +1508,35 @@ const _v34JoinSquad=joinSquad;
 joinSquad=async function(id){const u=socialCloudUser();if(!u?.id)return;const c=await fetchCommunityNetwork();if(c?.members.some(m=>m.squad_id===id&&m.user_id===u.id)){window.SystemOS?.notify('SQUAD LINK ALREADY ACTIVE','SOCIAL // SQUAD');return}return _v34JoinSquad(id)};
 const _v34SquadChallenge=squadChallenge;
 squadChallenge=async function(id,type,days){const u=socialCloudUser(),c=await fetchCommunityNetwork();if(!u||!c)return;const mine=c.squads.find(s=>s.owner_id===u.id);if(!mine||mine.id===id)return;const existing=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?or=(and(challenger_squad_id.eq.'+encodeURIComponent(mine.id)+',opponent_squad_id.eq.'+encodeURIComponent(id)+'),and(challenger_squad_id.eq.'+encodeURIComponent(id)+',opponent_squad_id.eq.'+encodeURIComponent(mine.id)+'))&status=in.(pending,active)&select=id&limit=1');if(existing.length){window.SystemOS?.notify('SQUAD OPERATION ALREADY PENDING OR ACTIVE','SOCIAL // SQUAD OPS');return}return _v34SquadChallenge(id,type,days)};
+
+
+/* ===== V35 COMPETITIVE SCORING + FINAL RESULTS ===== */
+challengeMetric=function(type){if(type==='workouts')return socialMissionCount();if(type==='streak')return Number(state?.currentStreak||0);return socialScore()};
+
+async function finalizeExpiredDuels(challenges){
+ const expired=(challenges||[]).filter(x=>x.status==='active'&&Date.now()>=duelEndsAt(x));if(!expired.length)return false;
+ const profiles=await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id,xp,missions,streak');
+ for(const x of expired){const a=profiles.find(p=>p.user_id===x.challenger_id)||{},b=profiles.find(p=>p.user_id===x.opponent_id)||{},as=duelDelta(duelProfileMetric(a,x.type),x.challenger_start),bs=duelDelta(duelProfileMetric(b,x.type),x.opponent_start),result=as===bs?'draw':as>bs?'challenger':'opponent';await patchChallenge(x.id,{status:'completed',challenger_final:as,opponent_final:bs,result,completed_at:new Date().toISOString()})}
+ return true
+}
+const _v35LiveDuelCard=liveDuelCard;
+liveDuelCard=function(x,profiles,u){
+ if(x.status!=='completed'||x.challenger_final==null||x.opponent_final==null)return _v35LiveDuelCard(x,profiles,u);
+ const mine=x.challenger_id===u.id,otherName=mine?x.opponent_name:x.challenger_name,myScore=Number(mine?x.challenger_final:x.opponent_final),theirScore=Number(mine?x.opponent_final:x.challenger_final),total=Math.max(1,myScore+theirScore),pct=Math.round(myScore/total*100),result=myScore===theirScore?'DRAW':myScore>theirScore?'VICTORY':'DEFEAT';
+ return '<article class="challenge-item duel-item live-duel duel-finished"><div class="duel-versus"><span>YOU</span><b>VS</b><span>'+escapeHtml(otherName)+'</span></div><div class="duel-meta"><strong>'+challengeLabel(x.type)+' // '+result+'</strong><small>FINAL SCORE // LOCKED</small></div><div class="duel-score"><b>'+myScore.toLocaleString()+'</b><div><i style="width:'+pct+'%"></i></div><b>'+theirScore.toLocaleString()+'</b></div></article>'
+};
+async function finalizeExpiredSquadChallenges(challenges,members,profiles){
+ const now=Date.now(),expired=(challenges||[]).filter(x=>x.status==='active'&&now>=new Date(x.accepted_at||x.created_at).getTime()+(Number(x.duration_days)||1)*86400000);if(!expired.length)return false;
+ for(const x of expired){const a=squadTotals(x.challenger_squad_id,members,profiles),b=squadTotals(x.opponent_squad_id,members,profiles),metric=x.type==='workouts'?'workouts':'xp',as=Math.max(0,a[metric]-Number(x.challenger_start||0)),bs=Math.max(0,b[metric]-Number(x.opponent_start||0)),result=as===bs?'draw':as>bs?'challenger':'opponent';await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(x.id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'completed',challenger_final:as,opponent_final:bs,result,completed_at:new Date().toISOString()})})}
+ return true
+}
+const _v35FetchSquad=fetchSquadChallenges;
+fetchSquadChallenges=async function(ids){let rows=await _v35FetchSquad(ids);if(!rows.length)return rows;try{const [net,c]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);if(net&&c&&await finalizeExpiredSquadChallenges(rows,c.members,net.profiles))rows=await _v35FetchSquad(ids)}catch(e){}return rows};
+
+// Result alerts are local/account-specific and emitted once when completed results are observed.
+function competitiveResultAlerts(duels=[],squads=[]){
+ const u=socialCloudUser();if(!u?.id)return;const seenKey='competitiveResultsSeen:'+u.id,seen=new Set(JSON.parse(localStorage.getItem(seenKey)||'[]'));
+ for(const x of duels.filter(x=>x.status==='completed'&&!seen.has('d:'+x.id))){const mine=x.challenger_id===u.id,win=x.result==='draw'?'DRAW':(x.result==='challenger')===mine?'VICTORY':'DEFEAT';systemAlert('duel','DUEL '+win,challengeLabel(x.type)+' // FINAL '+Number(mine?x.challenger_final:x.opponent_final||0)+' - '+Number(mine?x.opponent_final:x.challenger_final||0),x.id,'social');seen.add('d:'+x.id)}
+ for(const x of squads.filter(x=>x.status==='completed'&&!seen.has('s:'+x.id))){systemAlert('squad','SQUAD OPERATION COMPLETE',escapeHtml(x.challenger_name)+' '+Number(x.challenger_final||0)+' - '+Number(x.opponent_final||0)+' '+escapeHtml(x.opponent_name),x.id,'social');seen.add('s:'+x.id)}
+ localStorage.setItem(seenKey,JSON.stringify([...seen].slice(-200)))
+}
