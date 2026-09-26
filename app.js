@@ -1585,3 +1585,50 @@ async function syncHealthConnect(){
 }
 document.addEventListener('DOMContentLoaded',()=>{renderHealthTelemetry();if(window.AndroidHealthConnect&&healthTelemetry().status==='connected')syncHealthConnect()});
 window.addEventListener('focus',()=>{if(window.AndroidHealthConnect&&healthTelemetry().status==='connected')syncHealthConnect()});
+
+
+/* ===== V39 3D PLANETARY ORBIT CONTROLLER ===== */
+function initPlanetaryCommandOrbit(){
+ const core=document.querySelector('.system-core'),menu=core?.querySelector('.core-orbit-menu');
+ if(!core||!menu||menu.dataset.planetaryReady==='1')return;
+ menu.dataset.planetaryReady='1';
+ const nodes=[...menu.querySelectorAll('button[data-holo]')];
+ if(!nodes.length)return;
+ const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+ let phase=-Math.PI/2,last=performance.now(),raf=0,paused=false;
+ const speed=(Math.PI*2)/28;
+ function render(){
+  const rect=core.getBoundingClientRect(),rx=Math.max(rect.width*.57,150),ry=Math.max(rect.height*.25,62);
+  nodes.forEach((node,i)=>{
+   const a=phase+i*(Math.PI*2/nodes.length),depth=Math.sin(a),x=Math.cos(a)*rx,y=Math.sin(a)*ry;
+   const scale=.68+(depth+1)*.22,opacity=.42+(depth+1)*.29;
+   node.style.setProperty('--orbit-x',x.toFixed(1)+'px');
+   node.style.setProperty('--orbit-y',y.toFixed(1)+'px');
+   node.style.setProperty('--orbit-depth',(depth*120).toFixed(1)+'px');
+   node.style.setProperty('--orbit-scale',scale.toFixed(3));
+   node.style.setProperty('--orbit-opacity',Math.min(1,opacity).toFixed(3));
+   node.style.setProperty('--orbit-glow',(.08+Math.max(0,depth)*.28).toFixed(3));
+   node.style.setProperty('--orbit-z',depth>=0?String(40+Math.round(depth*20)):String(2+Math.round((depth+1)*6)));
+   node.setAttribute('aria-label',(node.querySelector('span')?.textContent||'Module')+(depth>.45?' - foreground':''));
+  });
+ }
+ function frame(now){
+  const dt=Math.min(.05,(now-last)/1000);last=now;
+  if(!paused&&!reduce)phase=(phase+speed*dt)%(Math.PI*2);
+  render();raf=requestAnimationFrame(frame);
+ }
+ function setPaused(v){paused=v;core.classList.toggle('orbit-paused',v)}
+ nodes.forEach(node=>{
+  node.addEventListener('click',()=>setPaused(true));
+  node.addEventListener('focus',()=>{if(!reduce)setPaused(true)});
+ });
+ document.getElementById('holoClose')?.addEventListener('click',()=>setPaused(false));
+ document.getElementById('osModuleClose')?.addEventListener('click',()=>setPaused(false));
+ menu.addEventListener('pointerenter',()=>setPaused(true));
+ menu.addEventListener('pointerleave',()=>{if(!core.classList.contains('is-projecting')&&!document.body.classList.contains('os-module-open'))setPaused(false)});
+ window.addEventListener('resize',render,{passive:true});
+ render();
+ if(reduce){setPaused(true);return}
+ raf=requestAnimationFrame(frame);
+}
+document.addEventListener('DOMContentLoaded',initPlanetaryCommandOrbit);
