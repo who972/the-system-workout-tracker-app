@@ -1431,3 +1431,37 @@ document.addEventListener('DOMContentLoaded',()=>{installAlertButton();setInterv
 const _v30Friend=sendFriendRequest;sendFriendRequest=async function(userId,name){await _v30Friend(userId,name);await systemAlert('friend','FRIEND LINK REQUEST',socialHandle()+' wants to connect.',userId,'social',userId)};
 const _v30Challenge=squadChallenge;squadChallenge=async function(id,type,days){const c=await fetchCommunityNetwork(),target=c?.squads.find(s=>s.id===id),owner=target?.owner_id;await _v30Challenge(id,type,days);if(owner)await systemAlert('squad','SQUAD CHALLENGE INCOMING',socialHandle()+' issued a '+challengeLabel(type)+' squad challenge.',id,'social',owner)};
 const _v30Duel=respondToChallenge;respondToChallenge=async function(id,accept){const rows=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id)+'&select=*'),x=rows[0];await _v30Duel(id,accept);if(x&&accept)await systemAlert('duel','DUEL ACCEPTED',socialHandle()+' accepted your challenge.',id,'social',x.challenger_id)};
+
+
+/* ===== V31 HARDENING // INTEGRATION FIXES ===== */
+// Keep OS taskbar synchronized even when the module's native close control is used.
+document.addEventListener('DOMContentLoaded',()=>{const close=document.getElementById('osModuleClose'),task=document.getElementById('osTaskCurrent');if(close&&task)close.addEventListener('click',()=>{task.innerHTML='<b>◇</b><span>CENTRAL COMMAND</span>';task.closest('.os-taskbar')?.classList.remove('has-task')})});
+
+// Daily quests are not training days. Weekly training-day credit comes from completed workouts.
+function creditWeeklyTrainingDay(){
+ const g=state.weeklyGoals.find(x=>x.id==='w_days');if(!g||g.completed)return;
+ const key='weeklyTrainingCredit:'+getTodayStr();if(localStorage.getItem(key))return;
+ localStorage.setItem(key,'1');g.progress++;if(g.progress>=g.target){g.completed=true;state.weeklyCompleted++;addSystemMessage('Weekly Objective Complete: '+g.title+' — +'+g.xpReward+' XP','achievement');addXp(g.xpReward,'weekly');checkAllWeeklyComplete()}
+}
+const _v31FinishWorkout=finishWorkout;finishWorkout=function(){creditWeeklyTrainingDay();return _v31FinishWorkout()};
+
+// Mission briefing remains attached after Mission Control rerenders.
+const _v31RenderMission=renderSystemMission;renderSystemMission=function(){_v31RenderMission();const b=document.getElementById('start-mission-btn');if(b&&!b.disabled&&typeof initMissionControlV22==='function'){const prior=b.onclick;b.onclick=null;setTimeout(()=>initMissionControlV22(),0)}};
+
+// Cross-user notifications are emitted by Supabase triggers. Avoid duplicate/failed client inserts.
+sendFriendRequest=async function(userId,name){const u=socialCloudUser();if(!u?.id||userId===u.id)return;try{await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({requester_id:u.id,addressee_id:userId,requester_name:socialHandle(),addressee_name:name,status:'pending'})});window.SystemOS?.notify?.('FRIEND REQUEST SENT // '+name.toUpperCase(),'SOCIAL // FRIEND LINK');renderSocialCommand()}catch(e){window.SystemOS?.notify?.((e.message||'FRIEND LINK FAILED').toUpperCase(),'SOCIAL // NETWORK')}}
+const _v31RespondDuel=respondToChallenge;respondToChallenge=async function(id,accept){return _v31RespondDuel(id,accept)};
+const _v31SquadChallenge=squadChallenge;squadChallenge=async function(id,type,days){return _v31SquadChallenge(id,type,days)};
+
+// Diagnostic self-check for the major runtime integrations.
+window.SystemDiagnostics=async function(){
+ const checks=[
+  ['OS',!!window.SystemOS?.open],
+  ['Mission Control',!!document.getElementById('start-mission-btn')],
+  ['Workout HUD',!!document.getElementById('workoutMode')],
+  ['Progression',!!window.SystemProgression?.show],
+  ['Alert Center',!!document.getElementById('systemAlertCenter')],
+  ['Cloud Session',!!socialCloudUser()]
+ ];let cloud=false;try{if(socialCloudUser()){await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id&limit=1');cloud=true}}catch(e){}
+ checks.push(['Social Cloud',cloud]);return checks.map(([name,ok])=>({name,ok}))
+};
