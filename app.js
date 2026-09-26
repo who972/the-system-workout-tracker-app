@@ -1540,3 +1540,29 @@ function competitiveResultAlerts(duels=[],squads=[]){
  for(const x of squads.filter(x=>x.status==='completed'&&!seen.has('s:'+x.id))){systemAlert('squad','SQUAD OPERATION COMPLETE',escapeHtml(x.challenger_name)+' '+Number(x.challenger_final||0)+' - '+Number(x.opponent_final||0)+' '+escapeHtml(x.opponent_name),x.id,'social');seen.add('s:'+x.id)}
  localStorage.setItem(seenKey,JSON.stringify([...seen].slice(-200)))
 }
+
+
+/* ===== V36 COMBAT RECORD // COMPETITIVE HISTORY ===== */
+function combatDate(x){const d=x.completed_at||x.created_at;try{return new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}catch(e){return 'ARCHIVED'}}
+function duelHistoryRow(x,u){
+ const mine=x.challenger_id===u.id,other=mine?x.opponent_name:x.challenger_name,my=Number(mine?x.challenger_final:x.opponent_final)||0,their=Number(mine?x.opponent_final:x.challenger_final)||0,result=my===their?'DRAW':my>their?'VICTORY':'DEFEAT';
+ return '<article class="combat-record-row '+result.toLowerCase()+'"><i>⚔</i><span><strong>'+escapeHtml(other)+'</strong><small>'+challengeLabel(x.type)+' • '+combatDate(x)+'</small></span><b>'+result+'</b><em>'+my.toLocaleString()+' - '+their.toLocaleString()+'</em></article>'
+}
+function squadHistoryRow(x,myIds){
+ const mineA=myIds.includes(x.challenger_squad_id),mineB=myIds.includes(x.opponent_squad_id),my=Number(mineA?x.challenger_final:x.opponent_final)||0,their=Number(mineA?x.opponent_final:x.challenger_final)||0,other=mineA?x.opponent_name:x.challenger_name,result=my===their?'DRAW':my>their?'VICTORY':'DEFEAT';
+ return '<article class="combat-record-row squad '+result.toLowerCase()+'"><i>◆</i><span><strong>'+escapeHtml(other)+'</strong><small>SQUAD '+challengeLabel(x.type)+' • '+combatDate(x)+'</small></span><b>'+result+'</b><em>'+my.toLocaleString()+' - '+their.toLocaleString()+'</em></article>'
+}
+async function renderCombatRecordV36(){
+ const root=document.getElementById('osSocialCommand'),u=socialCloudUser();if(!root||!u?.id)return;
+ const [net,c]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);if(!net||!c)return;
+ const myIds=c.members.filter(m=>m.user_id===u.id).map(m=>m.squad_id),squadRows=await fetchSquadChallenges(myIds),duels=(net.challenges||[]).filter(x=>x.status==='completed'&&x.challenger_final!=null&&x.opponent_final!=null),squads=(squadRows||[]).filter(x=>x.status==='completed'&&x.challenger_final!=null&&x.opponent_final!=null);
+ competitiveResultAlerts(duels,squads);
+ const old=root.querySelector('.combat-record');if(old)old.remove();
+ const shell=root.querySelector('.social-v25');if(!shell)return;
+ const all=[...duels.map(x=>({kind:'duel',x,t:new Date(x.completed_at||x.created_at).getTime()})),...squads.map(x=>({kind:'squad',x,t:new Date(x.completed_at||x.created_at).getTime()}))].sort((a,b)=>b.t-a.t);
+ const wins=all.filter(r=>{if(r.kind==='duel'){const mine=r.x.challenger_id===u.id,a=Number(mine?r.x.challenger_final:r.x.opponent_final),b=Number(mine?r.x.opponent_final:r.x.challenger_final);return a>b}const mine=myIds.includes(r.x.challenger_squad_id),a=Number(mine?r.x.challenger_final:r.x.opponent_final),b=Number(mine?r.x.opponent_final:r.x.challenger_final);return a>b}).length;
+ shell.insertAdjacentHTML('beforeend','<section class="combat-record social-card"><div class="social-head"><span>COMBAT RECORD // ARCHIVE</span><b>'+wins+' W // '+(all.length-wins)+' OTHER</b></div><div class="combat-record-tabs"><button class="active" data-record-filter="all">ALL</button><button data-record-filter="duel">DUELS</button><button data-record-filter="squad">SQUAD OPS</button></div><div id="combatRecordFeed" class="combat-record-feed">'+(all.length?all.map(r=>'<div data-record-kind="'+r.kind+'">'+(r.kind==='duel'?duelHistoryRow(r.x,u):squadHistoryRow(r.x,myIds))+'</div>').join(''):'<div class="social-empty">NO COMPLETED OPERATIONS // RECORD EMPTY</div>')+'</div></section>');
+ root.querySelectorAll('[data-record-filter]').forEach(b=>b.onclick=()=>{root.querySelectorAll('[data-record-filter]').forEach(x=>x.classList.toggle('active',x===b));root.querySelectorAll('[data-record-kind]').forEach(x=>x.hidden=b.dataset.recordFilter!=='all'&&x.dataset.recordKind!==b.dataset.recordFilter)})
+}
+const _v36RenderSocial=renderSocialCommand;
+renderSocialCommand=async function(){await _v36RenderSocial();await renderCombatRecordV36()};
