@@ -1600,7 +1600,9 @@ function initPlanetaryCommandOrbit(){
  if(!frontPlane){frontPlane=document.createElement('div');frontPlane.className='core-orbit-menu core-orbit-front';frontPlane.setAttribute('aria-hidden','true');core.appendChild(frontPlane)}
  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  let phase=-Math.PI/2,last=performance.now(),raf=0,paused=false;
+ let dragging=false,dragPointer=null,dragLastX=0,dragLastT=0,velocity=0,resumeTimer=0;
  const speed=(Math.PI*2)/18;
+ const dragSensitivity=.0105;
  function render(){
   const rect=core.getBoundingClientRect();
   const rx=Math.max(rect.width*.50,145),ry=Math.max(rect.height*.20,50);
@@ -1628,11 +1630,38 @@ function initPlanetaryCommandOrbit(){
  }
  function frame(now){
   const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(!paused&&!reduce)phase=(phase+speed*dt)%(Math.PI*2);
+  if(!dragging&&!paused&&!reduce){
+   if(Math.abs(velocity)>.0001){phase=(phase+velocity*dt)%(Math.PI*2);velocity*=Math.pow(.045,dt)}
+   else phase=(phase+speed*dt)%(Math.PI*2);
+  }
   render();raf=requestAnimationFrame(frame);
  }
  function setPaused(v){paused=v;core.classList.toggle('orbit-paused',v)}
- nodes.forEach(node=>node.addEventListener('click',()=>setPaused(true)));
+ function dragStart(e){
+  if(e.pointerType==='mouse'&&e.button!==0)return;
+  dragging=true;dragPointer=e.pointerId;dragLastX=e.clientX;dragLastT=performance.now();velocity=0;
+  clearTimeout(resumeTimer);core.classList.add('orbit-dragging');
+  try{core.setPointerCapture(e.pointerId)}catch(_){}
+ }
+ function dragMove(e){
+  if(!dragging||e.pointerId!==dragPointer)return;
+  const now=performance.now(),dx=e.clientX-dragLastX,dt=Math.max(8,now-dragLastT);
+  phase=(phase+dx*dragSensitivity)%(Math.PI*2);
+  velocity=(dx*dragSensitivity)/(dt/1000);
+  dragLastX=e.clientX;dragLastT=now;render();
+ }
+ function dragEnd(e){
+  if(!dragging||e.pointerId!==dragPointer)return;
+  dragging=false;dragPointer=null;core.classList.remove('orbit-dragging');
+  try{core.releasePointerCapture(e.pointerId)}catch(_){}
+  // Keep a little momentum, then return to automatic orbit.
+  resumeTimer=setTimeout(()=>{velocity=0},1200);
+ }
+ core.addEventListener('pointerdown',dragStart);
+ core.addEventListener('pointermove',dragMove);
+ core.addEventListener('pointerup',dragEnd);
+ core.addEventListener('pointercancel',dragEnd);
+ nodes.forEach(node=>node.addEventListener('click',()=>{if(Math.abs(velocity)<.15)setPaused(true)}));
  document.getElementById('holoClose')?.addEventListener('click',()=>setPaused(false));
  document.getElementById('osModuleClose')?.addEventListener('click',()=>setPaused(false));
  window.addEventListener('resize',render,{passive:true});
