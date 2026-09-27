@@ -1304,6 +1304,30 @@ let authMode='signin';
 function authGateStatus(msg,ok=false){const e=document.getElementById('authGateStatus');if(e){e.textContent=msg;e.dataset.ok=ok?'1':'0'}}
 function showAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=false}
 function hideAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=true}
+function showSystemEntry(){
+  const e=document.getElementById('systemEntryScreen');
+  if(e)e.hidden=false;
+  document.body.classList.add('system-entry-open');
+}
+function hideSystemEntry(){
+  const e=document.getElementById('systemEntryScreen');
+  if(e)e.hidden=true;
+  document.body.classList.remove('system-entry-open');
+}
+function enterMainInterface(){
+  hideAuthGate();
+  hideSystemEntry();
+  resetAuthProgress();
+  const boot=document.getElementById('systemBoot');
+  if(boot)boot.hidden=true;
+  document.body.classList.remove('system-boot-open','system-entering');
+  try{
+    const d=new Date();
+    const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+    localStorage.setItem('theSystemDailyBriefing',day);
+  }catch(_){}
+  window.scrollTo({top:0,left:0,behavior:'auto'});
+}
 function authDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
 function authProgress(stage,title,message){
   const card=document.querySelector('.auth-card');
@@ -1335,11 +1359,9 @@ async function completeAuthGate(session,remember=true){
   storeCloudSession(session,remember);
   renderCloudAccount();
   await authDelay(320);
-  authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface and daily briefing…');
+  authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface…');
   await authDelay(520);
-  hideAuthGate();
-  resetAuthProgress();
-  if(typeof renderDailyBriefing==='function')setTimeout(renderDailyBriefing,80);
+  enterMainInterface();
 }
 function setAuthMode(mode){
   authMode=mode;
@@ -1423,22 +1445,12 @@ async function validateStoredCloudSession(){
   sessionStorage.removeItem(CLOUD_SESSION_KEY);
   return null;
 }
-async function initAuthGate(){
-  const r=recoveryParams();
-  document.getElementById('authShowSignIn')?.addEventListener('click',()=>setAuthMode('signin'));
-  document.getElementById('authShowSignUp')?.addEventListener('click',()=>setAuthMode('signup'));
-  document.getElementById('authGateForm')?.addEventListener('submit',authGateSubmit);
-  document.getElementById('authForgot')?.addEventListener('click',authForgot);
-  document.getElementById('recoveryForm')?.addEventListener('submit',submitRecovery);
-
-  const rememberEl=document.getElementById('authRememberMe');
-  if(rememberEl)rememberEl.checked=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
-
-  if(r.type==='recovery'&&r.access_token){showRecovery();return}
-
+async function startEntryAuthentication(){
   showAuthGate();
+  setAuthMode('signin');
   const remembered=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
   const saved=getCloudSession();
+
   if(!remembered||!saved?.access_token){
     if(!remembered){
       localStorage.removeItem(CLOUD_SESSION_KEY);
@@ -1446,25 +1458,49 @@ async function initAuthGate(){
     }
     resetAuthProgress();
     authGateStatus('');
+    setTimeout(()=>document.getElementById('authEmail')?.focus({preventScroll:true}),120);
     return;
   }
 
+  authGateStatus('');
   authProgress(1,'SIGNING IN','Remembered account found. Restoring secure session…');
   await authDelay(260);
   authProgress(2,'VERIFYING IDENTITY','Confirming saved session with THE SYSTEM…');
   const valid=await validateStoredCloudSession();
   if(valid?.access_token){
     await authDelay(300);
-    authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface and daily briefing…');
+    authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface…');
     await authDelay(520);
     renderCloudAccount();
-    hideAuthGate();
-    resetAuthProgress();
-    if(typeof renderDailyBriefing==='function')setTimeout(renderDailyBriefing,80);
+    enterMainInterface();
   }else{
     resetAuthProgress();
     authGateStatus('Session expired. Sign in again.');
   }
+}
+async function initAuthGate(){
+  const r=recoveryParams();
+
+  document.getElementById('authShowSignIn')?.addEventListener('click',()=>setAuthMode('signin'));
+  document.getElementById('authShowSignUp')?.addEventListener('click',()=>setAuthMode('signup'));
+  document.getElementById('authGateForm')?.addEventListener('submit',authGateSubmit);
+  document.getElementById('authForgot')?.addEventListener('click',authForgot);
+  document.getElementById('recoveryForm')?.addEventListener('submit',submitRecovery);
+  document.getElementById('enterTheSystem')?.addEventListener('click',startEntryAuthentication);
+
+  const rememberEl=document.getElementById('authRememberMe');
+  if(rememberEl)rememberEl.checked=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
+
+  resetAuthProgress();
+  hideAuthGate();
+
+  if(r.type==='recovery'&&r.access_token){
+    hideSystemEntry();
+    showRecovery();
+    return;
+  }
+
+  showSystemEntry();
 }
 document.addEventListener('DOMContentLoaded',initAuthGate);
 document.addEventListener('DOMContentLoaded',()=>{
