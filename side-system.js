@@ -160,6 +160,23 @@ function renderAdaptiveMissions(){const el=document.getElementById('adaptiveMiss
 const WEEKLY_BOSS_CLASSES={E:{type:'GATE BOSS',name:'IRONHIDE BRUTE',hp:6000},D:{type:'ALPHA BEAST',name:'FANG OF THE DEEP',hp:12000},C:{type:'NAMED BOSS',name:'THE IRON DEVOURER',hp:24000},B:{type:'HIGH-TIER BOSS',name:'VOID WARDEN',hp:42000},A:{type:'LAIR MASTER',name:'THE ABYSS SENTINEL',hp:70000},S:{type:'CATASTROPHE-CLASS',name:'WORLD EATER',hp:110000},'S+':{type:'SOVEREIGN-CLASS',name:'THE LAST TYRANT',hp:175000},Shadow:{type:'APEX ENCOUNTER',name:'THE ECLIPSE KING',hp:250000}};
 function weekKey(){const d=new Date(),day=(d.getDay()+6)%7,m=new Date(d);m.setDate(d.getDate()-day);return m.toISOString().slice(0,10)}
 function weeklyGateState(s){const rank=currentClass(s),def=WEEKLY_BOSS_CLASSES[rank]||WEEKLY_BOSS_CLASSES.E,key=weekKey();s.weeklyGate=s.weeklyGate||{};if(s.weeklyGate.key!==key||s.weeklyGate.rank!==rank)s.weeklyGate={key,rank,damage:0,defeated:false,claimed:false};return{g:s.weeklyGate,rank,def}}
+function applyMissionDamageToWeeklyGate(performance,prs=[]){
+ const s=loadSideSystem(),w=weeklyGateState(s),g=w.g;if(g.defeated)return{damage:0,critical:false,defeated:true,hp:0};
+ const key=(typeof systemMissionKey==='function'?systemMissionKey():today())+':'+(performance?.mode||'full');
+ g.missionHits=g.missionHits||{};if(g.missionHits[key])return g.missionHits[key];
+ const score=Math.max(0,Math.min(100,Number(performance?.score)||0)),critical=(prs?.length||0)>0;
+ const rankScale={E:8,D:14,C:25,B:42,A:70,S:110,'S+':175,Shadow:250}[w.rank]||8;
+ const modeScale=performance?.mode==='full'?1:performance?.mode==='intense'?.8:.55;
+ const streakBonus=1+Math.min(7,Number(typeof state!=='undefined'?state.currentStreak||0:0))*.02;
+ const critBonus=critical?1.2:1;
+ const damage=Math.max(1,Math.round(score*rankScale*modeScale*streakBonus*critBonus));
+ g.damage=Math.min(w.def.hp,(Number(g.damage)||0)+damage);g.defeated=g.damage>=w.def.hp;
+ const hit={damage,critical,defeated:g.defeated,hp:Math.max(0,w.def.hp-g.damage),score};g.missionHits[key]=hit;saveSideSystem(s);
+ if(typeof queueReward==='function')queueReward({type:'boss',title:critical?'CRITICAL HIT':'BOSS DAMAGE',detail:w.def.name+' • '+damage.toLocaleString()+' DAMAGE',amount:0,intensity:g.defeated?'major':'mission',source:'boss'});
+ if(g.defeated&&window.SystemProgression?.bossUnlocked)window.SystemProgression.bossUnlocked(w.def.name+' DEFEATED');
+ setTimeout(()=>{try{renderBossCommand()}catch(e){}},100);
+ return hit
+}
 function weeklyGateDamage(s){const w=weeklyGateState(s),daily=dailySideMissions().map(x=>x.id),side=s.completed.filter(x=>daily.includes(x)).length,quests=(typeof state!=='undefined'&&state.dailyQuests?state.dailyQuests.filter(q=>q.completed).length:0),streak=Number(typeof state!=='undefined'?state.currentStreak||0:0);return Math.min(w.def.hp,quests*900+side*450+Math.min(7,streak)*180)}
 function renderBossCommand(){
  const host=document.getElementById('bossStageSystem');if(!host)return;
