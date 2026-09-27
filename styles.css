@@ -2383,3 +2383,7 @@ body.system-os-ready .core-orbit-menu button:hover{
 .system-entry-screen__enter:active{transform:translate(-50%,-50%) scale(.985)}
 .system-entry-screen__enter:focus-visible{outline:2px solid rgba(116,223,255,.95);outline-offset:4px;border-radius:18px}
 @media(max-height:650px){.system-entry-screen__enter{top:84.2%;width:min(39vw,560px);height:min(9vw,100px);padding:0;font-size:0}}
+
+/* V83 // ENTRY SCREEN CACHE KILL */
+.system-entry-screen__art{background-image:url('enter_the_system_landscape.jpg?v=83')!important;background-position:center center!important;background-size:cover!important;background-repeat:no-repeat!important}
+.system-entry-screen__status{display:none!important}
