@@ -423,8 +423,22 @@ function updateWorkoutStreak(credit=1) {
   // Any legitimate training keeps the habit alive, but tiny one-off exercise logs
   // should not manufacture streak days. Scheduled quick modes still count.
   if (Number(credit) < 0.4) return false;
+  const previousStreak = state.currentStreak;
+  const previousDate = state.lastWorkoutDate;
   updateStreak();
-  return true;
+  if (state.lastWorkoutDate !== previousDate) {
+    const streak = state.currentStreak;
+    const milestone = [3, 7, 14, 30, 60].includes(streak);
+    queueReward({
+      type: 'streak',
+      title: streak === 1 ? 'STREAK ESTABLISHED' : milestone ? 'CONSISTENCY MILESTONE' : 'STREAK EXTENDED',
+      detail: `${streak} DAY${streak === 1 ? '' : 'S'}`,
+      amount: 0,
+      intensity: milestone ? 'mission' : 'micro',
+      source: 'streak'
+    });
+  }
+  return state.currentStreak !== previousStreak || state.lastWorkoutDate !== previousDate;
 }
 
 // --- Quest Completion ---
@@ -605,15 +619,27 @@ function renderBodyProgress(){
   document.getElementById('weightLost').textContent=(w.starting&&w.current)?`${Math.max(0,w.starting-w.current).toFixed(1)} lb`:'--';
 }
 function logExercise(name,sets,reps,weight){
+  sets=Math.max(1,Number(sets)||1); reps=Math.max(1,Number(reps)||1); weight=Math.max(0,Number(weight)||0);
   const volume=sets*reps*weight;
   const previous=state.exerciseRecords.filter(r=>r.name===name);
-  const isPR=!previous.length || volume>Math.max(...previous.map(r=>r.volume));
+  const previousBest=previous.length?Math.max(...previous.map(r=>Number(r.volume)||0)):0;
+  const isPR=previous.length>0 && volume>previousBest;
+  const firstRecord=!previous.length;
   const rec={date:getTodayStr(),name,sets,reps,weight,volume,isPR};
   state.exerciseRecords.push(rec); state.exerciseRecords=state.exerciseRecords.slice(-100);
-  const xp=Math.max(10,Math.floor(sets*reps*2+(weight||0)*0.5)); addXp(xp,'exercise');
+
+  const baseXp=Math.max(10,Math.floor(sets*reps*2+(weight||0)*0.5));
+  const growthXp=isPR?Math.max(10,Math.min(50,Math.round(baseXp*.2))):0;
+  rewardEvent({amount:baseXp,source:'exercise',title:'TRAINING REGISTERED',detail:`${name} • ${sets}×${reps}${weight?' @ '+weight+' LB':''}`,intensity:'micro'});
+  if(isPR){
+    rewardEvent({amount:growthXp,source:'growth',title:'PERSONAL RECORD',detail:`${name} • ${Math.round(previousBest)} → ${Math.round(volume)} VOLUME`,intensity:'mission'});
+  } else if(firstRecord){
+    queueReward({type:'baseline',title:'BASELINE ESTABLISHED',detail:name,amount:0,intensity:'micro',source:'growth'});
+  }
+
   if(window.SystemBuild?.awardTraining) window.SystemBuild.awardTraining(name,Math.max(5,sets*2),1);
-  addSystemMessage(`${name} logged: ${sets} × ${reps}${weight?' @ '+weight+' lb':''} — +${xp} XP${isPR?' — NEW PR':''}`,'quest');
-  recordHistory('exercise_'+Date.now(), xp); saveState(); renderAll(); if(typeof renderAnalytics==='function')renderAnalytics();
+  addSystemMessage(`${name} logged: ${sets} × ${reps}${weight?' @ '+weight+' lb':''} — +${baseXp} XP${isPR?` — NEW PR +${growthXp} Growth XP`:''}`,'quest');
+  recordHistory('exercise_'+Date.now(), baseXp+growthXp); saveState(); renderAll(); if(typeof renderAnalytics==='function')renderAnalytics();
 }
 function renderExercises(){
   const el=document.getElementById('exerciseRecords'); if(!el) return;
