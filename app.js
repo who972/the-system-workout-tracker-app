@@ -466,6 +466,10 @@ function showMomentumPrompt() {
 function addXp(amount, source = 'quest', options = {}) {
   amount = Math.max(0, Math.floor(Number(amount) || 0));
   if (!amount) return false;
+  const baseAmount=amount, prestigeEligible=!options.noPrestige&&source!=='weekly'&&source!=='ascension';
+  if(prestigeEligible&&typeof ascensionRewardMultiplier==='function') amount=Math.max(baseAmount,Math.floor(baseAmount*ascensionRewardMultiplier()));
+  const prestigeBonus=amount-baseAmount;
+  if(prestigeBonus>0&&!options.suppressReward) queueReward({type:'prestige',title:'ASCENSION AMPLIFIER',detail:'+'+prestigeBonus+' BONUS XP',amount:0,intensity:'micro',source:'ascension'});
   const oldLevel = state.level;
   state.xp += amount;
   state.totalXp += amount;
