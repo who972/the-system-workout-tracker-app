@@ -33,9 +33,21 @@
     <form id="authGateForm" class="auth-form">
       <input id="authEmail" class="form-input" type="email" autocomplete="email" placeholder="Email" required>
       <div class="password-field"><input id="authPassword" class="form-input" type="password" autocomplete="current-password" placeholder="Password (6+ characters)" required><button class="password-toggle" type="button" data-password-toggle="authPassword" aria-label="Show password">Show</button></div>
+      <label class="auth-remember"><input id="authRememberMe" type="checkbox" checked><span>Remember me on this device</span></label>
       <button id="authSubmit" class="btn-primary" type="submit">Sign In</button>
     </form>
     <button id="authForgot" class="auth-link" type="button">Forgot password?</button>
+    <div id="authProgress" class="auth-progress" hidden aria-live="polite">
+      <div class="auth-progress__core"><span></span><b>TS</b></div>
+      <p id="authProgressTitle">SIGNING IN</p>
+      <small id="authProgressMessage">Establishing secure session…</small>
+      <div class="auth-progress__track"><i id="authProgressBar"></i></div>
+      <div class="auth-progress__steps">
+        <span data-auth-step="1">SIGN IN</span>
+        <span data-auth-step="2">VERIFY</span>
+        <span data-auth-step="3">INITIALIZE</span>
+      </div>
+    </div>
     <form id="recoveryForm" class="auth-form" hidden>
       <div class="password-field"><input id="recoveryPassword" class="form-input" type="password" autocomplete="new-password" placeholder="New password (6+ characters)" required><button class="password-toggle" type="button" data-password-toggle="recoveryPassword" aria-label="Show new password">Show</button></div>
       <div class="password-field"><input id="recoveryPasswordConfirm" class="form-input" type="password" autocomplete="new-password" placeholder="Confirm new password" required><button class="password-toggle" type="button" data-password-toggle="recoveryPasswordConfirm" aria-label="Show confirmed password">Show</button></div>
