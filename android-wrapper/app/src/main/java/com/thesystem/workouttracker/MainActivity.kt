@@ -47,7 +47,19 @@ class MainActivity : ComponentActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.webViewClient = object : android.webkit.WebViewClient() {
-            override fun shouldInterceptRequest(view: WebView, request: android.webkit.WebResourceRequest) = loader.shouldInterceptRequest(request.url)
+            override fun shouldInterceptRequest(
+                view: WebView,
+                request: android.webkit.WebResourceRequest
+            ): android.webkit.WebResourceResponse? {
+                val uri = request.url
+                // Intercept only the virtual local app origin. Supabase authentication
+                // and every other remote HTTPS request must be handled by WebView networking.
+                return if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") {
+                    loader.shouldInterceptRequest(uri)
+                } else {
+                    super.shouldInterceptRequest(view, request)
+                }
+            }
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             WebViewCompat.addWebMessageListener(webView, "SystemHealthNative", setOf("https://appassets.androidplatform.net")) { _, message, _, _, reply ->
