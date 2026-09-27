@@ -2315,3 +2315,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V73 // LEGACY COMBAT COMBOS */
 .legacy-combat-brief__stats{grid-template-columns:repeat(3,1fr)}.legacy-combat-brief__stats span:nth-last-child(-n+2) strong{font-size:7px}.boss-combat-fx.critical .bcf-impact b{transform:scale(1.08)}@media(max-width:720px){.legacy-combat-brief__stats{grid-template-columns:repeat(2,1fr)}}
+
+/* V74 // LEGACY SPECIAL ATTACKS */
+.boss-combat-fx.critical .bcf-attack{text-shadow:0 0 12px currentColor}.legacy-combat-brief__stats strong{overflow-wrap:anywhere}
