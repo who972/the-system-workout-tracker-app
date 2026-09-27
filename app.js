@@ -288,14 +288,51 @@ function processRewardQueue() {
 }
 
 function showRewardFeedback(reward) {
-  // Reuse the System Log so rewards work immediately in every current build.
-  // A dedicated cinematic HUD overlay can subscribe to this same event later.
   const xpText = reward.amount > 0 ? ` +${reward.amount} XP` : '';
   const detail = reward.detail ? ` — ${reward.detail}` : '';
   addSystemMessage(`${reward.title}${xpText}${detail}`, reward.intensity === 'major' ? 'level' : 'achievement');
+  showRewardHud(reward);
   try {
     window.dispatchEvent(new CustomEvent('system:reward', { detail: reward }));
   } catch (e) {}
+}
+
+function ensureRewardHud() {
+  let hud = document.getElementById('systemRewardHud');
+  if (hud) return hud;
+  hud = document.createElement('div');
+  hud.id = 'systemRewardHud';
+  hud.className = 'reward-hud';
+  hud.setAttribute('aria-live', 'polite');
+  hud.innerHTML = `
+    <div class="reward-hud__scan"></div>
+    <div class="reward-hud__label"></div>
+    <div class="reward-hud__xp"></div>
+    <div class="reward-hud__detail"></div>
+    <div class="reward-hud__progress"><span></span></div>
+  `;
+  document.body.appendChild(hud);
+  return hud;
+}
+
+function showRewardHud(reward) {
+  const hud = ensureRewardHud();
+  const label = hud.querySelector('.reward-hud__label');
+  const xp = hud.querySelector('.reward-hud__xp');
+  const detail = hud.querySelector('.reward-hud__detail');
+  const fill = hud.querySelector('.reward-hud__progress span');
+  label.textContent = reward.title;
+  xp.textContent = reward.amount > 0 ? `+${reward.amount} XP` : '';
+  detail.textContent = reward.detail || '';
+  const needed = xpNeededForLevel(state.level);
+  const pct = Math.max(0, Math.min(100, (state.xp / needed) * 100));
+  fill.style.width = '0%';
+  hud.className = `reward-hud reward-hud--${reward.intensity || 'micro'}`;
+  void hud.offsetWidth;
+  hud.classList.add('reward-hud--visible');
+  requestAnimationFrame(() => { fill.style.width = `${pct}%`; });
+  window.setTimeout(() => hud.classList.remove('reward-hud--visible'),
+    reward.intensity === 'major' ? 1900 : reward.intensity === 'mission' ? 1450 : 850);
 }
 
 function rewardEvent({ amount = 0, source = 'system', title = 'PROGRESS REGISTERED', detail = '', intensity = 'micro' } = {}) {
