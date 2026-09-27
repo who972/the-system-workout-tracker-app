@@ -2276,3 +2276,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V60 // LEGACY CHAPTER TRIALS */
 .legacy-trial-btn,.legacy-trial-lock{width:100%;margin-top:8px;padding:9px;border:1px solid rgba(98,228,255,.25);background:rgba(5,25,35,.72);font:800 7px 'JetBrains Mono',monospace;letter-spacing:.08em;color:inherit;text-align:left}.legacy-trial-btn{cursor:pointer;box-shadow:inset 0 0 14px rgba(70,220,255,.035)}.legacy-trial-btn small{display:block;margin-top:3px;font-size:6px;opacity:.5}.legacy-trial-btn:hover{border-color:rgba(98,228,255,.55);box-shadow:inset 0 0 22px rgba(70,220,255,.07)}.legacy-trial-btn:disabled{opacity:.55;cursor:default}.legacy-trial-lock{opacity:.35}.legacy-chapter.complete .legacy-trial-btn{border-color:rgba(98,228,255,.48)}
+
+/* V61 // LEGACY TRIAL RELICS */
+.hunter-id-card.frame-trialborn{border-style:double;border-width:3px;box-shadow:inset 0 0 34px rgba(70,220,255,.1)}.hunter-id-card.frame-overlord{border-style:double;border-width:4px;box-shadow:inset 0 0 54px rgba(255,255,255,.09),0 0 32px rgba(70,220,255,.13)}.vault-grid article.unlocked:has(b:first-child){text-shadow:0 0 7px rgba(98,228,255,.15)}
