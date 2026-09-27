@@ -1173,8 +1173,9 @@ function initSystemOS(){
   restore();setActive(current,false);body.innerHTML='';parked=[];current=name;
   if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand()}
   m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});
-  if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // LINK READY</span><strong>'+m.title+'</strong><p>This SYSTEM module is online and ready for its connected data.</p></div></div>'; if(name==='boss'&&typeof renderBossCommand==='function')renderBossCommand(); if(name==='side'&&typeof renderSideSystem==='function')renderSideSystem();
-  title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');stage.setAttribute('aria-hidden','false');document.body.classList.add('os-module-open');setActive(name,true);body.scrollTop=0
+  if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // LINK READY</span><strong>'+m.title+'</strong><p>This SYSTEM module is online and ready for its connected data.</p></div></div>';
+  title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');stage.setAttribute('aria-hidden','false');document.body.classList.add('os-module-open');setActive(name,true);body.scrollTop=0;
+  requestAnimationFrame(()=>{try{if(name==='boss'&&typeof renderBossCommand==='function')renderBossCommand();if(name==='side'&&typeof renderSideSystem==='function')renderSideSystem()}catch(err){console.error('SYSTEM module render failed',name,err);window.SystemOS?.notify?.('MODULE OPEN // DATA RENDER ERROR','SYSTEM // DIAGNOSTIC')}})
  }
  window.SystemOS={open,close};
  document.getElementById('osModuleClose').onclick=close;
