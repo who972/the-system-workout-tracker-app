@@ -2370,3 +2370,16 @@ body.system-os-ready .core-orbit-menu button:hover{
 .system-entry-screen{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;background:#02060d;overflow:hidden}.system-entry-screen[hidden]{display:none!important}.system-entry-screen__art{position:absolute;inset:0;background:#02060d url('system-entry-hero.jpg') center center/contain no-repeat;filter:saturate(1.05) contrast(1.04)}.system-entry-screen:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(0,0,0,.26) 100%);pointer-events:none}.system-entry-screen__enter{position:absolute;left:50%;top:82%;transform:translate(-50%,-50%);width:min(48vh,420px);min-width:260px;padding:14px 24px;border:2px solid rgba(94,225,255,.9);clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%);background:linear-gradient(180deg,rgba(15,66,139,.88),rgba(0,20,57,.94));box-shadow:0 0 10px rgba(45,195,255,.9),inset 0 0 22px rgba(45,195,255,.24),0 0 34px rgba(0,118,255,.35);color:#f3fdff;font:900 17px 'JetBrains Mono',monospace;letter-spacing:.08em;text-shadow:0 0 10px rgba(73,224,255,.75);cursor:pointer;animation:systemEntryPulse 2.2s ease-in-out infinite}.system-entry-screen__enter:active{transform:translate(-50%,-50%) scale(.985)}.system-entry-screen__status{position:absolute;right:18px;bottom:12px;font:700 8px 'JetBrains Mono',monospace;letter-spacing:.12em;color:rgba(122,234,255,.65)}body.system-entry-open{overflow:hidden}.auth-gate{z-index:13000;background:rgba(2,7,14,.86);backdrop-filter:blur(9px)}@keyframes systemEntryPulse{50%{box-shadow:0 0 18px rgba(45,195,255,1),inset 0 0 30px rgba(45,195,255,.34),0 0 50px rgba(0,118,255,.5)}}
 @media(max-height:650px){.system-entry-screen__enter{top:80%;width:min(43vh,390px);padding:10px 20px;font-size:14px}.system-entry-screen__status{font-size:7px}}
 @media(prefers-reduced-motion:reduce){.system-entry-screen__enter{animation:none}}
+
+
+/* V82 // FINAL LANDSCAPE ENTRY HERO */
+.system-entry-screen{position:fixed;inset:0;z-index:12000;display:block;background:#01040a;overflow:hidden}
+.system-entry-screen[hidden]{display:none!important}
+.system-entry-screen__art{position:absolute;inset:0;background:#01040a url('enter_the_system_landscape.jpg') center center/cover no-repeat;filter:none}
+.system-entry-screen:before{display:none}
+.system-entry-screen__status{display:none!important}
+.system-entry-screen__enter{position:absolute;left:50%;top:84.2%;transform:translate(-50%,-50%);width:min(38vw,620px);height:min(9vw,118px);min-width:260px;z-index:4;border:0;clip-path:none;background:transparent!important;box-shadow:none!important;color:transparent!important;text-shadow:none!important;padding:0;cursor:pointer;animation:none!important}
+.system-entry-screen__enter span{opacity:0!important;pointer-events:none}
+.system-entry-screen__enter:active{transform:translate(-50%,-50%) scale(.985)}
+.system-entry-screen__enter:focus-visible{outline:2px solid rgba(116,223,255,.95);outline-offset:4px;border-radius:18px}
+@media(max-height:650px){.system-entry-screen__enter{top:84.2%;width:min(39vw,560px);height:min(9vw,100px);padding:0;font-size:0}}
