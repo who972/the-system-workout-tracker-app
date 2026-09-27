@@ -1472,12 +1472,13 @@ function showMissionDebrief(seconds,xp,prs){
  const performance=calculateMissionPerformance(seconds,prs);
  document.getElementById('missionDebriefGrade').textContent=performance.grade+' // '+performance.score;
  window.SystemMissionPerformance=performance;
- const sessions=workoutHistory();if(sessions.length){sessions[sessions.length-1].performance={...performance};localStorage.setItem('systemWorkoutSessions',JSON.stringify(sessions.slice(-365)))}
+ const bossHit=typeof applyMissionDamageToWeeklyGate==='function'?applyMissionDamageToWeeklyGate(performance,prs):null;
+ const sessions=workoutHistory();if(sessions.length){sessions[sessions.length-1].performance={...performance};if(bossHit)sessions[sessions.length-1].bossDamage={...bossHit};localStorage.setItem('systemWorkoutSessions',JSON.stringify(sessions.slice(-365)))}
  document.getElementById('missionDebriefTime').textContent=fmt(seconds);
  document.getElementById('missionDebriefXp').textContent='+'+xp+' XP';
  document.getElementById('missionDebriefPrCount').textContent=String(prs.length);
  document.getElementById('missionDebriefStreak').textContent=(state.currentStreak||0)+' DAYS';
- document.getElementById('missionDebriefPr').textContent=prs.length?'NEW PR // '+prs.join(' • '):'ALL OBJECTIVES CLEARED';
+ document.getElementById('missionDebriefPr').textContent=(bossHit?(bossHit.critical?'CRITICAL HIT // ':'BOSS HIT // ')+bossHit.damage.toLocaleString()+' DAMAGE • ':'')+(prs.length?'NEW PR // '+prs.join(' • '):'ALL OBJECTIVES CLEARED');
  const analysis=typeof getPerformanceAnalysis==='function'?getPerformanceAnalysis():null;
  const rows=analysis?.rows?.slice().sort((a,b)=>b.score-a.score).slice(0,2)||[];
  document.getElementById('missionDebriefGrowth').innerHTML=rows.length?rows.map(x=>'<span><b>'+performanceLabel(x.stat)+'</b><i>'+x.percent+'% DEVELOPMENT</i></span>').join(''):'<span><b>CALIBRATING</b><i>COMPLETE MORE MISSIONS</i></span>';
