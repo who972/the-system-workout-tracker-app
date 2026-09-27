@@ -2285,3 +2285,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V63 // LEGACY ASCENSION */
 .legacy-ascend-btn{width:100%;padding:12px;margin-top:12px;border:3px double rgba(160,240,255,.6);background:rgba(5,26,37,.8);color:inherit;font:900 8px 'JetBrains Mono',monospace;letter-spacing:.12em;text-align:left;box-shadow:inset 0 0 28px rgba(70,220,255,.08),0 0 20px rgba(70,220,255,.06);cursor:pointer}.legacy-ascend-btn small{display:block;margin-top:4px;font-size:6px;opacity:.55}.legacy-ascend-btn:hover{box-shadow:inset 0 0 38px rgba(70,220,255,.13),0 0 28px rgba(70,220,255,.1)}
+
+/* V64 // ASCENSION RECORDS */
+.hunter-id-card__ascension{display:block;margin-top:4px;font:800 6px 'JetBrains Mono',monospace;font-style:normal;letter-spacing:.1em;opacity:.7}.hunter-id-card.frame-ascended{box-shadow:inset 0 0 38px rgba(70,220,255,.1)}.hunter-id-card.frame-exalted{border:3px double rgba(160,240,255,.62);box-shadow:inset 0 0 50px rgba(70,220,255,.12)}.hunter-id-card.frame-eternal{border:4px double rgba(210,250,255,.8);box-shadow:inset 0 0 70px rgba(255,255,255,.1),0 0 38px rgba(70,220,255,.16)}.central-legacy.frame-eternal:after{content:"∞ ETERNAL ASCENSION";font:900 6px 'JetBrains Mono',monospace;letter-spacing:.12em;opacity:.8}
