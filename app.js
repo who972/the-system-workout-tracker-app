@@ -1834,7 +1834,7 @@ function hunterLegacyState(profile,trophies=null,legacy=null){
  return{score,level:lvl,title,progress,next:Math.max(0,next-score),components:{missions,gates,streak,classes,raids,mvp},active:level>=50||classes>=2}
 }
 const LEGACY_ASCENSION_KEY='systemLegacyAscension';
-function legacyAscension(){try{return Object.assign({cycle:0,history:[],baseline:null},JSON.parse(localStorage.getItem(LEGACY_ASCENSION_KEY)||'{}'))}catch(e){return{cycle:0,history:[],baseline:null}}}
+function legacyAscension(){try{const x=Object.assign({cycle:0,history:[],baseline:null},JSON.parse(localStorage.getItem(LEGACY_ASCENSION_KEY)||'{}'));x.cycle=Math.max(0,Number(x.cycle)||0);x.history=Array.isArray(x.history)?x.history.filter(v=>v&&Number(v.cycle)>=1):[];x.baseline=x.baseline&&typeof x.baseline==='object'?x.baseline:null;return x}catch(e){return{cycle:0,history:[],baseline:null}}}
 function ascensionRecord(){
  const a=legacyAscension(),completed=(a.history||[]).filter(x=>Number(x.cycle)>=1),marks=completed.length;
  const tier=marks>=10?'ETERNAL':marks>=5?'EXALTED':marks>=3?'MASTER':marks>=1?'ASCENDED':'UNASCENDED';
