@@ -801,6 +801,12 @@ function renderPlayerCard() {
   if(titleEl){titleEl.textContent=equippedTitle?.name||'';titleEl.hidden=!equippedTitle}
   document.getElementById('playerLevel').textContent = `Level ${state.level}`;
   document.getElementById('playerStreak').textContent = `🔥 ${state.currentStreak} day streak`;
+  const legacyEl=document.getElementById('centralLegacyIdentity');
+  if(legacyEl){
+    const profile=typeof buildSocialIdentity==='function'?buildSocialIdentity():{level:state.level,missions:state.totalQuestsCompleted,streak:state.currentStreak,gates:0};
+    const legacy=typeof hunterLegacyState==='function'?hunterLegacyState(profile,null,null):null,card=typeof getIdentityCard==='function'?getIdentityCard():{frame:'SYSTEM',emblem:'RANK'};
+    if(legacy){legacyEl.className='central-legacy '+(legacy.active?'active':'dormant')+' frame-'+String(card.frame||'SYSTEM').toLowerCase();legacyEl.innerHTML='<span>'+escapeHtml(legacy.title)+'</span><b>LEGACY LV '+legacy.level+'</b><small>'+legacy.score.toLocaleString()+' LP</small>';document.getElementById('playerCard')?.setAttribute('data-legacy-tier',legacy.level>=10?'sovereign':legacy.level>=7?'mythic':legacy.level>=5?'veteran':legacy.level>=3?'ascendant':'awakened')}
+  }
   document.getElementById('totalWorkouts').querySelector('.player-card__total-num').textContent = state.totalQuestsCompleted;
   document.getElementById('xpValues').textContent = `${state.xp} / ${xpNeeded}`;
   document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
