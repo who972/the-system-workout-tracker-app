@@ -1813,18 +1813,22 @@ const LEGACY_MISSION_KEY='systemLegacyMissionClaims';
 function legacyMissionClaims(){try{return JSON.parse(localStorage.getItem(LEGACY_MISSION_KEY)||'[]')}catch(e){return[]}}
 function legacyMissions(x){
  const c=x.components||{},defs=[
-  {id:'mission_100',name:'CENTURY OF DISCIPLINE',detail:'Complete 100 missions',value:c.missions,target:100,lp:300},
-  {id:'streak_30',name:'UNBROKEN ROUTINE',detail:'Maintain a 30-day streak',value:c.streak,target:30,lp:350},
-  {id:'gates_10',name:'GATE VETERAN',detail:'Record 10 Gate clears',value:c.gates,target:10,lp:400},
-  {id:'raids_10',name:'RAID CAMPAIGN',detail:'Complete 10 Squad raids',value:c.raids,target:10,lp:500},
-  {id:'classes_5',name:'ARCHIVE DOMINION',detail:'Collect all 5 Boss trophy classes',value:c.classes,target:5,lp:600},
-  {id:'mvp_3',name:'VANGUARD COMMAND',detail:'Earn 3 Squad Raid MVPs',value:c.mvp,target:3,lp:650}
+  {id:'mission_100',chapter:1,name:'CENTURY OF DISCIPLINE',detail:'Complete 100 missions',value:c.missions,target:100,lp:300},
+  {id:'streak_30',chapter:1,name:'UNBROKEN ROUTINE',detail:'Maintain a 30-day streak',value:c.streak,target:30,lp:350},
+  {id:'gates_10',chapter:2,name:'GATE VETERAN',detail:'Record 10 Gate clears',value:c.gates,target:10,lp:400},
+  {id:'raids_10',chapter:2,name:'RAID CAMPAIGN',detail:'Complete 10 Squad raids',value:c.raids,target:10,lp:500},
+  {id:'classes_5',chapter:3,name:'ARCHIVE DOMINION',detail:'Collect all 5 Boss trophy classes',value:c.classes,target:5,lp:600},
+  {id:'mvp_3',chapter:3,name:'VANGUARD COMMAND',detail:'Earn 3 Squad Raid MVPs',value:c.mvp,target:3,lp:650}
  ];const claimed=legacyMissionClaims();return defs.map(m=>({...m,complete:Number(m.value)>=m.target,claimed:claimed.includes(m.id),progress:Math.min(100,Number(m.value)/m.target*100)}))
+}
+const LEGACY_CHAPTERS=[{id:1,name:'AWAKENING',subtitle:'Prove the discipline that created the Hunter.'},{id:2,name:'GATEFRONT',subtitle:'Carry that discipline into Gate operations.'},{id:3,name:'SOVEREIGN PATH',subtitle:'Master the raid archive and lead from the front.'}];
+function legacyCampaign(ms){
+ let previous=true;const chapters=LEGACY_CHAPTERS.map(c=>{const missions=ms.filter(m=>m.chapter===c.id),complete=missions.every(m=>m.complete),unlocked=c.id===1||previous;const progress=missions.length?missions.reduce((n,m)=>n+m.progress,0)/missions.length:0;previous=previous&&complete;return{...c,missions,complete,unlocked,progress}});const active=chapters.find(c=>c.unlocked&&!c.complete)||chapters[chapters.length-1];return{chapters,active,complete:chapters.every(c=>c.complete)}
 }
 function renderLegacyMissions(){
  const panel=document.getElementById('legacyMissions'),list=document.getElementById('legacyMissionList'),meta=document.getElementById('legacyMissionMeta');if(!panel||!list)return;
- const x=hunterLegacyState(typeof buildSocialIdentity==='function'?buildSocialIdentity():null,null,null);panel.hidden=!x.active;if(!x.active)return;const ms=legacyMissions(x);meta.textContent=ms.filter(m=>m.complete).length+' / '+ms.length+' COMPLETE';
- list.innerHTML=ms.map(m=>'<article class="'+(m.complete?'complete ':'')+(m.claimed?'claimed':'')+'"><div><small>LEGACY DIRECTIVE // +'+m.lp+' LP MILESTONE</small><b>'+escapeHtml(m.name)+'</b><span>'+escapeHtml(m.detail)+'</span></div><strong>'+Math.min(m.target,Number(m.value||0))+' / '+m.target+'</strong><div class="legacy-mission-track"><i style="width:'+m.progress+'%"></i></div><em>'+(m.claimed?'RECORDED':m.complete?'DIRECTIVE COMPLETE':'IN PROGRESS')+'</em></article>').join('');
+ const x=hunterLegacyState(typeof buildSocialIdentity==='function'?buildSocialIdentity():null,null,null);panel.hidden=!x.active;if(!x.active)return;const ms=legacyMissions(x),campaign=legacyCampaign(ms);meta.textContent=campaign.complete?'CAMPAIGN COMPLETE':'CHAPTER '+campaign.active.id+' // '+campaign.active.name;
+ list.innerHTML='<div class="legacy-campaign-map">'+campaign.chapters.map(c=>'<section class="legacy-chapter '+(c.complete?'complete ':c.unlocked?'active ':'locked ')+'"><header><span>CHAPTER '+String(c.id).padStart(2,'0')+'</span><b>'+escapeHtml(c.name)+'</b><small>'+escapeHtml(c.subtitle)+'</small><em>'+Math.round(c.progress)+'%</em></header><div class="legacy-chapter-track"><i style="width:'+c.progress+'%"></i></div>'+c.missions.map(m=>'<article class="'+(m.complete?'complete ':'')+(m.claimed?'claimed':'')+(c.unlocked?'':' chapter-locked')+'"><div><small>LEGACY DIRECTIVE // +'+m.lp+' LP MILESTONE</small><b>'+escapeHtml(m.name)+'</b><span>'+escapeHtml(m.detail)+'</span></div><strong>'+Math.min(m.target,Number(m.value||0))+' / '+m.target+'</strong><div class="legacy-mission-track"><i style="width:'+m.progress+'%"></i></div><em>'+(m.claimed?'RECORDED':m.complete?'DIRECTIVE COMPLETE':c.unlocked?'IN PROGRESS':'CHAPTER LOCKED')+'</em></article>').join('')+'</section>').join('')+'</div>';
  const claims=legacyMissionClaims(),fresh=ms.filter(m=>m.complete&&!m.claimed);if(fresh.length){localStorage.setItem(LEGACY_MISSION_KEY,JSON.stringify([...claims,...fresh.map(m=>m.id)]));fresh.forEach((m,i)=>setTimeout(()=>queueReward({title:'LEGACY DIRECTIVE COMPLETE',detail:m.name+' • +'+m.lp+' LP MILESTONE',amount:0,intensity:'major',source:'achievement'}),i*900))}
 }
 function legacyPanel(x){return '<section class="hunter-legacy '+(x.active?'active':'dormant')+'"><div><small>HUNTER // PERMANENT LEGACY</small><h3>'+escapeHtml(x.title)+'</h3><strong>LEGACY LV '+x.level+'</strong></div><b>'+x.score.toLocaleString()+' LP</b><div class="hunter-legacy__track"><i style="width:'+x.progress+'%"></i></div><span>'+(x.active?x.next.toLocaleString()+' LP TO NEXT LEGACY LEVEL':'REACH S-RANK OR COLLECT 2 TROPHY CLASSES TO AWAKEN')+'</span></section>'}
@@ -2199,4 +2203,4 @@ window.SystemSocialNetwork={search:searchSocialPlayers,sync:syncSocialProfile,re
 window.SystemFriends={request:sendFriendRequest,respond:respondFriend,remove:removeFriend,refresh:renderSocialCommand};
 
 /* V43 // SQUAD IDENTITY + ROSTER */
-window.SystemSquads={community:fetchCommunityNetwork,identity:getIdentityCard,identityUnlocks:identityUnlockState,rewardVault:openRewardVault,rewardDetail:openVaultDetail,trophies:trophyCollection,hunterLegacy:hunterLegacyState,legacyMissions,refreshIdentityUnlocks,openPlayer:openPlayerDossier,openSquad:openSquadDossier,legacy:squadLegacyMap,create:createSquad,join:joinSquad,leave:leaveSquad,challenge:squadChallenge,progress:squadProgress,achievements:squadAchievementState,gate:fetchSquadGateIntel,victories:fetchSquadVictories,attack:applySquadGateDamage,refresh:renderSocialCommand};
+window.SystemSquads={community:fetchCommunityNetwork,identity:getIdentityCard,identityUnlocks:identityUnlockState,rewardVault:openRewardVault,rewardDetail:openVaultDetail,trophies:trophyCollection,hunterLegacy:hunterLegacyState,legacyMissions,legacyCampaign,refreshIdentityUnlocks,openPlayer:openPlayerDossier,openSquad:openSquadDossier,legacy:squadLegacyMap,create:createSquad,join:joinSquad,leave:leaveSquad,challenge:squadChallenge,progress:squadProgress,achievements:squadAchievementState,gate:fetchSquadGateIntel,victories:fetchSquadVictories,attack:applySquadGateDamage,refresh:renderSocialCommand};
