@@ -1614,13 +1614,14 @@ const _v25Social=renderSocialCommand;renderSocialCommand=renderSocialCommandV25;
 const SOCIAL_CLOUD_TABLE='social_profiles',SOCIAL_CHALLENGE_TABLE='social_challenges';
 function socialCloudUser(){return getCloudSession()?.user||null}
 function socialHandle(){const u=socialCloudUser(),me=getSystemSettings();return (me.name||u?.email?.split('@')[0]||'Player').trim()}
-async function syncSocialProfile(){
- const u=socialCloudUser();if(!u?.id)return false;const identity=buildSocialIdentity();
- await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:u.id,display_name:identity.name,xp:identity.xp,level:identity.level,rank:identity.rank,missions:identity.missions,streak:identity.streak,title:identity.title||null,gates:identity.gates||0,critical_hits:identity.criticalHits||0,best_score:identity.bestScore||0,highest_boss:identity.highestBoss||null,updated_at:identity.updatedAt})});setTimeout(refreshIdentityUnlocks,0);return true
+let socialProfileSyncBusy=false,socialIdentityRefreshBusy=false;
+async function syncSocialProfile(options={}){
+ const u=socialCloudUser();if(!u?.id||socialProfileSyncBusy)return false;const identity=buildSocialIdentity();socialProfileSyncBusy=true;
+ try{await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:u.id,display_name:identity.name,xp:identity.xp,level:identity.level,rank:identity.rank,missions:identity.missions,streak:identity.streak,title:identity.title||null,gates:identity.gates||0,critical_hits:identity.criticalHits||0,best_score:identity.bestScore||0,highest_boss:identity.highestBoss||null,updated_at:identity.updatedAt})});if(options.refreshUnlocks!==false&&!socialIdentityRefreshBusy)setTimeout(()=>refreshIdentityUnlocks(),0);return true}finally{socialProfileSyncBusy=false}
 }
-async function fetchSocialNetwork(){
+async function fetchSocialNetwork(options={}){
  const u=socialCloudUser();if(!u?.id)return null;
- try{await syncSocialProfile();const [profiles,challenges]=await Promise.all([cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id,display_name,xp,level,rank,missions,streak,title,gates,critical_hits,best_score,highest_boss,updated_at&order=xp.desc&limit=100'),cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?or=(challenger_id.eq.'+encodeURIComponent(u.id)+',opponent_id.eq.'+encodeURIComponent(u.id)+')&select=*&order=created_at.desc&limit=50')]);return{profiles,challenges}}catch(e){window.SystemOS?.notify('NETWORK LINK UNAVAILABLE // USING LOCAL DATA','SOCIAL // CLOUD');return null}
+ try{if(options.sync!==false)await syncSocialProfile({refreshUnlocks:false});const [profiles,challenges]=await Promise.all([cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id,display_name,xp,level,rank,missions,streak,title,gates,critical_hits,best_score,highest_boss,updated_at&order=xp.desc&limit=100'),cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?or=(challenger_id.eq.'+encodeURIComponent(u.id)+',opponent_id.eq.'+encodeURIComponent(u.id)+')&select=*&order=created_at.desc&limit=50')]);return{profiles,challenges}}catch(e){window.SystemOS?.notify('NETWORK LINK UNAVAILABLE // USING LOCAL DATA','SOCIAL // CLOUD');return null}
 }
 async function renderSocialCloud(){
  const root=document.getElementById('osSocialCommand');if(!root)return;renderSocialCommandV25();const u=socialCloudUser();
@@ -1772,7 +1773,8 @@ function checkIdentityUnlockTransitions(profile,legacy,trophies=null,hunterLegac
  return fresh
 }
 async function refreshIdentityUnlocks(){
- try{const u=socialCloudUser();if(!u?.id)return;const [net,community]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]),p=net?.profiles?.find(x=>x.user_id===u.id);if(!p)return;const m=community?.members?.find(x=>x.user_id===u.id),sq=m&&community.squads.find(x=>x.id===m.squad_id),victories=sq?await fetchSquadVictories(sq.id):[],legacy=sq?{...(await squadLegacyMap([sq]))[sq.id],victories:victories.length}:null;{const trophies=trophyCollection(victories);checkIdentityUnlockTransitions(p,legacy,trophies,hunterLegacyState(p,trophies,legacy))}}catch(e){}
+ if(socialIdentityRefreshBusy)return;socialIdentityRefreshBusy=true;
+ try{const u=socialCloudUser();if(!u?.id)return;const [net,community]=await Promise.all([fetchSocialNetwork({sync:false}),fetchCommunityNetwork()]),p=net?.profiles?.find(x=>x.user_id===u.id);if(!p)return;const m=community?.members?.find(x=>x.user_id===u.id),sq=m&&community.squads.find(x=>x.id===m.squad_id),victories=sq?await fetchSquadVictories(sq.id):[],legacy=sq?{...(await squadLegacyMap([sq]))[sq.id],victories:victories.length}:null;const trophies=trophyCollection(victories);checkIdentityUnlockTransitions(p,legacy,trophies,hunterLegacyState(p,trophies,legacy))}catch(e){}finally{socialIdentityRefreshBusy=false}
 }
 function identityUnlockState(profile,legacy,trophies=null,hunterLegacy=null){
  const level=Number(profile?.level||state.level||1),gates=Number(profile?.gates||0),streak=Number(profile?.streak||state.currentStreak||0),mvp=Number(legacy?.mvp||0),raids=Number(legacy?.victories||0);
