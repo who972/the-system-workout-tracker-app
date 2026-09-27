@@ -40,6 +40,48 @@ const DEFAULT_DAILY_QUESTS = [
   { id: 'stretch',   title: 'Stretching',    target: 10, unit: 'min',  xp: 40,  stat: 'vit' },
 ];
 
+// Adaptive mission targets: gradual progression based on demonstrated completion,
+// with conservative caps so THE SYSTEM challenges the player without punishing them.
+const ADAPTIVE_QUEST_LIMITS = {
+  pushups: { step: 2, max: 60 }, squats: { step: 3, max: 80 },
+  plank: { step: 5, max: 120 }, running: { step: 2, max: 40 },
+  stretch: { step: 1, max: 20 }
+};
+
+function getAdaptiveQuestTarget(def, profile) {
+  const p = profile?.[def.id] || {};
+  const cfg = ADAPTIVE_QUEST_LIMITS[def.id];
+  if (!cfg) return def.target;
+  const level = Math.max(0, Number(p.level)||0);
+  return Math.min(cfg.max, def.target + level * cfg.step);
+}
+
+function buildAdaptiveDailyQuests(profile = {}) {
+  return DEFAULT_DAILY_QUESTS.map(def => ({
+    ...def,
+    target: getAdaptiveQuestTarget(def, profile),
+    progress: 0,
+    completed: false
+  }));
+}
+
+function registerAdaptiveQuestResult(quest) {
+  state.adaptiveQuests = state.adaptiveQuests || {};
+  const p = state.adaptiveQuests[quest.id] || { level: 0, clears: 0 };
+  p.clears = (Number(p.clears)||0) + 1;
+  // Require repeated success before increasing difficulty. Humans apparently
+  // respond better to achievable progression than surprise punishment.
+  if (p.clears % 3 === 0) {
+    const cfg = ADAPTIVE_QUEST_LIMITS[quest.id];
+    const def = DEFAULT_DAILY_QUESTS.find(q => q.id === quest.id);
+    if (cfg && def && getAdaptiveQuestTarget(def, p) < cfg.max) {
+      p.level = (Number(p.level)||0) + 1;
+      queueReward({type:'adaptation',title:'SYSTEM ADAPTATION',detail:`${quest.title} difficulty increased for future missions`,amount:0,intensity:'mission',source:'adaptation'});
+    }
+  }
+  state.adaptiveQuests[quest.id] = p;
+}
+
 const DEFAULT_WEEKLY_GOALS = [
   { id: 'w_workouts', title: 'Complete 5 Workout Sessions', target: 5,  unit: 'sessions', xpReward: 750 },
   { id: 'w_xp',       title: 'Earn 1,500 Total XP',             target: 1500, unit: 'XP',       xpReward: 450 },
@@ -157,6 +199,7 @@ function defaultState() {
     weeklyCompleted: 0,
     weight: { current: null, starting: null, goal: null, history: [] },
     exerciseRecords: [],
+    adaptiveQuests: {},
   };
 }
 
@@ -172,6 +215,7 @@ function loadState() {
     state.weight = Object.assign({ current: null, starting: null, goal: null, history: [] }, saved.weight || {});
     state.weight.history = Array.isArray(state.weight.history) ? state.weight.history : [];
     state.exerciseRecords = Array.isArray(saved.exerciseRecords) ? saved.exerciseRecords : [];
+    state.adaptiveQuests = saved.adaptiveQuests && typeof saved.adaptiveQuests === 'object' ? saved.adaptiveQuests : {};
 
     // Check for daily reset
     const today = getTodayStr();
@@ -185,14 +229,14 @@ function loadState() {
           state.currentStreak = 0;
         }
       }
-      state.dailyQuests = DEFAULT_DAILY_QUESTS.map(q => ({ ...q, progress: 0, completed: false }));
+      state.dailyQuests = buildAdaptiveDailyQuests(state.adaptiveQuests);
       state.allDailyCompleted = false;
       state.dailyDate = today;
     } else {
       // Keep saved daily quest progress
       state.dailyQuests = (saved.dailyQuests || []).map(q => {
         const def = DEFAULT_DAILY_QUESTS.find(d => d.id === q.id);
-        return def ? { ...def, progress: q.progress || 0, completed: q.completed || false } : null;
+        return def ? { ...def, target: Number(q.target)||getAdaptiveQuestTarget(def, state.adaptiveQuests), progress: q.progress || 0, completed: q.completed || false } : null;
       }).filter(Boolean);
     }
 
@@ -491,6 +535,7 @@ function completeQuest(questId) {
   quest.completed = true;
   quest.progress = quest.target;
   state.totalQuestsCompleted++;
+  registerAdaptiveQuestResult(quest);
 
   addSystemMessage(`Quest Complete: ${quest.title} — +${quest.xp} XP`, 'quest');
   rewardEvent({ amount: quest.xp, source: 'quest', title: 'OBJECTIVE COMPLETE', detail: quest.title, intensity: 'micro' });
