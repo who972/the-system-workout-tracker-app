@@ -283,7 +283,11 @@ function processRewardQueue() {
   const delay = reward.intensity === 'major' ? 2200 : reward.intensity === 'mission' ? 1700 : 1050;
   window.setTimeout(() => {
     rewardQueueActive = false;
-    processRewardQueue();
+    if (rewardQueue.length) {
+      processRewardQueue();
+    } else if (['workout','bonus','level','achievement','growth'].includes(reward.source) || reward.intensity === 'major') {
+      window.setTimeout(showMomentumPrompt, 300);
+    }
   }, delay);
 }
 
@@ -340,6 +344,44 @@ function rewardEvent({ amount = 0, source = 'system', title = 'PROGRESS REGISTER
   const leveled = xp > 0 ? addXp(xp, source, { suppressReward: true }) : false;
   queueReward({ type: 'xp', title, detail, amount: xp, intensity, source });
   return { xp, leveled };
+}
+
+function getNextObjective() {
+  const pending = (state.dailyQuests || []).find(q => !q.completed);
+  if (pending) {
+    const remaining = Math.max(0, (Number(pending.target)||0) - (Number(pending.progress)||0));
+    return { title: pending.title, detail: `${remaining} ${pending.unit || ''} REMAINING`.trim(), view: 'missions' };
+  }
+  const weekly = (state.weeklyGoals || []).find(g => !g.completed);
+  if (weekly) {
+    const remaining = Math.max(0, (Number(weekly.target)||0) - (Number(weekly.progress)||0));
+    return { title: weekly.title, detail: `${remaining} ${weekly.unit || ''} REMAINING`.trim(), view: 'missions' };
+  }
+  return { title: 'RECOVERY / MOBILITY', detail: 'OPTIONAL ACTIVE RECOVERY', view: 'train' };
+}
+
+function showMomentumPrompt() {
+  if (document.querySelector('.momentum-prompt--visible')) return;
+  const next = getNextObjective();
+  let panel = document.getElementById('systemMomentumPrompt');
+  if (!panel) {
+    panel = document.createElement('div');
+    panel.id = 'systemMomentumPrompt';
+    panel.className = 'momentum-prompt';
+    panel.innerHTML = `<small>SYSTEM // MOMENTUM</small><strong>NEXT OBJECTIVE AVAILABLE</strong><b></b><span></span><button type="button">VIEW OBJECTIVE</button>`;
+    document.body.appendChild(panel);
+    panel.querySelector('button').addEventListener('click', () => {
+      const view = panel.dataset.view || 'missions';
+      const nav = document.querySelector(`.app-nav [data-view="${view}"]`);
+      if (nav) nav.click();
+      panel.classList.remove('momentum-prompt--visible');
+    });
+  }
+  panel.querySelector('b').textContent = next.title;
+  panel.querySelector('span').textContent = next.detail;
+  panel.dataset.view = next.view;
+  panel.classList.add('momentum-prompt--visible');
+  window.setTimeout(() => panel.classList.remove('momentum-prompt--visible'), 7000);
 }
 
 // --- XP & Leveling ---
