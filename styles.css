@@ -2160,3 +2160,16 @@ body.system-os-ready .core-orbit-menu button:hover{
   .reward-hud, .reward-hud__progress span { transition-duration:.01ms; }
   .reward-hud--visible .reward-hud__scan { animation:none; }
 }
+
+
+/* SYSTEM // MOMENTUM */
+.momentum-prompt{position:fixed;right:3vw;top:18%;z-index:9998;width:min(340px,38vw);padding:15px 18px;border:1px solid rgba(91,226,255,.45);border-radius:8px;background:rgba(3,13,22,.94);box-shadow:0 0 28px rgba(50,215,255,.18);backdrop-filter:blur(8px);opacity:0;transform:translateX(24px);pointer-events:none;transition:.25s ease}
+.momentum-prompt--visible{opacity:1;transform:translateX(0);pointer-events:auto}
+.momentum-prompt small,.momentum-prompt strong,.momentum-prompt b,.momentum-prompt span{display:block}
+.momentum-prompt small{font-size:9px;letter-spacing:.16em;opacity:.65}
+.momentum-prompt strong{margin-top:5px;font-size:11px;letter-spacing:.13em;color:#7cecff}
+.momentum-prompt b{margin-top:9px;font-size:16px;letter-spacing:.04em}
+.momentum-prompt span{margin-top:3px;font-size:10px;opacity:.7}
+.momentum-prompt button{margin-top:12px;width:100%;padding:8px;border:1px solid rgba(91,226,255,.55);border-radius:5px;background:rgba(65,210,255,.08);color:#bff6ff;font:700 10px 'JetBrains Mono',monospace;letter-spacing:.12em;cursor:pointer}
+.momentum-prompt button:hover{background:rgba(65,210,255,.16)}
+@media(max-width:700px){.momentum-prompt{right:4vw;width:92vw;top:14%}}
