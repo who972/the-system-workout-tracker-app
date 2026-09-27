@@ -1313,6 +1313,20 @@ function showRecovery(){showAuthGate();document.querySelector('.auth-tabs').hidd
 async function submitRecovery(e){e.preventDefault();const p=document.getElementById('recoveryPassword').value,c=document.getElementById('recoveryPasswordConfirm').value;if(p.length<6){authGateStatus('Password must be at least 6 characters.');return}if(p!==c){authGateStatus('Passwords do not match.');return}const r=recoveryParams();if(!r.access_token){authGateStatus('This recovery link is invalid or expired.');return}try{authGateStatus('Updating password…');const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{method:'PUT',headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+r.access_token,'Content-Type':'application/json'},body:JSON.stringify({password:p})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.message||data.msg||'Could not update password.');localStorage.removeItem(CLOUD_SESSION_KEY);history.replaceState({},'',location.pathname);authGateStatus('Password updated. You can now sign in.',true);setTimeout(()=>location.reload(),900)}catch(err){authGateStatus(err.message)}}
 function initAuthGate(){const r=recoveryParams();if(r.type==='recovery'&&r.access_token){showRecovery()}else if(getCloudSession()?.access_token)hideAuthGate();else showAuthGate();document.getElementById('authShowSignIn')?.addEventListener('click',()=>setAuthMode('signin'));document.getElementById('authShowSignUp')?.addEventListener('click',()=>setAuthMode('signup'));document.getElementById('authGateForm')?.addEventListener('submit',authGateSubmit);document.getElementById('authForgot')?.addEventListener('click',authForgot);document.getElementById('recoveryForm')?.addEventListener('submit',submitRecovery)}
 document.addEventListener('DOMContentLoaded',initAuthGate);
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('[data-password-toggle]').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      const input=document.getElementById(btn.dataset.passwordToggle);
+      if(!input)return;
+      const reveal=input.type==='password';
+      input.type=reveal?'text':'password';
+      btn.textContent=reveal?'Hide':'Show';
+      btn.setAttribute('aria-label',(reveal?'Hide':'Show')+' password');
+      input.focus({preventScroll:true});
+      try{input.setSelectionRange(input.value.length,input.value.length)}catch(_){}
+    });
+  });
+});
 
 // RC1 navigation and lightweight production error handling
 document.addEventListener('DOMContentLoaded',()=>{
