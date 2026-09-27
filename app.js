@@ -1857,6 +1857,11 @@ function ascensionRewardPanel(){
  const p=ascensionRewardProfile(),next=p.next;
  return '<div class="ascension-rewards"><strong>ASCENSION // PRESTIGE</strong><span><small>PRESTIGE TITLE</small><b>'+escapeHtml(p.title)+'</b></span><span><small>ASCENSION MARKS</small><b>'+p.marks+'</b></span><span><small>XP AMPLIFIER</small><b>+'+p.xpBonus+'%</b></span><span><small>LEGACY BONUS</small><b>+'+p.legacyBonus+'%</b></span>'+(next?'<p>NEXT REWARD // A'+next.at+' • '+escapeHtml(next.name)+'<br><small>'+escapeHtml(next.detail)+'</small></p>':'<p>MAXIMUM PRESTIGE // ETERNAL REWARD TRACK COMPLETE</p>')+'</div>';
 }
+const ASCENSION_REWARD_SEEN_KEY='systemAscensionRewardSeenV1';
+function checkAscensionPrestigeUnlocks(){
+ const unlocked=ascensionPrestigeRewards().filter(x=>x.unlocked),ids=unlocked.map(x=>x.id);let seen=[];try{seen=JSON.parse(localStorage.getItem(ASCENSION_REWARD_SEEN_KEY)||'[]')}catch(e){}
+ const fresh=unlocked.filter(x=>!seen.includes(x.id));if(fresh.length){localStorage.setItem(ASCENSION_REWARD_SEEN_KEY,JSON.stringify([...new Set([...seen,...ids])]));fresh.forEach((x,i)=>setTimeout(()=>queueReward({title:'PRESTIGE REWARD UNLOCKED',detail:x.name+' • '+x.detail,amount:0,intensity:'major',source:'ascension'}),i*1200))}return fresh;
+}
 function ascensionPrestigeRewards(){
  const p=ascensionRewardProfile();return p.rewards.map(x=>({id:'prestige_'+x.at,name:x.name,detail:x.detail,unlocked:x.unlocked,kind:'ASCENSION PRESTIGE',mark:'A'+x.at,stat:x.unlocked?'PERMANENT REWARD ACTIVE':'COMPLETE ASCENSION '+x.at}));
 }
@@ -1875,7 +1880,7 @@ function ascendLegacy(){
  const ctx=cachedLegacyContext(),profile=ctx.profile||(typeof buildSocialIdentity==='function'?buildSocialIdentity():{missions:state.totalQuestsCompleted,gates:0,streak:state.currentStreak}),components=ctx.hunter?.components||{},base={missions:Number(profile.missions||components.missions||0),gates:Number(profile.gates||components.gates||0),streak:Number(profile.streak||components.streak||0),raids:Number(components.raids||0),mvp:Number(components.mvp||0)};
  const completedCycle=Number(old.cycle||0),reward=completedCycle>=1?ascensionRewardProfile():null; const next={cycle:completedCycle+1,baseline:base,history:[...(old.history||[]),...(completedCycle>=1?[{cycle:completedCycle,completedAt:new Date().toISOString(),prestigeTitle:reward?.title||'ASCENDED HUNTER',xpBonus:reward?.xpBonus||0}]:[])]};
  localStorage.setItem(LEGACY_ASCENSION_KEY,JSON.stringify(next));localStorage.setItem(LEGACY_TRIAL_KEY,'[]');localStorage.setItem(LEGACY_MISSION_KEY,'[]');
- queueReward({title:'LEGACY ASCENSION',detail:'ASCENSION '+next.cycle+' // NEW LEGACY CYCLE INITIALIZED',amount:0,intensity:'major',source:'achievement'}); const post=ascensionRewardProfile(); if(post.completed!==0||post.marks>0) queueReward({title:'PRESTIGE UPDATED',detail:post.title+' • +'+post.xpBonus+'% XP AMPLIFIER',amount:0,intensity:'major',source:'ascension'});window.SystemOS?.notify('ASCENSION '+next.cycle+' ONLINE','LEGACY // NEW CYCLE');renderLegacyMissions();return true
+ queueReward({title:'LEGACY ASCENSION',detail:'ASCENSION '+next.cycle+' // NEW LEGACY CYCLE INITIALIZED',amount:0,intensity:'major',source:'achievement'}); const post=ascensionRewardProfile(); checkAscensionPrestigeUnlocks(); if(post.completed!==0||post.marks>0) queueReward({title:'PRESTIGE UPDATED',detail:post.title+' • +'+post.xpBonus+'% XP AMPLIFIER',amount:0,intensity:'major',source:'ascension'});window.SystemOS?.notify('ASCENSION '+next.cycle+' ONLINE','LEGACY // NEW CYCLE');renderLegacyMissions();return true
 }
 const LEGACY_MISSION_KEY='systemLegacyMissionClaims';
 function legacyMissionClaims(){try{return JSON.parse(localStorage.getItem(LEGACY_MISSION_KEY)||'[]')}catch(e){return[]}}
