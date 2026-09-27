@@ -374,6 +374,7 @@ function addXp(amount, source = 'quest', options = {}) {
   if (leveled) {
     const rank = getRank(state.level);
     addSystemMessage(`LEVEL UP! You are now Level ${state.level} — ${rank.title}`, 'level');
+    queueReward({ type: 'level', title: 'LEVEL UP', detail: `LEVEL ${state.level} • ${rank.title}`, amount: 0, intensity: 'major', source: 'level' });
     showLevelUpModal(state.level, rank);
   }
 
@@ -436,7 +437,7 @@ function completeQuest(questId) {
   state.totalQuestsCompleted++;
 
   addSystemMessage(`Quest Complete: ${quest.title} — +${quest.xp} XP`, 'quest');
-  addXp(quest.xp);
+  rewardEvent({ amount: quest.xp, source: 'quest', title: 'OBJECTIVE COMPLETE', detail: quest.title, intensity: 'micro' });
   // Legacy quest stats retired. Canonical attributes grow from logged training.
 
   // Check all daily complete
@@ -472,7 +473,7 @@ function checkAllDailyComplete() {
   if (allComplete && !state.allDailyCompleted) {
     state.allDailyCompleted = true;
     addSystemMessage('All Daily Quests Complete! Bonus: +250 XP', 'achievement');
-    addXp(250, 'bonus');
+    rewardEvent({ amount: 250, source: 'bonus', title: 'DAILY QUESTS CLEARED', detail: 'All daily objectives complete', intensity: 'mission' });
   }
 }
 
@@ -509,7 +510,7 @@ function logCustomWorkout(name, duration, intensity) {
   state.totalQuestsCompleted++;
 
   addSystemMessage(`Training Log: ${name} (${duration}min) — +${xp} XP`, 'quest');
-  addXp(xp);
+  rewardEvent({ amount: xp, source: 'workout', title: qualifies ? 'MISSION COMPLETE' : 'TRAINING REGISTERED', detail: `${name} • ${duration} MIN`, intensity: qualifies ? 'mission' : 'micro' });
 
 
   // Custom workout counts as one workout session for weekly goal
@@ -563,6 +564,7 @@ function checkAchievements() {
       unlocked = true;
       const tierName = ach.tier === 'srank' ? 'S-Rank' : ach.tier === 'shadow' ? 'Shadow Sovereign' : ach.tier.charAt(0).toUpperCase() + ach.tier.slice(1);
       addSystemMessage(`Achievement Unlocked [${tierName}]: ${ach.title} — ${ach.desc}`, 'achievement');
+      queueReward({ type: 'achievement', title: 'ACHIEVEMENT UNLOCKED', detail: `${ach.title} • ${tierName}`, amount: 0, intensity: ach.tier === 'srank' || ach.tier === 'shadow' ? 'major' : 'mission', source: 'achievement' });
     }
   }
   if (unlocked) {
