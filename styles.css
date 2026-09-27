@@ -2300,3 +2300,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V68 // TRIAL PERFORMANCE RECORDS */
 .legacy-trial-record span:last-child b{font-size:13px}.vault-grid article.unlocked small{line-height:1.35}
+
+/* V69 // ARMED LEGACY TRIALS */
+.legacy-trial-btn:has(small){position:relative}.legacy-trial-btn:not(:disabled){transition:box-shadow .2s ease}.legacy-trial-btn[data-legacy-trial]{text-transform:uppercase}.legacy-trial-btn[data-legacy-trial]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
