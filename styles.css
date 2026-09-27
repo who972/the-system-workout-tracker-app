@@ -2387,3 +2387,22 @@ body.system-os-ready .core-orbit-menu button:hover{
 /* V83 // ENTRY SCREEN CACHE KILL */
 .system-entry-screen__art{background-image:url('enter_the_system_landscape.jpg?v=83')!important;background-position:center center!important;background-size:cover!important;background-repeat:no-repeat!important}
 .system-entry-screen__status{display:none!important}
+
+
+/* V84 // ROBUST ENTRY IMAGE RENDER */
+.system-entry-screen__image{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+  display:block;
+  z-index:0;
+}
+.system-entry-screen__art{
+  background:none!important;
+  z-index:1;
+  pointer-events:none;
+}
+.system-entry-screen__enter{z-index:3!important}
