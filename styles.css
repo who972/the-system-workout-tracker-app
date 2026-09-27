@@ -2297,3 +2297,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V67 // LEGACY TRIAL RECORDS */
 .legacy-trial-record{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:9px}.legacy-trial-record span{padding:8px;border:1px solid rgba(98,228,255,.16);background:rgba(5,22,31,.5)}.legacy-trial-record small,.legacy-trial-record b{display:block;font-family:'JetBrains Mono',monospace}.legacy-trial-record small{font-size:6px;opacity:.45}.legacy-trial-record b{margin-top:3px;font-size:11px}@media(max-width:640px){.legacy-trial-record{grid-template-columns:1fr}}
+
+/* V68 // TRIAL PERFORMANCE RECORDS */
+.legacy-trial-record span:last-child b{font-size:13px}.vault-grid article.unlocked small{line-height:1.35}
