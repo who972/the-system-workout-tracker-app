@@ -1836,6 +1836,23 @@ function ascensionRecord(){
  const tier=marks>=10?'ETERNAL':marks>=5?'EXALTED':marks>=3?'MASTER':marks>=1?'ASCENDED':'UNASCENDED';
  return{current:Number(a.cycle||0),completed:marks,tier,history:completed,mark:'A'+marks}
 }
+function ascensionRewardProfile(){
+ const r=ascensionRecord(),marks=Number(r.completed||0),current=Number(r.current||0);
+ const xpBonus=Math.min(25,marks*2),legacyBonus=Math.min(50,marks*5);
+ const title=marks>=10?'ETERNAL ASCENDANT':marks>=5?'EXALTED HUNTER':marks>=3?'ASCENSION MASTER':marks>=1?'ASCENDED HUNTER':'UNASCENDED';
+ const rewards=[
+  {at:1,name:'ASCENDED HUNTER',detail:'+2% XP bonus • Ascended identity frame',unlocked:marks>=1},
+  {at:3,name:'ASCENSION MASTER',detail:'+6% XP bonus • Master prestige emblem',unlocked:marks>=3},
+  {at:5,name:'EXALTED HUNTER',detail:'+10% XP bonus • Exalted identity frame',unlocked:marks>=5},
+  {at:10,name:'ETERNAL ASCENDANT',detail:'+20% XP bonus • Eternal prestige aura',unlocked:marks>=10}
+ ];
+ return{marks,current,title,xpBonus,legacyBonus,rewards,next:rewards.find(x=>!x.unlocked)||null};
+}
+function ascensionRewardMultiplier(){return 1+(ascensionRewardProfile().xpBonus/100)}
+function ascensionRewardPanel(){
+ const p=ascensionRewardProfile(),next=p.next;
+ return '<div class="ascension-rewards"><strong>ASCENSION // PRESTIGE</strong><span><small>PRESTIGE TITLE</small><b>'+escapeHtml(p.title)+'</b></span><span><small>ASCENSION MARKS</small><b>'+p.marks+'</b></span><span><small>XP AMPLIFIER</small><b>+'+p.xpBonus+'%</b></span><span><small>LEGACY BONUS</small><b>+'+p.legacyBonus+'%</b></span>'+(next?'<p>NEXT REWARD // A'+next.at+' • '+escapeHtml(next.name)+'<br><small>'+escapeHtml(next.detail)+'</small></p>':'<p>MAXIMUM PRESTIGE // ETERNAL REWARD TRACK COMPLETE</p>')+'</div>';
+}
 function ascensionMarks(){
  const r=ascensionRecord();return[
   {id:'ascension_1',name:'ASCENSION MARK I',detail:'Complete the first Legacy cycle',unlocked:r.completed>=1,kind:'ASCENSION MARK',mark:'Ⅰ'},
