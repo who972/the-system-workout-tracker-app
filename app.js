@@ -1467,6 +1467,23 @@ function calculateMissionPerformance(seconds,prs){
  return{score,grade,completion:Math.round(completion*100),targetRate:Math.round(targetRate*100),prRate:Math.round(prRate*100),consistency:Math.round(consistency*100),mode:m.mode||'full'};
 }
 function missionPerformanceGrade(seconds,prs){return calculateMissionPerformance(seconds,prs).grade}
+function showBossCombatFx(hit){
+ if(!hit||!hit.damage)return;
+ let e=document.getElementById('bossCombatFx');
+ if(!e){e=document.createElement('section');e.id='bossCombatFx';e.className='boss-combat-fx';e.innerHTML='<div class="bcf-scan"></div><div class="bcf-card"><small>THE SYSTEM // BOSS ENCOUNTER</small><div class="bcf-rank" id="bcfRank">E-RANK GATE</div><h2 id="bcfBoss">GATE BOSS</h2><div class="bcf-impact"><span id="bcfAttack">PLAYER ATTACK</span><b id="bcfDamage">-0</b></div><div class="bcf-hp-head"><span>BOSS HP</span><strong id="bcfHp">0 / 0</strong></div><div class="bcf-hp"><i id="bcfHpFill"></i></div><div id="bcfPhase" class="bcf-phase">PHASE I // ARMOR INTACT</div><div id="bcfResult" class="bcf-result"></div></div>';document.body.appendChild(e)}
+ const hp=Math.max(0,Number(hit.hp)||0),max=Math.max(1,Number(hit.maxHp)||1),pct=Math.round(hp/max*100);
+ document.getElementById('bcfRank').textContent=(hit.rank||'E')+'-RANK GATE';
+ document.getElementById('bcfBoss').textContent=hit.boss||'GATE BOSS';
+ document.getElementById('bcfAttack').textContent=hit.critical?'CRITICAL HIT':'PLAYER ATTACK';
+ document.getElementById('bcfDamage').textContent='-'+Number(hit.damage).toLocaleString();
+ document.getElementById('bcfHp').textContent=hp.toLocaleString()+' / '+max.toLocaleString();
+ const fill=document.getElementById('bcfHpFill');fill.style.width=Math.min(100,Math.round((hp+hit.damage)/max*100))+'%';
+ document.getElementById('bcfPhase').textContent=hit.defeated?'GATE CLEARED':pct>66?'PHASE I // ARMOR INTACT':pct>33?'PHASE II // DEFENSE BREAKING':'PHASE III // FINAL PHASE';
+ document.getElementById('bcfResult').textContent=hit.defeated?'BOSS DEFEATED':'DAMAGE CONFIRMED';
+ e.classList.remove('active','critical','defeated');if(hit.critical)e.classList.add('critical');if(hit.defeated)e.classList.add('defeated');void e.offsetWidth;e.classList.add('active');
+ requestAnimationFrame(()=>requestAnimationFrame(()=>fill.style.width=pct+'%'));
+ setTimeout(()=>e.classList.remove('active'),hit.defeated?3400:2400);
+}
 function showMissionDebrief(seconds,xp,prs){
  ensureMissionFx();prs=prs||[];
  const performance=calculateMissionPerformance(seconds,prs);
@@ -1482,7 +1499,7 @@ function showMissionDebrief(seconds,xp,prs){
  const analysis=typeof getPerformanceAnalysis==='function'?getPerformanceAnalysis():null;
  const rows=analysis?.rows?.slice().sort((a,b)=>b.score-a.score).slice(0,2)||[];
  document.getElementById('missionDebriefGrowth').innerHTML=rows.length?rows.map(x=>'<span><b>'+performanceLabel(x.stat)+'</b><i>'+x.percent+'% DEVELOPMENT</i></span>').join(''):'<span><b>CALIBRATING</b><i>COMPLETE MORE MISSIONS</i></span>';
- document.getElementById('missionDebrief').classList.add('active');
+ document.getElementById('missionDebrief').classList.add('active');if(bossHit?.damage)setTimeout(()=>showBossCombatFx(bossHit),260);
 }
 
 /* ===== V16 CENTRAL COMMAND v2 CONTROLLER ===== */
