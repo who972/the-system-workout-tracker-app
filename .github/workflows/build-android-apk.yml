@@ -46,7 +46,10 @@ jobs:
           cp index.html app.js styles.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
-          echo "Packaged web assets:"
+          test -s "$WEB/enter_the_system_landscape.jpg"
+grep -q "enter_the_system_landscape.jpg" "$WEB/styles.css"
+echo "Verified final landscape entry artwork"
+echo "Packaged web assets:"
           find "$WEB" -maxdepth 1 -type f -printf "%f\n" | sort
 
       - name: Restore persistent signing key
@@ -76,12 +79,14 @@ jobs:
           "$APKSIGNER" verify --verbose --print-certs "$APK"
           "$AAPT" dump badging "$APK" | head -1
           unzip -p "$APK" assets/www/app.js | grep -q "ORBIT V42 // LIVE"
+          unzip -l "$APK" | grep -q "assets/www/enter_the_system_landscape.jpg"
+          unzip -p "$APK" assets/www/styles.css | grep -q "enter_the_system_landscape.jpg"
           echo "APK signature, package metadata, and current runtime verified"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v51-debug-apk
+          name: the-system-v82-entry-final-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
