@@ -165,20 +165,36 @@ function renderBossCommand(){
  const host=document.getElementById('bossStageSystem');if(!host)return;
  let panel=document.getElementById('weeklyGatePanel');
  if(!panel){panel=document.createElement('section');panel.id='weeklyGatePanel';panel.className='weekly-gate-panel';const list=host.querySelector('#bossStageList');host.insertBefore(panel,list||host.firstChild)}
- try{
-  const s=loadSideSystem(),w=weeklyGateState(s),damage=weeklyGateDamage(s);
-  w.g.damage=Math.max(Number(w.g.damage)||0,damage);if(w.g.damage>=w.def.hp)w.g.defeated=true;saveSideSystem(s);
-  const hp=Math.max(0,w.def.hp-w.g.damage),pct=Math.max(0,Math.min(100,Math.round(hp/w.def.hp*100))),next=nextPromotion(s);
-  let intel={strength:'Baseline pending',weak:'Baseline pending',directive:'Complete training to generate Boss Intel.'};
-  try{const x=systemIntelligence();if(x)intel=x}catch(e){console.warn('Boss Intel unavailable',e)}
-  const daily=dailySideMissions(),sideDone=(s.completed||[]).filter(id=>daily.some(m=>m.id===id)).length;
-  const quests=(typeof state!=='undefined'&&Array.isArray(state.dailyQuests))?state.dailyQuests.filter(q=>q.completed).length:0;
-  panel.innerHTML='<div class="gate-tabs"><button class="active" type="button">WEEKLY GATE</button><button type="button" data-jump-rank>RANK TRIAL</button></div><div class="gate-threat"><div><span class="side-tag">'+w.def.type+' // '+w.rank+'-RANK GATE</span><h2>'+w.def.name+'</h2><p>'+(w.g.defeated?'GATE CLEARED // BOSS DEFEATED':'HOSTILE ENTITY DETECTED // WEEKLY ENCOUNTER ACTIVE')+'</p></div><div class="gate-rank">'+w.rank+'</div></div><div class="gate-hp-head"><span>BOSS HP</span><strong>'+hp.toLocaleString()+' / '+w.def.hp.toLocaleString()+'</strong></div><div class="gate-hp"><i style="width:'+pct+'%"></i></div><div class="gate-grid"><article><span class="side-tag">BOSS INTEL</span><p><b>Primary Strength:</b> '+(intel.strength||'Baseline pending')+'</p><p><b>Weakness:</b> '+(intel.weak||'Baseline pending')+'</p><p><b>System Strategy:</b> '+(intel.directive||'Complete training to generate strategy.')+'</p></article><article><span class="side-tag">COMBAT CONTRIBUTION</span><p>Main objectives cleared: <b>'+quests+'</b></p><p>Side Missions: <b>'+sideDone+'/5</b></p><p>Damage dealt: <b>'+w.g.damage.toLocaleString()+'</b></p></article><article><span class="side-tag">REWARDS</span><p><b>Gate Clear XP</b></p><p>Boss victory record</p><p>Rank progression credit</p></article></div><div class="gate-phase"><span>PHASE '+(pct>66?'I':pct>33?'II':'III')+'</span><b>'+(pct>66?'ARMOR INTACT':pct>33?'DEFENSE BREAKING':'FINAL PHASE')+'</b></div>'+(next?'<div class="rank-trial-preview"><span class="side-tag">NEXT RANK TRIAL</span><strong>'+next.rank+'-CLASS PROMOTION</strong><small>'+(eligible(next,s)?'QUALIFIED // TRIAL READY':'LOCKED // COMPLETE PROMOTION REQUIREMENTS')+'</small></div>':'');
-  panel.querySelector('[data-jump-rank]')?.addEventListener('click',()=>host.querySelector('#bossStageList')?.scrollIntoView({behavior:'smooth',block:'start'}));
- }catch(err){
-  console.error('Weekly Gate render failed',err);
-  panel.innerHTML='<div class="gate-threat"><div><span class="side-tag">WEEKLY GATE // SYSTEM LINK</span><h2>GATE COMMAND ONLINE</h2><p>Boss telemetry is recalibrating. Promotion Trials remain available below.</p></div><div class="gate-rank">E</div></div><div class="gate-phase"><span>DIAGNOSTIC</span><b>TELEMETRY RECONNECTING</b></div>';
- }
+ const safeState=loadSideSystem();
+ const rank=currentClass(safeState)||'E';
+ const def=WEEKLY_BOSS_CLASSES[rank]||WEEKLY_BOSS_CLASSES.E;
+ const key=weekKey();
+ safeState.weeklyGate=safeState.weeklyGate||{};
+ if(safeState.weeklyGate.key!==key||safeState.weeklyGate.rank!==rank)safeState.weeklyGate={key:key,rank:rank,damage:0,defeated:false,claimed:false};
+ const gate=safeState.weeklyGate;
+ const completed=Array.isArray(safeState.completed)?safeState.completed:[];
+ let sideDone=0;try{const ids=dailySideMissions().map(m=>m.id);sideDone=completed.filter(id=>ids.includes(id)).length}catch(e){}
+ const quests=(typeof state!=='undefined'&&Array.isArray(state.dailyQuests))?state.dailyQuests.filter(q=>q&&q.completed).length:0;
+ const streak=(typeof state!=='undefined'&&Number.isFinite(Number(state.currentStreak)))?Number(state.currentStreak):0;
+ const todayDamage=Math.max(0,quests*900+sideDone*450+Math.min(7,streak)*180);
+ gate.damage=Math.min(def.hp,Math.max(Number(gate.damage)||0,todayDamage));
+ gate.defeated=gate.damage>=def.hp;
+ saveSideSystem(safeState);
+ const hp=Math.max(0,def.hp-gate.damage),pct=Math.max(0,Math.min(100,Math.round(hp/def.hp*100)));
+ let intel={strength:'Baseline pending',weak:'Baseline pending',directive:'Complete a logged training session to generate combat strategy.'};
+ try{if(typeof systemIntelligence==='function'){const x=systemIntelligence();if(x)intel={...intel,...x}}}catch(e){console.warn('Boss Intel unavailable',e)}
+ let next=null;try{next=typeof nextPromotion==='function'?nextPromotion(safeState):null}catch(e){}
+ let trialText='MAX RANK // ALL PROMOTION TRIALS CLEARED';
+ if(next){let ready=false;try{ready=eligible(next,safeState)}catch(e){}trialText=ready?'QUALIFIED // TRIAL READY':'LOCKED // COMPLETE PROMOTION REQUIREMENTS'}
+ panel.innerHTML='<div class="gate-tabs"><button class="active" type="button">WEEKLY GATE</button><button type="button" data-jump-rank>RANK TRIAL</button></div>'+
+ '<div class="gate-threat"><div><span class="side-tag">'+def.type+' // '+rank+'-RANK GATE</span><h2>'+def.name+'</h2><p>'+(gate.defeated?'GATE CLEARED // BOSS DEFEATED':'HOSTILE ENTITY DETECTED // WEEKLY ENCOUNTER ACTIVE')+'</p></div><div class="gate-rank">'+rank+'</div></div>'+
+ '<div class="gate-hp-head"><span>BOSS HP</span><strong>'+hp.toLocaleString()+' / '+def.hp.toLocaleString()+'</strong></div><div class="gate-hp"><i style="width:'+pct+'%"></i></div>'+
+ '<div class="gate-grid"><article><span class="side-tag">BOSS INTEL</span><p><b>Primary Strength:</b> '+intel.strength+'</p><p><b>Weakness:</b> '+intel.weak+'</p><p><b>System Strategy:</b> '+intel.directive+'</p></article>'+
+ '<article><span class="side-tag">COMBAT CONTRIBUTION</span><p>Main objectives cleared: <b>'+quests+'</b></p><p>Side Missions: <b>'+sideDone+'/5</b></p><p>Damage dealt: <b>'+gate.damage.toLocaleString()+'</b></p></article>'+
+ '<article><span class="side-tag">REWARDS</span><p><b>Gate Clear XP</b></p><p>Boss victory record</p><p>Rank progression credit</p></article></div>'+
+ '<div class="gate-phase"><span>PHASE '+(pct>66?'I':pct>33?'II':'III')+'</span><b>'+(pct>66?'ARMOR INTACT':pct>33?'DEFENSE BREAKING':'FINAL PHASE')+'</b></div>'+
+ (next?'<div class="rank-trial-preview"><span class="side-tag">NEXT RANK TRIAL</span><strong>'+next.rank+'-CLASS PROMOTION</strong><small>'+trialText+'</small></div>':'<div class="rank-trial-preview"><span class="side-tag">RANK STATUS</span><strong>APEX RANK</strong><small>'+trialText+'</small></div>');
+ panel.querySelector('[data-jump-rank]')?.addEventListener('click',()=>host.querySelector('#bossStageList')?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
 function renderSideSystem(){renderPlayerStatus();renderBossCommand();renderRankPath();const root=document.getElementById('sideMissionSystem');if(!root)return;const s=loadSideSystem(),missions=document.getElementById('sideMissionList');
 renderAdaptiveMissions();const available=unlockedMissions(s),dailyIds=dailySideMissions().map(x=>x.id),count=s.completed.filter(id=>dailyIds.includes(id)).length;missions.innerHTML='<div class="side-board-progress"><strong>DAILY SIDE MISSIONS • '+count+'/5</strong><span>3/5: +50 XP • 5/5: +100 XP</span></div>'+available.map(m=>{const h=m.id==='steps'?loadHealthData():null,hs=h?healthProviderStatus():null,stepUI=h?'<div class="step-provider"><div class="step-progress"><strong>'+h.steps.toLocaleString()+' / '+h.stepGoal.toLocaleString()+' STEPS</strong><div class="step-track"><i style="width:'+Math.min(100,Math.round(h.steps/h.stepGoal*100))+'%"></i></div></div>'+(hs.available?'<button type="button" data-health-sync>SYNC HEALTH CONNECT</button>':'')+'<label>Today’s steps (manual) <input data-step-input type="number" min="0" step="100" value="'+h.steps+'"></label>'+'<label>Goal <input data-step-goal type="number" min="1000" step="500" value="'+h.stepGoal+'"></label><small>Source: '+hs.label+(hs.available?' • Tap sync to allow Steps access':' • Health Connect sync is available in the Android app')+'</small></div>':'';const claimed=s.completed.includes(m.id)||(m.rankMission&&!!s.rankMissionClaims[m.id]);return '<article class="side-card '+(claimed?'is-done':'')+'"><div><span class="side-tag">'+(m.tag||'SIDE MISSION')+(m.stat?' • '+m.stat.toUpperCase():'')+'</span><h3>'+m.title+'</h3><p>'+m.desc+'</p>'+stepUI+'<details class="side-ideas"><summary>IDEAS</summary><ul>'+(m.ideas||[]).map(x=>'<li>'+x+'</li>').join('')+'</ul></details></div><div class="side-reward">+'+m.xp+' XP</div><button data-side="'+m.id+'" '+(claimed?'disabled':'')+'>'+(claimed?'COMPLETE':'CLAIM COMPLETE')+'</button></article>'}).join('');
