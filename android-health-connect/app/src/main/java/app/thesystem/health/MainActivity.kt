@@ -44,8 +44,15 @@ class MainActivity : ComponentActivity() {
         }
         webView.webChromeClient = WebChromeClient()
         webView.webViewClient = object : WebViewClient() {
-            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? =
-                assetLoader.shouldInterceptRequest(request.url)
+            override fun shouldInterceptRequest(view: WebView, request: WebResourceRequest): WebResourceResponse? {
+                val uri = request.url
+                // Only route the app's virtual local origin through the asset loader.
+                // Remote HTTPS requests must continue to the network for authentication.
+                if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") {
+                    return assetLoader.shouldInterceptRequest(uri)
+                }
+                return super.shouldInterceptRequest(view, request)
+            }
 
             override fun shouldOverrideUrlLoading(view: WebView, request: WebResourceRequest): Boolean {
                 val uri = request.url
