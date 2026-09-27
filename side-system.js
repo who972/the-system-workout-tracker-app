@@ -171,7 +171,7 @@ function applyMissionDamageToWeeklyGate(performance,prs=[]){
  const critBonus=critical?1.2:1;
  const damage=Math.max(1,Math.round(score*rankScale*modeScale*streakBonus*critBonus));
  g.damage=Math.min(w.def.hp,(Number(g.damage)||0)+damage);g.defeated=g.damage>=w.def.hp;
- const hit={damage,critical,defeated:g.defeated,hp:Math.max(0,w.def.hp-g.damage),score};g.missionHits[key]=hit;saveSideSystem(s);
+ const hit={damage,critical,defeated:g.defeated,hp:Math.max(0,w.def.hp-g.damage),maxHp:w.def.hp,boss:w.def.name,rank:w.rank,score};g.missionHits[key]=hit;saveSideSystem(s);
  if(typeof queueReward==='function')queueReward({type:'boss',title:critical?'CRITICAL HIT':'BOSS DAMAGE',detail:w.def.name+' • '+damage.toLocaleString()+' DAMAGE',amount:0,intensity:g.defeated?'major':'mission',source:'boss'});
  if(g.defeated&&window.SystemProgression?.bossUnlocked)window.SystemProgression.bossUnlocked(w.def.name+' DEFEATED');
  setTimeout(()=>{try{renderBossCommand()}catch(e){}},100);
