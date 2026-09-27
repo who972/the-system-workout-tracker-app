@@ -1450,16 +1450,29 @@ function ensureMissionFx(){
 document.addEventListener('DOMContentLoaded',ensureMissionFx);
 const _osStartWorkoutMode=startWorkoutMode;
 startWorkoutMode=function(){ensureMissionFx();const f=document.getElementById('missionLaunchFlash');f.classList.remove('active');void f.offsetWidth;f.classList.add('active');setTimeout(()=>{_osStartWorkoutMode();f.classList.remove('active')},650)};
-function missionPerformanceGrade(seconds,prs){
- const m=missionForMode(adaptiveSystemMission()),target=30*60,ratio=seconds/target;
- if(m.mode==='full'&&prs.length>=2)return 'S-RANK PERFORMANCE';
- if(m.mode==='full'&&(prs.length||ratio>=.8))return 'A-RANK PERFORMANCE';
- if(m.mode==='full')return 'B-RANK PERFORMANCE';
- return m.mode==='intense'?'B-RANK // QUICK INTENSE':'C-RANK // QUICK LIGHT';
+function calculateMissionPerformance(seconds,prs){
+ const m=missionForMode(adaptiveSystemMission()),p=getMissionProgress(),sets=flatSets(m),completed=sets.filter(x=>p[x.ei+'-'+x.si]?.done).length;
+ const completion=sets.length?completed/sets.length:1;
+ let targetHits=0,targetCount=0;
+ sets.forEach(x=>{const target=parseTargetReps(x.target),actual=Number(p[x.ei+'-'+x.si]?.reps)||0;if(target>0){targetCount++;if(actual>=target)targetHits++}});
+ const targetRate=targetCount?targetHits/targetCount:completion;
+ const prRate=Math.min(1,(prs?.length||0)/Math.max(1,m.exercises.length));
+ const timeRate=Math.min(1,seconds/(30*60));
+ const consistency=Math.min(1,(Number(state.currentStreak)||0)/7);
+ const modeFactor=m.mode==='full'?1:m.mode==='intense'?.9:.78;
+ // Completion matters most. Targets and consistency reward quality without encouraging unsafe speed.
+ const raw=(completion*.45+targetRate*.25+prRate*.12+timeRate*.08+consistency*.10)*100*modeFactor;
+ const score=Math.max(0,Math.min(100,Math.round(raw)));
+ const grade=score>=90?'S-RANK PERFORMANCE':score>=80?'A-RANK PERFORMANCE':score>=68?'B-RANK PERFORMANCE':score>=55?'C-RANK PERFORMANCE':'D-RANK PERFORMANCE';
+ return{score,grade,completion:Math.round(completion*100),targetRate:Math.round(targetRate*100),prRate:Math.round(prRate*100),consistency:Math.round(consistency*100),mode:m.mode||'full'};
 }
+function missionPerformanceGrade(seconds,prs){return calculateMissionPerformance(seconds,prs).grade}
 function showMissionDebrief(seconds,xp,prs){
  ensureMissionFx();prs=prs||[];
- document.getElementById('missionDebriefGrade').textContent=missionPerformanceGrade(seconds,prs);
+ const performance=calculateMissionPerformance(seconds,prs);
+ document.getElementById('missionDebriefGrade').textContent=performance.grade+' // '+performance.score;
+ window.SystemMissionPerformance=performance;
+ const sessions=workoutHistory();if(sessions.length){sessions[sessions.length-1].performance={...performance};localStorage.setItem('systemWorkoutSessions',JSON.stringify(sessions.slice(-365)))}
  document.getElementById('missionDebriefTime').textContent=fmt(seconds);
  document.getElementById('missionDebriefXp').textContent='+'+xp+' XP';
  document.getElementById('missionDebriefPrCount').textContent=String(prs.length);
