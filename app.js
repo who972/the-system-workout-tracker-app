@@ -1445,13 +1445,31 @@ document.addEventListener('DOMContentLoaded',initSystemOS);
 /* ===== V15 MISSION LAUNCH / DEBRIEF ===== */
 function ensureMissionFx(){
  if(!document.getElementById('missionLaunchFlash')){const e=document.createElement('div');e.id='missionLaunchFlash';e.className='mission-launch-flash';e.innerHTML='<div><small>THE SYSTEM // MISSION CONTROL</small><strong>MISSION LAUNCH</strong><span>TRAINING LINK ESTABLISHED</span></div>';document.body.appendChild(e)}
- if(!document.getElementById('missionDebrief')){const e=document.createElement('div');e.id='missionDebrief';e.className='mission-debrief';e.innerHTML='<div class="mission-debrief__card"><small>THE SYSTEM // DEBRIEF</small><h1>MISSION COMPLETE</h1><div id="missionDebriefTime">00:00</div><div id="missionDebriefXp" class="mission-debrief__xp">+0 XP</div><p id="missionDebriefPr">OBJECTIVES CLEARED</p><button type="button" id="missionDebriefClose">RETURN TO CENTRAL COMMAND</button></div>';document.body.appendChild(e);document.getElementById('missionDebriefClose').onclick=()=>e.classList.remove('active')}
+ if(!document.getElementById('missionDebrief')){const e=document.createElement('div');e.id='missionDebrief';e.className='mission-debrief';e.innerHTML=`<div class="mission-debrief__card"><small>THE SYSTEM // AFTER ACTION REPORT</small><h1>MISSION COMPLETE</h1><div id="missionDebriefGrade" class="mission-debrief__grade">MISSION CLEARED</div><div class="mission-debrief__stats"><div><b id="missionDebriefXp">+0 XP</b><span>EXPERIENCE</span></div><div><b id="missionDebriefTime">00:00</b><span>TRAINING TIME</span></div><div><b id="missionDebriefPrCount">0</b><span>PERSONAL RECORDS</span></div><div><b id="missionDebriefStreak">0 DAYS</b><span>STREAK</span></div></div><div class="mission-debrief__growth"><small>ATTRIBUTE DEVELOPMENT</small><div id="missionDebriefGrowth"></div></div><p id="missionDebriefPr">ALL OBJECTIVES CLEARED</p><button type="button" id="missionDebriefClose">RETURN TO CENTRAL COMMAND</button></div>`;document.body.appendChild(e);document.getElementById('missionDebriefClose').onclick=()=>{e.classList.remove('active');setTimeout(showMomentumPrompt,250)}}
 }
 document.addEventListener('DOMContentLoaded',ensureMissionFx);
 const _osStartWorkoutMode=startWorkoutMode;
 startWorkoutMode=function(){ensureMissionFx();const f=document.getElementById('missionLaunchFlash');f.classList.remove('active');void f.offsetWidth;f.classList.add('active');setTimeout(()=>{_osStartWorkoutMode();f.classList.remove('active')},650)};
-function showMissionDebrief(seconds,xp,prs){ensureMissionFx();document.getElementById('missionDebriefTime').textContent=fmt(seconds)+' TRAINING TIME';document.getElementById('missionDebriefXp').textContent='+'+xp+' XP';document.getElementById('missionDebriefPr').textContent=prs&&prs.length?'NEW PR // '+prs.join(' • '):'ALL OBJECTIVES CLEARED';document.getElementById('missionDebrief').classList.add('active')}
-
+function missionPerformanceGrade(seconds,prs){
+ const m=missionForMode(adaptiveSystemMission()),target=30*60,ratio=seconds/target;
+ if(m.mode==='full'&&prs.length>=2)return 'S-RANK PERFORMANCE';
+ if(m.mode==='full'&&(prs.length||ratio>=.8))return 'A-RANK PERFORMANCE';
+ if(m.mode==='full')return 'B-RANK PERFORMANCE';
+ return m.mode==='intense'?'B-RANK // QUICK INTENSE':'C-RANK // QUICK LIGHT';
+}
+function showMissionDebrief(seconds,xp,prs){
+ ensureMissionFx();prs=prs||[];
+ document.getElementById('missionDebriefGrade').textContent=missionPerformanceGrade(seconds,prs);
+ document.getElementById('missionDebriefTime').textContent=fmt(seconds);
+ document.getElementById('missionDebriefXp').textContent='+'+xp+' XP';
+ document.getElementById('missionDebriefPrCount').textContent=String(prs.length);
+ document.getElementById('missionDebriefStreak').textContent=(state.currentStreak||0)+' DAYS';
+ document.getElementById('missionDebriefPr').textContent=prs.length?'NEW PR // '+prs.join(' • '):'ALL OBJECTIVES CLEARED';
+ const analysis=typeof getPerformanceAnalysis==='function'?getPerformanceAnalysis():null;
+ const rows=analysis?.rows?.slice().sort((a,b)=>b.score-a.score).slice(0,2)||[];
+ document.getElementById('missionDebriefGrowth').innerHTML=rows.length?rows.map(x=>'<span><b>'+performanceLabel(x.stat)+'</b><i>'+x.percent+'% DEVELOPMENT</i></span>').join(''):'<span><b>CALIBRATING</b><i>COMPLETE MORE MISSIONS</i></span>';
+ document.getElementById('missionDebrief').classList.add('active');
+}
 
 /* ===== V16 CENTRAL COMMAND v2 CONTROLLER ===== */
 document.addEventListener('DOMContentLoaded',()=>{
