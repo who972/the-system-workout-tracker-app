@@ -157,9 +157,16 @@ function renderRankPath(){const el=ensureRankPath();if(!el)return;const s=loadSi
 }
 
 function renderAdaptiveMissions(){const el=document.getElementById('adaptiveMissionPanel');if(el)el.remove()}
-const WEEKLY_BOSS_CLASSES={E:{type:'GATE BOSS',name:'IRONHIDE BRUTE',hp:6000},D:{type:'ALPHA BEAST',name:'FANG OF THE DEEP',hp:12000},C:{type:'NAMED BOSS',name:'THE IRON DEVOURER',hp:24000},B:{type:'HIGH-TIER BOSS',name:'VOID WARDEN',hp:42000},A:{type:'LAIR MASTER',name:'THE ABYSS SENTINEL',hp:70000},S:{type:'CATASTROPHE-CLASS',name:'WORLD EATER',hp:110000},'S+':{type:'SOVEREIGN-CLASS',name:'THE LAST TYRANT',hp:175000},Shadow:{type:'APEX ENCOUNTER',name:'THE ECLIPSE KING',hp:250000}};
+const WEEKLY_BOSS_CLASSES={E:{type:'GATE BOSS',name:'IRONHIDE BRUTE',hp:6000,xp:300},D:{type:'ALPHA BEAST',name:'FANG OF THE DEEP',hp:12000,xp:450},C:{type:'NAMED BOSS',name:'THE IRON DEVOURER',hp:24000,xp:650},B:{type:'HIGH-TIER BOSS',name:'VOID WARDEN',hp:42000,xp:900},A:{type:'LAIR MASTER',name:'THE ABYSS SENTINEL',hp:70000,xp:1200},S:{type:'CATASTROPHE-CLASS',name:'WORLD EATER',hp:110000,xp:1600},'S+':{type:'SOVEREIGN-CLASS',name:'THE LAST TYRANT',hp:175000,xp:2100},Shadow:{type:'APEX ENCOUNTER',name:'THE ECLIPSE KING',hp:250000,xp:3000}};
 function weekKey(){const d=new Date(),day=(d.getDay()+6)%7,m=new Date(d);m.setDate(d.getDate()-day);return m.toISOString().slice(0,10)}
-function weeklyGateState(s){const rank=currentClass(s),def=WEEKLY_BOSS_CLASSES[rank]||WEEKLY_BOSS_CLASSES.E,key=weekKey();s.weeklyGate=s.weeklyGate||{};if(s.weeklyGate.key!==key||s.weeklyGate.rank!==rank)s.weeklyGate={key,rank,damage:0,defeated:false,claimed:false};return{g:s.weeklyGate,rank,def}}
+function weeklyGateState(s){const rank=currentClass(s),def=WEEKLY_BOSS_CLASSES[rank]||WEEKLY_BOSS_CLASSES.E,key=weekKey();s.weeklyGate=s.weeklyGate||{};if(s.weeklyGate.key!==key||s.weeklyGate.rank!==rank){if(s.weeklyGate.key)s.gateHistory=[...(s.gateHistory||[]),{...s.weeklyGate,boss:(WEEKLY_BOSS_CLASSES[s.weeklyGate.rank]||{}).name||'UNKNOWN BOSS'}].slice(-52);s.weeklyGate={key,rank,damage:0,defeated:false,claimed:false,missionHits:{}}}return{g:s.weeklyGate,rank,def}}
+function claimWeeklyGateVictory(s,w){
+ const g=w.g;if(!g.defeated||g.claimed)return false;g.claimed=true;g.clearedAt=new Date().toISOString();s.gateVictories=s.gateVictories||[];s.gateVictories.unshift({week:g.key,rank:w.rank,boss:w.def.name,damage:g.damage,xp:w.def.xp,clearedAt:g.clearedAt});s.gateVictories=s.gateVictories.slice(0,100);saveSideSystem(s);
+ if(typeof addXp==='function')addXp(w.def.xp,'boss',{suppressReward:true});
+ if(typeof queueReward==='function')queueReward({type:'boss',title:'GATE CLEARED',detail:w.def.name+' • +'+w.def.xp+' XP',amount:w.def.xp,intensity:'major',source:'boss'});
+ if(typeof addSystemMessage==='function')addSystemMessage('Boss defeated: '+w.def.name+' • +'+w.def.xp+' XP','achievement');
+ return true
+}
 function applyMissionDamageToWeeklyGate(performance,prs=[]){
  const s=loadSideSystem(),w=weeklyGateState(s),g=w.g;if(g.defeated)return{damage:0,critical:false,defeated:true,hp:0};
  const key=(typeof systemMissionKey==='function'?systemMissionKey():today())+':'+(performance?.mode||'full');
@@ -173,7 +180,7 @@ function applyMissionDamageToWeeklyGate(performance,prs=[]){
  g.damage=Math.min(w.def.hp,(Number(g.damage)||0)+damage);g.defeated=g.damage>=w.def.hp;
  const hit={damage,critical,defeated:g.defeated,hp:Math.max(0,w.def.hp-g.damage),maxHp:w.def.hp,boss:w.def.name,rank:w.rank,score};g.missionHits[key]=hit;saveSideSystem(s);
  if(typeof queueReward==='function')queueReward({type:'boss',title:critical?'CRITICAL HIT':'BOSS DAMAGE',detail:w.def.name+' • '+damage.toLocaleString()+' DAMAGE',amount:0,intensity:g.defeated?'major':'mission',source:'boss'});
- if(g.defeated&&window.SystemProgression?.bossUnlocked)window.SystemProgression.bossUnlocked(w.def.name+' DEFEATED');
+ if(g.defeated){claimWeeklyGateVictory(s,w);if(window.SystemProgression?.bossUnlocked)window.SystemProgression.bossUnlocked(w.def.name+' DEFEATED')}
  setTimeout(()=>{try{renderBossCommand()}catch(e){}},100);
  return hit
 }
@@ -209,7 +216,7 @@ function renderBossCommand(){
   panel.querySelector('.gate-hp i').style.width=pct+'%';
   const cards=panel.querySelectorAll('.gate-grid article');
   cards[0].innerHTML='<span class="side-tag">BOSS INTEL</span><p><b>Primary Strength:</b> '+intel.strength+'</p><p><b>Weakness:</b> '+intel.weak+'</p><p><b>System Strategy:</b> '+intel.directive+'</p>';
-  cards[1].innerHTML='<span class="side-tag">COMBAT CONTRIBUTION</span><p>Main objectives cleared: <b>'+quests+'</b></p><p>Side Missions: <b>'+sideDone+'/5</b></p><p>Damage dealt: <b>'+gate.damage.toLocaleString()+'</b></p>';
+  cards[1].innerHTML='<span class="side-tag">COMBAT CONTRIBUTION</span><p>Main objectives cleared: <b>'+quests+'</b></p><p>Side Missions: <b>'+sideDone+'/5</b></p><p>Damage dealt: <b>'+gate.damage.toLocaleString()+'</b></p>';cards[2].innerHTML='<span class="side-tag">REWARDS</span><p><b>+'+def.xp.toLocaleString()+' XP</b> Gate Clear</p><p>Boss victory record</p><p>'+(gate.claimed?'REWARD CLAIMED':'DEFEAT BOSS TO CLAIM')+'</p>';
   panel.querySelector('.gate-phase span').textContent='PHASE '+(pct>66?'I':pct>33?'II':'III');
   panel.querySelector('.gate-phase b').textContent=pct>66?'ARMOR INTACT':pct>33?'DEFENSE BREAKING':'FINAL PHASE';
   if(next){panel.querySelector('.rank-trial-preview strong').textContent=next.rank+'-CLASS PROMOTION';panel.querySelector('.rank-trial-preview small').textContent=ready?'QUALIFIED // TRIAL READY':'LOCKED // COMPLETE PROMOTION REQUIREMENTS'}
