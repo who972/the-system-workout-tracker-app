@@ -2303,3 +2303,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V69 // ARMED LEGACY TRIALS */
 .legacy-trial-btn:has(small){position:relative}.legacy-trial-btn:not(:disabled){transition:box-shadow .2s ease}.legacy-trial-btn[data-legacy-trial]{text-transform:uppercase}.legacy-trial-btn[data-legacy-trial]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* V70 // PERSISTENT TRIAL DAMAGE */
+.legacy-trial-btn small{margin-top:4px}.legacy-trial-btn[data-legacy-trial]{overflow:hidden}.legacy-trial-btn[data-legacy-trial] small{opacity:.68}
