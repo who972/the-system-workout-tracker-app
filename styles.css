@@ -2306,3 +2306,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V70 // PERSISTENT TRIAL DAMAGE */
 .legacy-trial-btn small{margin-top:4px}.legacy-trial-btn[data-legacy-trial]{overflow:hidden}.legacy-trial-btn[data-legacy-trial] small{opacity:.68}
+
+/* V71 // LEGACY TRIAL PHASES */
+.legacy-trial-btn small{display:block}.legacy-trial-btn:not(:disabled) small{font-variant-numeric:tabular-nums}.boss-combat-fx.active .bcf-phase{letter-spacing:.1em}
