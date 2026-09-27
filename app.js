@@ -2028,13 +2028,121 @@ function runLegacyTrial(id){
  queueReward({title:'LEGACY TRIAL ARMED',detail:c.trial+' • COMPLETE A SYSTEM MISSION TO ENGAGE '+trial.guardian,amount:0,intensity:'major',source:'achievement'});window.SystemOS?.notify('TRIAL ARMED // COMPLETE A SYSTEM MISSION','LEGACY // '+c.trial);renderLegacyMissions()
 }
 function renderLegacyMissions(){
- const panel=document.getElementById('legacyMissions'),list=document.getElementById('legacyMissionList'),meta=document.getElementById('legacyMissionMeta');if(!panel||!list)return;
- const x=currentHunterLegacy(),trialRecord=legacyTrialRecord(),armed=activeLegacyTrial(),combat=legacyTrialCombatState(armed);panel.hidden=!x.active;if(!x.active)return;const ms=legacyMissions(x),campaign=legacyCampaign(ms);const asc=legacyAscension(),mods=ascensionModifiers();meta.textContent=(asc.cycle?'ASCENSION '+asc.cycle+' // '+mods.label+' // ':'')+(campaign.complete?'CAMPAIGN COMPLETE':'CHAPTER '+campaign.active.id+' // '+campaign.active.name);
- list.innerHTML=ascensionRewardPanel()+(armed&&combat?'<section class="legacy-combat-brief"><div><small>ACTIVE LEGACY ENCOUNTER</small><h3>'+escapeHtml(armed.trialName)+'</h3><b>'+escapeHtml(armed.trial.guardian)+'</b></div><div class="legacy-combat-brief__stats"><span><small>GUARDIAN HP</small><strong>'+combat.hp+' / '+combat.maxHp+'</strong></span><span><small>PHASE</small><strong>'+escapeHtml(combat.name)+'</strong></span><span><small>ATTEMPTS</small><strong>'+combat.attempts+'</strong></span><span><small>LAST SCORE</small><strong>'+(combat.lastScore||'--')+'</strong></span><span><small>COMBO</small><strong>'+(combat.combo?'x'+combat.combo:'--')+'</strong></span><span><small>LAST ATTACK</small><strong>'+escapeHtml(combat.lastAttack||'--')+'</strong></span></div><div class="legacy-combat-brief__hp"><i style="width:'+combat.pct+'%"></i></div><p><strong>'+escapeHtml(combat.objective)+'</strong> // '+escapeHtml(combat.hint)+'</p></section>':'')+(trialRecord.clears?'<div class="legacy-trial-record"><span><small>TRIAL CLEARS</small><b>'+trialRecord.clears+'</b></span><span><small>SOVEREIGN CLEARS</small><b>'+trialRecord.sovereignClears+'</b></span><span><small>HIGHEST ASCENSION</small><b>A'+trialRecord.highestAscension+'</b></span><span><small>BEST TRIAL SCORE</small><b>'+trialRecord.bestPerformance+'</b></span><span><small>FEWEST ATTEMPTS</small><b>'+(trialRecord.fewestAttempts||'--')+'</b></span><span><small>FASTEST CLEAR</small><b>'+formatTrialTime(trialRecord.fastestSeconds)+'</b></span><span><small>AVG ATTEMPTS</small><b>'+(trialRecord.avgAttempts?trialRecord.avgAttempts.toFixed(1):'--')+'</b></span></div>':'')+(mods.mods.length?'<div class="ascension-modifiers"><strong>ASCENSION CONDITIONS</strong>'+mods.mods.map(m=>'<span><b>'+escapeHtml(m.name)+'</b><small>'+escapeHtml(m.detail)+'</small></span>').join('')+'</div>':'')+'<div class="legacy-campaign-map">'+campaign.chapters.map(c=>'<section class="legacy-chapter '+(c.complete?'complete ':c.unlocked?'active ':'locked ')+'"><header><span>CHAPTER '+String(c.id).padStart(2,'0')+'</span><b>'+escapeHtml(c.name)+'</b><small>'+escapeHtml(c.subtitle)+'</small><em>'+Math.round(c.progress)+'%</em></header><div class="legacy-chapter-track"><i style="width:'+c.progress+'%"></i></div>'+c.missions.map(m=>'<article class="'+(m.complete?'complete ':'')+(m.claimed?'claimed':'')+(c.unlocked?'':' chapter-locked')+'"><div><small>LEGACY DIRECTIVE // +'+m.lp+' LP MILESTONE</small><b>'+escapeHtml(m.name)+'</b><span>'+escapeHtml(m.detail)+'</span></div><strong>'+Math.min(m.target,Number(m.value||0))+' / '+m.target+'</strong><div class="legacy-mission-track"><i style="width:'+m.progress+'%"></i></div><em>'+(m.claimed?'RECORDED':m.complete?'DIRECTIVE COMPLETE':c.unlocked?'IN PROGRESS':'CHAPTER LOCKED')+'</em></article>').join('')+(c.trialUnlocked?'<button class="legacy-trial-btn" data-legacy-trial="'+c.id+'">'+(c.trialCleared?'TRIAL CLEARED':armed?.chapter===c.id?'TRIAL ARMED // COMPLETE SYSTEM MISSION':'BEGIN '+escapeHtml(c.trial))+'<small>'+escapeHtml(ascensionTrialProfile(c).guardian)+' • '+(armed?.chapter===c.id?Math.max(0,ascensionTrialProfile(c).maxHp-Number(armed.damage||0))+' / ':'')+ascensionTrialProfile(c).maxHp+' HP'+(armed?.chapter===c.id&&armed.attempts?' • '+armed.attempts+' ATTEMPT'+(armed.attempts===1?'':'S'):'')+(armed?.chapter===c.id&&combat?' • '+combat.name:'')+(ascensionTrialProfile(c).affixes.length?' • '+ascensionTrialProfile(c).affixes.join(' / '):'')+'</small></button>':'<div class="legacy-trial-lock">FINAL TRIAL // '+(c.directivesComplete?'AWAITING PREVIOUS CHAPTER':'COMPLETE ALL CHAPTER DIRECTIVES')+(c.directivesComplete&&!c.trialCondition?' // 30-DAY STREAK REQUIRED':'')+'</div>')+(campaign.complete&&legacyArtifact().unlocked?'<button class="legacy-ascend-btn" id="legacyAscendBtn">INITIATE LEGACY ASCENSION<small>PRESERVE IDENTITY • TROPHIES • HISTORY // RESET CAMPAIGN ONLY</small></button>':'')+'</div>';
- const ascendBtn=document.getElementById('legacyAscendBtn');if(ascendBtn)ascendBtn.onclick=()=>{if(confirm('Begin a new Legacy Ascension cycle? Campaign directives and Trials reset. Identity, trophies and training history are preserved.'))ascendLegacy()};
- list.querySelectorAll('[data-legacy-trial]').forEach(b=>{b.disabled=b.textContent.includes('CLEARED');b.onclick=()=>runLegacyTrial(b.dataset.legacyTrial)});
- const claims=legacyMissionClaims(),fresh=ms.filter(m=>m.complete&&!m.claimed);if(fresh.length){localStorage.setItem(LEGACY_MISSION_KEY,JSON.stringify([...claims,...fresh.map(m=>m.id)]));fresh.forEach((m,i)=>setTimeout(()=>queueReward({title:'LEGACY DIRECTIVE COMPLETE',detail:m.name+' • +'+m.lp+' LP MILESTONE',amount:0,intensity:'major',source:'achievement'}),i*900))}
+  const panel=document.getElementById('legacyMissions');
+  const list=document.getElementById('legacyMissionList');
+  const meta=document.getElementById('legacyMissionMeta');
+  if(!panel||!list)return;
+
+  const x=currentHunterLegacy();
+  const trialRecord=legacyTrialRecord();
+  const armed=activeLegacyTrial();
+  const combat=legacyTrialCombatState(armed);
+
+  panel.hidden=!x.active;
+  if(!x.active)return;
+
+  const ms=legacyMissions(x);
+  const campaign=legacyCampaign(ms);
+  const asc=legacyAscension();
+  const mods=ascensionModifiers();
+
+  meta.textContent=(asc.cycle?'ASCENSION '+asc.cycle+' // '+mods.label+' // ':'')+
+    (campaign.complete?'CAMPAIGN COMPLETE':'CHAPTER '+campaign.active.id+' // '+campaign.active.name);
+
+  const combatHtml=armed&&combat
+    ? '<section class="legacy-combat-brief"><div><small>ACTIVE LEGACY ENCOUNTER</small><h3>'+escapeHtml(armed.trialName)+'</h3><b>'+escapeHtml(armed.trial.guardian)+'</b></div>'+
+      '<div class="legacy-combat-brief__stats">'+
+      '<span><small>GUARDIAN HP</small><strong>'+combat.hp+' / '+combat.maxHp+'</strong></span>'+
+      '<span><small>PHASE</small><strong>'+escapeHtml(combat.name)+'</strong></span>'+
+      '<span><small>ATTEMPTS</small><strong>'+combat.attempts+'</strong></span>'+
+      '<span><small>LAST SCORE</small><strong>'+(combat.lastScore||'--')+'</strong></span>'+
+      '<span><small>COMBO</small><strong>'+(combat.combo?'x'+combat.combo:'--')+'</strong></span>'+
+      '<span><small>LAST ATTACK</small><strong>'+escapeHtml(combat.lastAttack||'--')+'</strong></span></div>'+
+      '<div class="legacy-combat-brief__hp"><i style="width:'+combat.pct+'%"></i></div>'+
+      '<p><strong>'+escapeHtml(combat.objective)+'</strong> // '+escapeHtml(combat.hint)+'</p></section>'
+    : '';
+
+  const recordHtml=trialRecord.clears
+    ? '<div class="legacy-trial-record">'+
+      '<span><small>TRIAL CLEARS</small><b>'+trialRecord.clears+'</b></span>'+
+      '<span><small>SOVEREIGN CLEARS</small><b>'+trialRecord.sovereignClears+'</b></span>'+
+      '<span><small>HIGHEST ASCENSION</small><b>A'+trialRecord.highestAscension+'</b></span>'+
+      '<span><small>BEST TRIAL SCORE</small><b>'+trialRecord.bestPerformance+'</b></span>'+
+      '<span><small>FEWEST ATTEMPTS</small><b>'+(trialRecord.fewestAttempts||'--')+'</b></span>'+
+      '<span><small>FASTEST CLEAR</small><b>'+formatTrialTime(trialRecord.fastestSeconds)+'</b></span>'+
+      '<span><small>AVG ATTEMPTS</small><b>'+(trialRecord.avgAttempts?trialRecord.avgAttempts.toFixed(1):'--')+'</b></span></div>'
+    : '';
+
+  const modifierHtml=mods.mods.length
+    ? '<div class="ascension-modifiers"><strong>ASCENSION CONDITIONS</strong>'+
+      mods.mods.map(m=>'<span><b>'+escapeHtml(m.name)+'</b><small>'+escapeHtml(m.detail)+'</small></span>').join('')+
+      '</div>'
+    : '';
+
+  const chaptersHtml=campaign.chapters.map(ch=>{
+    const chapterClass=ch.complete?'complete':(ch.unlocked?'active':'locked');
+    const missionsHtml=ch.missions.map(m=>
+      '<article class="'+(m.complete?'complete ':'')+(m.claimed?'claimed':'')+(ch.unlocked?'':' chapter-locked')+'">'+
+      '<div><small>LEGACY DIRECTIVE // +'+m.lp+' LP MILESTONE</small><b>'+escapeHtml(m.name)+'</b><span>'+escapeHtml(m.detail)+'</span></div>'+
+      '<strong>'+Math.min(m.target,Number(m.value||0))+' / '+m.target+'</strong>'+
+      '<div class="legacy-mission-track"><i style="width:'+m.progress+'%"></i></div>'+
+      '<em>'+(m.claimed?'RECORDED':(m.complete?'DIRECTIVE COMPLETE':(ch.unlocked?'IN PROGRESS':'CHAPTER LOCKED')))+'</em></article>'
+    ).join('');
+
+    let trialHtml='';
+    if(ch.trialUnlocked){
+      const profile=ascensionTrialProfile(ch);
+      const isArmed=armed?.chapter===ch.id;
+      const title=ch.trialCleared?'TRIAL CLEARED':(isArmed?'TRIAL ARMED // COMPLETE SYSTEM MISSION':'BEGIN '+escapeHtml(ch.trial));
+      const hpText=isArmed?Math.max(0,profile.maxHp-Number(armed.damage||0))+' / '+profile.maxHp+' HP':profile.maxHp+' HP';
+      const attempts=isArmed&&armed.attempts?' • '+armed.attempts+' ATTEMPT'+(armed.attempts===1?'':'S'):'';
+      const phase=isArmed&&combat?' • '+combat.name:'';
+      const affixes=profile.affixes.length?' • '+profile.affixes.join(' / '):'';
+      trialHtml='<button class="legacy-trial-btn" data-legacy-trial="'+ch.id+'">'+title+
+        '<small>'+escapeHtml(profile.guardian)+' • '+hpText+attempts+phase+affixes+'</small></button>';
+    }else{
+      trialHtml='<div class="legacy-trial-lock">FINAL TRIAL // '+
+        (ch.directivesComplete?'AWAITING PREVIOUS CHAPTER':'COMPLETE ALL CHAPTER DIRECTIVES')+
+        (ch.directivesComplete&&!ch.trialCondition?' // 30-DAY STREAK REQUIRED':'')+'</div>';
+    }
+
+    return '<section class="legacy-chapter '+chapterClass+'"><header><span>CHAPTER '+String(ch.id).padStart(2,'0')+
+      '</span><b>'+escapeHtml(ch.name)+'</b><small>'+escapeHtml(ch.subtitle)+'</small><em>'+Math.round(ch.progress)+
+      '%</em></header><div class="legacy-chapter-track"><i style="width:'+ch.progress+'%"></i></div>'+
+      missionsHtml+trialHtml+'</section>';
+  }).join('');
+
+  const ascendHtml=campaign.complete&&legacyArtifact().unlocked
+    ? '<button class="legacy-ascend-btn" id="legacyAscendBtn">INITIATE LEGACY ASCENSION<small>PRESERVE IDENTITY • TROPHIES • HISTORY // RESET CAMPAIGN ONLY</small></button>'
+    : '';
+
+  list.innerHTML=ascensionRewardPanel()+combatHtml+recordHtml+modifierHtml+
+    '<div class="legacy-campaign-map">'+chaptersHtml+ascendHtml+'</div>';
+
+  const ascendBtn=document.getElementById('legacyAscendBtn');
+  if(ascendBtn)ascendBtn.onclick=()=>{
+    if(confirm('Begin a new Legacy Ascension cycle? Campaign directives and Trials reset. Identity, trophies and training history are preserved.'))ascendLegacy();
+  };
+
+  list.querySelectorAll('[data-legacy-trial]').forEach(b=>{
+    b.disabled=b.textContent.includes('CLEARED');
+    b.onclick=()=>runLegacyTrial(b.dataset.legacyTrial);
+  });
+
+  const claims=legacyMissionClaims();
+  const fresh=ms.filter(m=>m.complete&&!m.claimed);
+  if(fresh.length){
+    localStorage.setItem(LEGACY_MISSION_KEY,JSON.stringify([...claims,...fresh.map(m=>m.id)]));
+    fresh.forEach((m,i)=>setTimeout(()=>queueReward({
+      title:'LEGACY DIRECTIVE COMPLETE',
+      detail:m.name+' • +'+m.lp+' LP MILESTONE',
+      amount:0,
+      intensity:'major',
+      source:'achievement'
+    }),i*900));
+  }
 }
+
 function legacyPanel(x){return '<section class="hunter-legacy '+(x.active?'active':'dormant')+'"><div><small>HUNTER // PERMANENT LEGACY</small><h3>'+escapeHtml(x.title)+'</h3><strong>LEGACY LV '+x.level+'</strong></div><b>'+x.score.toLocaleString()+' LP</b><div class="hunter-legacy__track"><i style="width:'+x.progress+'%"></i></div><span>'+(x.active?x.next.toLocaleString()+' LP TO NEXT LEGACY LEVEL':'REACH S-RANK OR COLLECT 2 TROPHY CLASSES TO AWAKEN')+'</span></section>'}
 function ensureVaultDetail(){let e=document.getElementById('vaultRewardDetail');if(e)return e;e=document.createElement('div');e.id='vaultRewardDetail';e.className='vault-detail';e.setAttribute('aria-hidden','true');e.innerHTML='<div class="vault-detail__panel"><button class="vault-detail__close" aria-label="Close reward detail">×</button><div id="vaultDetailBody"></div></div>';document.body.appendChild(e);e.querySelector('button').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')};return e}
 function openVaultDetail(item){
