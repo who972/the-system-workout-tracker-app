@@ -24,6 +24,37 @@ function getRank(level) {
   return rank;
 }
 
+// --- Player Performance Profile ---
+const PERFORMANCE_STATS = ['str','end','agi','vit'];
+function ensurePerformanceProfile() {
+  state.performanceProfile = state.performanceProfile || {
+    str:{score:0,actions:0}, end:{score:0,actions:0}, agi:{score:0,actions:0}, vit:{score:0,actions:0}
+  };
+  PERFORMANCE_STATS.forEach(k => state.performanceProfile[k] ||= {score:0,actions:0});
+  return state.performanceProfile;
+}
+function registerPerformance(stat, effort=1) {
+  if (!PERFORMANCE_STATS.includes(stat)) return;
+  const p=ensurePerformanceProfile()[stat];
+  p.actions=(Number(p.actions)||0)+1;
+  p.score=Math.round(((Number(p.score)||0)+Math.max(.25,Number(effort)||1))*10)/10;
+}
+function getPerformanceAnalysis() {
+  const p=ensurePerformanceProfile();
+  const rows=PERFORMANCE_STATS.map(k=>({stat:k,score:Number(p[k].score)||0,actions:Number(p[k].actions)||0}));
+  const max=Math.max(1,...rows.map(x=>x.score));
+  rows.forEach(x=>x.percent=Math.round(x.score/max*100));
+  const weakest=rows.slice().sort((a,b)=>a.score-b.score)[0];
+  const strongest=rows.slice().sort((a,b)=>b.score-a.score)[0];
+  return {rows,weakest,strongest};
+}
+function performanceLabel(stat){return ({str:'STRENGTH',end:'ENDURANCE',agi:'CONDITIONING',vit:'RECOVERY'})[stat]||stat.toUpperCase();}
+function recommendPerformanceMission(){
+  const a=getPerformanceAnalysis(), stat=a.weakest.stat;
+  const q=(state.dailyQuests||[]).find(x=>x.stat===stat&&!x.completed);
+  return {stat,title:q?.title||({str:'Strength Development',end:'Endurance Development',agi:'Conditioning Development',vit:'Recovery + Mobility'})[stat]};
+}
+
 // --- XP Formula ---
 function xpNeededForLevel(level) {
   // Fitness-RPG pacing: early levels move quickly, while higher ranks
@@ -200,6 +231,7 @@ function defaultState() {
     weight: { current: null, starting: null, goal: null, history: [] },
     exerciseRecords: [],
     adaptiveQuests: {},
+    performanceProfile: { str:{score:0,actions:0}, end:{score:0,actions:0}, agi:{score:0,actions:0}, vit:{score:0,actions:0} },
   };
 }
 
@@ -216,6 +248,7 @@ function loadState() {
     state.weight.history = Array.isArray(state.weight.history) ? state.weight.history : [];
     state.exerciseRecords = Array.isArray(saved.exerciseRecords) ? saved.exerciseRecords : [];
     state.adaptiveQuests = saved.adaptiveQuests && typeof saved.adaptiveQuests === 'object' ? saved.adaptiveQuests : {};
+    state.performanceProfile = saved.performanceProfile && typeof saved.performanceProfile === 'object' ? saved.performanceProfile : state.performanceProfile;
 
     // Check for daily reset
     const today = getTodayStr();
@@ -391,7 +424,8 @@ function rewardEvent({ amount = 0, source = 'system', title = 'PROGRESS REGISTER
 }
 
 function getNextObjective() {
-  const pending = (state.dailyQuests || []).find(q => !q.completed);
+  const recommendation = recommendPerformanceMission();
+  const pending = (state.dailyQuests || []).find(q => !q.completed && q.stat === recommendation.stat) || (state.dailyQuests || []).find(q => !q.completed);
   if (pending) {
     const remaining = Math.max(0, (Number(pending.target)||0) - (Number(pending.progress)||0));
     return { title: pending.title, detail: `${remaining} ${pending.unit || ''} REMAINING`.trim(), view: 'missions' };
@@ -536,6 +570,7 @@ function completeQuest(questId) {
   quest.progress = quest.target;
   state.totalQuestsCompleted++;
   registerAdaptiveQuestResult(quest);
+  registerPerformance(quest.stat, Math.max(.5, Number(quest.target) / Math.max(1, Number(DEFAULT_DAILY_QUESTS.find(q=>q.id===quest.id)?.target)||quest.target)));
 
   addSystemMessage(`Quest Complete: ${quest.title} — +${quest.xp} XP`, 'quest');
   rewardEvent({ amount: quest.xp, source: 'quest', title: 'OBJECTIVE COMPLETE', detail: quest.title, intensity: 'micro' });
@@ -1331,6 +1366,7 @@ function renderCommandHud(){
   const plan=typeof WORKOUT_PLAN!=='undefined'?WORKOUT_PLAN[new Date().getDay()]:null;
   if(plan){set('hudMissionName',plan.name.toUpperCase());set('hudMissionFocus',plan.focus+' // 30 MIN');}
   const qs=state.dailyQuests||[],done=qs.filter(q=>q.completed).length,daily=qs.length?Math.round(done/qs.length*100):0;set('hudCorePercent',daily+'%');
+  const pa=getPerformanceAnalysis(), rec=recommendPerformanceMission(); window.SystemPerformance={analysis:pa,recommendation:rec};
 }
 document.addEventListener('DOMContentLoaded',()=>{renderCommandHud();document.getElementById('hudBriefing')?.addEventListener('click',()=>document.getElementById('replayDailyBriefing')?.click())});
 const _systemRenderAll=renderAll;renderAll=function(){_systemRenderAll();renderCommandHud()};
