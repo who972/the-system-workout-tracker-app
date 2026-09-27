@@ -1367,8 +1367,11 @@ function renderCommandHud(){
   if(plan){set('hudMissionName',plan.name.toUpperCase());set('hudMissionFocus',plan.focus+' // 30 MIN');}
   const qs=state.dailyQuests||[],done=qs.filter(q=>q.completed).length,daily=qs.length?Math.round(done/qs.length*100):0;set('hudCorePercent',daily+'%');
   const pa=getPerformanceAnalysis(), rec=recommendPerformanceMission(); window.SystemPerformance={analysis:pa,recommendation:rec};
+  const perfMap={str:'Str',end:'End',agi:'Agi',vit:'Vit'};
+  pa.rows.forEach(x=>{const suf=perfMap[x.stat],bar=document.getElementById('hudPerf'+suf),val=document.getElementById('hudPerf'+suf+'Val');if(bar)bar.style.width=x.percent+'%';if(val)val.textContent=x.percent+'%'});
+  set('hudPerfPriority',pa.rows.every(x=>x.score===0)?'ESTABLISHING BASELINE':performanceLabel(pa.weakest.stat)+' // '+rec.title.toUpperCase());
 }
-document.addEventListener('DOMContentLoaded',()=>{renderCommandHud();document.getElementById('hudBriefing')?.addEventListener('click',()=>document.getElementById('replayDailyBriefing')?.click())});
+document.addEventListener('DOMContentLoaded',()=>{renderCommandHud();document.getElementById('hudBriefing')?.addEventListener('click',()=>document.getElementById('replayDailyBriefing')?.click());document.getElementById('hudPerfMission')?.addEventListener('click',()=>document.querySelector('.app-nav [data-view="missions"]')?.click())});
 const _systemRenderAll=renderAll;renderAll=function(){_systemRenderAll();renderCommandHud()};
 
 /* ===== V13 ORBITAL HOLOGRAM CONTROLLER ===== */
