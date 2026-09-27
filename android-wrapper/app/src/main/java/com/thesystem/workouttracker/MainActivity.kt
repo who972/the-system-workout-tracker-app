@@ -44,8 +44,10 @@ class MainActivity : ComponentActivity() {
         webView = WebView(this)
         setContentView(webView)
         val loader = WebViewAssetLoader.Builder().addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this)).build()
+        webView.clearCache(true)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
+        webView.settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
         webView.webViewClient = object : android.webkit.WebViewClient() {
             override fun shouldInterceptRequest(
                 view: WebView,
