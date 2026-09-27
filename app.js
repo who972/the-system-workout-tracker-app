@@ -257,8 +257,58 @@ function addSystemMessage(text, type = '') {
   }
 }
 
+// --- Instant Reward Engine ---
+// Central queue for immediate, ordered feedback from real-world effort.
+const rewardQueue = [];
+let rewardQueueActive = false;
+
+function queueReward(event = {}) {
+  rewardQueue.push({
+    type: event.type || 'xp',
+    title: event.title || 'PROGRESS REGISTERED',
+    detail: event.detail || '',
+    amount: Math.max(0, Number(event.amount) || 0),
+    intensity: event.intensity || 'micro',
+    source: event.source || 'system',
+    createdAt: Date.now(),
+  });
+  processRewardQueue();
+}
+
+function processRewardQueue() {
+  if (rewardQueueActive || !rewardQueue.length) return;
+  rewardQueueActive = true;
+  const reward = rewardQueue.shift();
+  showRewardFeedback(reward);
+  const delay = reward.intensity === 'major' ? 2200 : reward.intensity === 'mission' ? 1700 : 1050;
+  window.setTimeout(() => {
+    rewardQueueActive = false;
+    processRewardQueue();
+  }, delay);
+}
+
+function showRewardFeedback(reward) {
+  // Reuse the System Log so rewards work immediately in every current build.
+  // A dedicated cinematic HUD overlay can subscribe to this same event later.
+  const xpText = reward.amount > 0 ? ` +${reward.amount} XP` : '';
+  const detail = reward.detail ? ` — ${reward.detail}` : '';
+  addSystemMessage(`${reward.title}${xpText}${detail}`, reward.intensity === 'major' ? 'level' : 'achievement');
+  try {
+    window.dispatchEvent(new CustomEvent('system:reward', { detail: reward }));
+  } catch (e) {}
+}
+
+function rewardEvent({ amount = 0, source = 'system', title = 'PROGRESS REGISTERED', detail = '', intensity = 'micro' } = {}) {
+  const xp = Math.max(0, Math.floor(Number(amount) || 0));
+  const leveled = xp > 0 ? addXp(xp, source, { suppressReward: true }) : false;
+  queueReward({ type: 'xp', title, detail, amount: xp, intensity, source });
+  return { xp, leveled };
+}
+
 // --- XP & Leveling ---
-function addXp(amount, source = 'quest') {
+function addXp(amount, source = 'quest', options = {}) {
+  amount = Math.max(0, Math.floor(Number(amount) || 0));
+  if (!amount) return false;
   const oldLevel = state.level;
   state.xp += amount;
   state.totalXp += amount;
@@ -291,6 +341,18 @@ function addXp(amount, source = 'quest') {
   }
 
   checkAchievements();
+
+  // Legacy callers still receive immediate feedback. New features should call
+  // rewardEvent() so multiple rewards are sequenced through the shared queue.
+  if (!options.suppressReward && source !== 'weekly') {
+    queueReward({
+      type: 'xp',
+      title: source === 'quest' ? 'OBJECTIVE COMPLETE' : 'PROGRESS REGISTERED',
+      amount,
+      intensity: source === 'quest' ? 'micro' : 'mission',
+      source
+    });
+  }
   return leveled;
 }
 
