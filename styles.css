@@ -2291,3 +2291,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 
 /* V65 // ASCENSION DIFFICULTY MODIFIERS */
 .ascension-modifiers{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;padding:9px;border:1px solid rgba(98,228,255,.2);background:rgba(4,18,27,.6)}.ascension-modifiers>strong{grid-column:1/-1;font:900 7px 'JetBrains Mono',monospace;letter-spacing:.12em}.ascension-modifiers span{padding:7px;border-left:2px solid rgba(98,228,255,.32);background:rgba(70,220,255,.025)}.ascension-modifiers b,.ascension-modifiers small{display:block}.ascension-modifiers b{font:800 7px 'JetBrains Mono',monospace}.ascension-modifiers small{margin-top:3px;font-size:6px;opacity:.5}@media(max-width:760px){.ascension-modifiers{grid-template-columns:1fr}}
+
+/* V66 // ASCENSION TRIAL PROFILES */
+.legacy-trial-btn small{letter-spacing:.05em}.legacy-chapter.active .legacy-trial-btn:not(:disabled){background:linear-gradient(90deg,rgba(70,220,255,.07),rgba(5,25,35,.72));animation:trial-ready-pulse 2.6s ease-in-out infinite}@keyframes trial-ready-pulse{50%{box-shadow:inset 0 0 28px rgba(70,220,255,.11),0 0 13px rgba(70,220,255,.07)}}@media(prefers-reduced-motion:reduce){.legacy-chapter.active .legacy-trial-btn:not(:disabled){animation:none}}
