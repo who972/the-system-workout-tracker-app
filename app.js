@@ -1278,14 +1278,22 @@ document.addEventListener('DOMContentLoaded',initSystemSettings);
 // --- Shared Supabase Cloud Sync ---
 const CLOUD_CONFIG_KEY='theSystemCloudConfig';
 const CLOUD_SESSION_KEY='theSystemCloudSession';
+const AUTH_REMEMBER_KEY='theSystemRememberMe';
 const SYSTEM_CLOUD={url:'https://wczmxbvdfctffhpohnne.supabase.co',key:'sb_publishable_Pl0Ls17XrDeEHtt4n2UOPQ_PKyye8o1'};
 function getCloudConfig(){return SYSTEM_CLOUD}
-function getCloudSession(){try{return JSON.parse(localStorage.getItem(CLOUD_SESSION_KEY)||'null')}catch(e){return null}}
+function getCloudSession(){try{return JSON.parse(sessionStorage.getItem(CLOUD_SESSION_KEY)||localStorage.getItem(CLOUD_SESSION_KEY)||'null')}catch(e){return null}}
+function storeCloudSession(session,remember=true){
+  const raw=JSON.stringify(session);
+  sessionStorage.setItem(CLOUD_SESSION_KEY,raw);
+  localStorage.setItem(AUTH_REMEMBER_KEY,remember?'1':'0');
+  if(remember)localStorage.setItem(CLOUD_SESSION_KEY,raw);
+  else localStorage.removeItem(CLOUD_SESSION_KEY);
+}
 function cloudStatus(msg,ok=false){const e=document.getElementById('cloudStatus');if(e){e.textContent=msg;e.dataset.ok=ok?'1':'0';}}
 async function cloudRequest(path,opts={}){const c=SYSTEM_CLOUD,s=getCloudSession();const h={'apikey':c.key,'Content-Type':'application/json',...(opts.headers||{})};if(s?.access_token)h.Authorization='Bearer '+s.access_token;const r=await fetch(c.url+path,{...opts,headers:h});const body=await r.text();let data={};try{data=body?JSON.parse(body):{}}catch(e){}if(!r.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'Cloud request failed.');return data;}
 async function cloudSignUp(){try{const emailEl=document.getElementById('cloudEmail'),passwordEl=document.getElementById('cloudPassword');if(!emailEl||!passwordEl){showAuthGate();throw new Error('Use the account screen to create your account.');}const email=emailEl.value.trim(),password=passwordEl.value;if(!email||password.length<6)throw new Error('Enter a valid email and a password of at least 6 characters.');cloudStatus('Creating account…');const s=await cloudRequest('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});if(s.access_token){localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(s));cloudStatus('Account created and signed in.',true);renderCloudAccount();}else cloudStatus('Account created. Check your email to confirm it, then sign in.',true);}catch(e){cloudStatus(e.message)}}
 async function cloudSignIn(){try{const emailEl=document.getElementById('cloudEmail'),passwordEl=document.getElementById('cloudPassword');if(!emailEl||!passwordEl){showAuthGate();throw new Error('Use the account screen to sign in.');}const email=emailEl.value.trim(),password=passwordEl.value;if(!email||!password)throw new Error('Enter your email and password.');cloudStatus('Signing in…');const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(s));cloudStatus('Signed in as '+(s.user?.email||email)+'.',true);renderCloudAccount();}catch(e){cloudStatus(e.message)}}
-function cloudSignOut(){localStorage.removeItem(CLOUD_SESSION_KEY);cloudStatus('Signed out.');renderCloudAccount();showAuthGate();}
+function cloudSignOut(){localStorage.removeItem(CLOUD_SESSION_KEY);sessionStorage.removeItem(CLOUD_SESSION_KEY);localStorage.setItem(AUTH_REMEMBER_KEY,'0');cloudStatus('Signed out.');renderCloudAccount();showAuthGate();}
 function cloudPayload(){const data=systemBackup();delete data.localStorage[CLOUD_CONFIG_KEY];delete data.localStorage[CLOUD_SESSION_KEY];return data;}
 async function pushCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id)throw new Error('Sign in first.');cloudStatus('Uploading…');syncLocalSocialIdentity();await cloudRequest('/rest/v1/workout_backups?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:s.user.id,data:cloudPayload(),updated_at:new Date().toISOString()})});localStorage.setItem('theSystemLastSync',new Date().toISOString());cloudStatus('Cloud backup uploaded.',true);pushSocialIdentity();renderCloudAccount();}catch(e){cloudStatus(e.message)}}
 async function pullCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id)throw new Error('Sign in first.');cloudStatus('Downloading…');const rows=await cloudRequest('/rest/v1/workout_backups?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=data,updated_at&limit=1');if(!rows.length)throw new Error('No cloud backup found.');if(!confirm('Restore the cloud backup on this device? Current local training data will be replaced.'))return;const keepSession=localStorage.getItem(CLOUD_SESSION_KEY);localStorage.clear();Object.entries(rows[0].data.localStorage||{}).forEach(([k,v])=>localStorage.setItem(k,v));if(keepSession)localStorage.setItem(CLOUD_SESSION_KEY,keepSession);localStorage.setItem('theSystemLastSync',rows[0].updated_at||new Date().toISOString());location.reload();}catch(e){cloudStatus(e.message)}}
@@ -1296,45 +1304,114 @@ let authMode='signin';
 function authGateStatus(msg,ok=false){const e=document.getElementById('authGateStatus');if(e){e.textContent=msg;e.dataset.ok=ok?'1':'0'}}
 function showAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=false}
 function hideAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=true}
-function completeAuthGate(session){
+function authDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
+function authProgress(stage,title,message){
+  const card=document.querySelector('.auth-card');
+  const box=document.getElementById('authProgress');
+  const t=document.getElementById('authProgressTitle');
+  const m=document.getElementById('authProgressMessage');
+  const bar=document.getElementById('authProgressBar');
+  if(!card||!box)return;
+  card.classList.add('auth-processing');
+  box.hidden=false;
+  if(t)t.textContent=title;
+  if(m)m.textContent=message;
+  if(bar)bar.style.width=({1:'34%',2:'68%',3:'100%'})[stage]||'0%';
+  box.querySelectorAll('[data-auth-step]').forEach(el=>{
+    const n=Number(el.dataset.authStep);
+    el.classList.toggle('done',n<stage);
+    el.classList.toggle('active',n===stage);
+  });
+}
+function resetAuthProgress(){
+  const card=document.querySelector('.auth-card');
+  const box=document.getElementById('authProgress');
+  card?.classList.remove('auth-processing');
+  if(box)box.hidden=true;
+}
+async function completeAuthGate(session,remember=true){
   if(!session?.access_token)throw new Error('Sign-in response did not include a valid session.');
-  localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(session));
+  authProgress(2,'VERIFYING IDENTITY','Secure session established. Verifying Hunter profile…');
+  storeCloudSession(session,remember);
   renderCloudAccount();
+  await authDelay(320);
+  authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface and daily briefing…');
+  await authDelay(520);
   hideAuthGate();
-  // The daily boot can be scheduled before authentication completes. Re-run it
-  // after a successful login so the user enters THE SYSTEM immediately.
+  resetAuthProgress();
   if(typeof renderDailyBriefing==='function')setTimeout(renderDailyBriefing,80);
 }
-function setAuthMode(mode){authMode=mode;document.getElementById('authShowSignIn')?.classList.toggle('active',mode==='signin');document.getElementById('authShowSignUp')?.classList.toggle('active',mode==='signup');const b=document.getElementById('authSubmit');if(b)b.textContent=mode==='signin'?'Sign In':'Create Account';authGateStatus('')}
-async function authGateSubmit(e){e.preventDefault();const email=document.getElementById('authEmail').value.trim(),password=document.getElementById('authPassword').value;if(!email||password.length<6){authGateStatus('Enter a valid email and a password of at least 6 characters.');return}try{authGateStatus(authMode==='signin'?'Signing in…':'Creating account…');if(authMode==='signup'){const s=await cloudRequest('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});if(s.access_token){authGateStatus('Account created.',true);completeAuthGate(s)}else authGateStatus('Account created. Check your email to confirm it, then return here and sign in.',true)}else{const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});authGateStatus('Access granted. Initializing THE SYSTEM…',true);completeAuthGate(s)}}catch(err){authGateStatus(err.message)}}
+function setAuthMode(mode){
+  authMode=mode;
+  resetAuthProgress();
+  document.getElementById('authShowSignIn')?.classList.toggle('active',mode==='signin');
+  document.getElementById('authShowSignUp')?.classList.toggle('active',mode==='signup');
+  const b=document.getElementById('authSubmit');
+  const remember=document.querySelector('.auth-remember');
+  if(b)b.textContent=mode==='signin'?'Sign In':'Create Account';
+  if(remember)remember.hidden=mode!=='signin';
+  authGateStatus('');
+}
+async function authGateSubmit(e){
+  e.preventDefault();
+  const email=document.getElementById('authEmail').value.trim();
+  const password=document.getElementById('authPassword').value;
+  const remember=document.getElementById('authRememberMe')?.checked!==false;
+  if(!email||password.length<6){authGateStatus('Enter a valid email and a password of at least 6 characters.');return}
+  try{
+    authGateStatus('');
+    authProgress(1,authMode==='signin'?'SIGNING IN':'CREATING ACCOUNT',authMode==='signin'?'Connecting to THE SYSTEM…':'Creating your Hunter profile…');
+    await authDelay(180);
+    if(authMode==='signup'){
+      const s=await cloudRequest('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});
+      if(s.access_token){
+        await completeAuthGate(s,true);
+      }else{
+        resetAuthProgress();
+        authGateStatus('Account created. Check your email to confirm it, then return here and sign in.',true);
+      }
+    }else{
+      const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
+      await completeAuthGate(s,remember);
+    }
+  }catch(err){
+    resetAuthProgress();
+    authGateStatus(err.message);
+  }
+}
 async function authForgot(){const email=document.getElementById('authEmail').value.trim();if(!email){authGateStatus('Enter your email first.');return}try{authGateStatus('Sending reset email…');const redirectTo=location.origin+location.pathname;await cloudRequest('/auth/v1/recover?redirect_to='+encodeURIComponent(redirectTo),{method:'POST',body:JSON.stringify({email})});authGateStatus('Password reset email sent.',true)}catch(err){authGateStatus(err.message)}}
 function recoveryParams(){const q=new URLSearchParams(location.search),h=new URLSearchParams(location.hash.replace(/^#/,''));return {type:q.get('type')||h.get('type'),access_token:q.get('access_token')||h.get('access_token'),refresh_token:q.get('refresh_token')||h.get('refresh_token')}}
-function showRecovery(){showAuthGate();document.querySelector('.auth-tabs').hidden=true;document.getElementById('authGateForm').hidden=true;document.getElementById('authForgot').hidden=true;document.getElementById('recoveryForm').hidden=false;const title=document.querySelector('.auth-card h1');if(title)title.innerHTML='Set a new<br>password.';const copy=document.querySelector('.auth-copy');if(copy)copy.textContent='Choose a new password for your THE SYSTEM account.';authGateStatus('Recovery link verified.',true)}
-async function submitRecovery(e){e.preventDefault();const p=document.getElementById('recoveryPassword').value,c=document.getElementById('recoveryPasswordConfirm').value;if(p.length<6){authGateStatus('Password must be at least 6 characters.');return}if(p!==c){authGateStatus('Passwords do not match.');return}const r=recoveryParams();if(!r.access_token){authGateStatus('This recovery link is invalid or expired.');return}try{authGateStatus('Updating password…');const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{method:'PUT',headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+r.access_token,'Content-Type':'application/json'},body:JSON.stringify({password:p})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.message||data.msg||'Could not update password.');localStorage.removeItem(CLOUD_SESSION_KEY);history.replaceState({},'',location.pathname);authGateStatus('Password updated. You can now sign in.',true);setTimeout(()=>location.reload(),900)}catch(err){authGateStatus(err.message)}}
+function showRecovery(){resetAuthProgress();showAuthGate();document.querySelector('.auth-tabs').hidden=true;document.getElementById('authGateForm').hidden=true;document.getElementById('authForgot').hidden=true;document.getElementById('recoveryForm').hidden=false;const title=document.querySelector('.auth-card h1');if(title)title.innerHTML='Set a new<br>password.';const copy=document.querySelector('.auth-copy');if(copy)copy.textContent='Choose a new password for your THE SYSTEM account.';authGateStatus('Recovery link verified.',true)}
+async function submitRecovery(e){e.preventDefault();const p=document.getElementById('recoveryPassword').value,c=document.getElementById('recoveryPasswordConfirm').value;if(p.length<6){authGateStatus('Password must be at least 6 characters.');return}if(p!==c){authGateStatus('Passwords do not match.');return}const r=recoveryParams();if(!r.access_token){authGateStatus('This recovery link is invalid or expired.');return}try{authGateStatus('Updating password…');const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{method:'PUT',headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+r.access_token,'Content-Type':'application/json'},body:JSON.stringify({password:p})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.message||data.msg||'Could not update password.');localStorage.removeItem(CLOUD_SESSION_KEY);sessionStorage.removeItem(CLOUD_SESSION_KEY);history.replaceState({},'',location.pathname);authGateStatus('Password updated. You can now sign in.',true);setTimeout(()=>location.reload(),900)}catch(err){authGateStatus(err.message)}}
 async function validateStoredCloudSession(){
   const session=getCloudSession();
   if(!session?.access_token)return null;
+  const remember=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
   const check=async token=>{
-    const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{
-      headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+token}
-    });
+    const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+token}});
     if(res.ok)return await res.json();
     if(res.status===401||res.status===403)return null;
     throw new Error('Unable to verify account session.');
   };
   try{
     const user=await check(session.access_token);
-    if(user)return {...session,user};
+    if(user){
+      const valid={...session,user};
+      storeCloudSession(valid,remember);
+      return valid;
+    }
     if(session.refresh_token){
-      const refreshed=await cloudRequest('/auth/v1/token?grant_type=refresh_token',{
+      const refreshed=await fetch(SYSTEM_CLOUD.url+'/auth/v1/token?grant_type=refresh_token',{
         method:'POST',
+        headers:{apikey:SYSTEM_CLOUD.key,'Content-Type':'application/json'},
         body:JSON.stringify({refresh_token:session.refresh_token})
       });
-      if(refreshed?.access_token){
-        const refreshedUser=refreshed.user||await check(refreshed.access_token);
+      const data=await refreshed.json().catch(()=>({}));
+      if(refreshed.ok&&data?.access_token){
+        const refreshedUser=data.user||await check(data.access_token);
         if(refreshedUser){
-          const next={...session,...refreshed,user:refreshedUser};
-          localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(next));
+          const next={...session,...data,user:refreshedUser};
+          storeCloudSession(next,remember);
           return next;
         }
       }
@@ -1343,6 +1420,7 @@ async function validateStoredCloudSession(){
     console.warn('Stored session validation failed:',err);
   }
   localStorage.removeItem(CLOUD_SESSION_KEY);
+  sessionStorage.removeItem(CLOUD_SESSION_KEY);
   return null;
 }
 async function initAuthGate(){
@@ -1353,22 +1431,38 @@ async function initAuthGate(){
   document.getElementById('authForgot')?.addEventListener('click',authForgot);
   document.getElementById('recoveryForm')?.addEventListener('submit',submitRecovery);
 
+  const rememberEl=document.getElementById('authRememberMe');
+  if(rememberEl)rememberEl.checked=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
+
   if(r.type==='recovery'&&r.access_token){showRecovery();return}
 
   showAuthGate();
+  const remembered=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
   const saved=getCloudSession();
-  if(!saved?.access_token){
+  if(!remembered||!saved?.access_token){
+    if(!remembered){
+      localStorage.removeItem(CLOUD_SESSION_KEY);
+      sessionStorage.removeItem(CLOUD_SESSION_KEY);
+    }
+    resetAuthProgress();
     authGateStatus('');
     return;
   }
 
-  authGateStatus('Verifying saved session…');
+  authProgress(1,'SIGNING IN','Remembered account found. Restoring secure session…');
+  await authDelay(260);
+  authProgress(2,'VERIFYING IDENTITY','Confirming saved session with THE SYSTEM…');
   const valid=await validateStoredCloudSession();
   if(valid?.access_token){
+    await authDelay(300);
+    authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface and daily briefing…');
+    await authDelay(520);
     renderCloudAccount();
     hideAuthGate();
+    resetAuthProgress();
     if(typeof renderDailyBriefing==='function')setTimeout(renderDailyBriefing,80);
   }else{
+    resetAuthProgress();
     authGateStatus('Session expired. Sign in again.');
   }
 }
