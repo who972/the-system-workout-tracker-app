@@ -102,7 +102,7 @@
 <section id="commandDeck" class="command-deck" aria-label="System command HUD">
   <div class="command-deck__grid"></div>
   <aside class="hud-wing hud-wing--left">
-    <div class="hud-module"><span class="hud-module__tag">PLAYER // STATUS</span><div class="hud-player-line"><strong id="hudPlayerLevel">LV. 1</strong><span id="hudPlayerRank">E-RANK</span></div><div class="hud-meter"><i id="hudXpFill"></i></div><small id="hudXpText">0 / 100 XP</small></div>
+    <div class="hud-module"><span class="hud-module__tag">PLAYER // STATUS</span><div class="hud-player-line"><strong id="hudPlayerLevel">LV. 1</strong><span id="hudPlayerRank">E-RANK</span></div><small id="hudCombatTitle" class="hud-combat-title" hidden></small><div class="hud-meter"><i id="hudXpFill"></i></div><small id="hudXpText">0 / 100 XP</small></div>
     <div class="hud-module"><span class="hud-module__tag">CAMPAIGN // PROGRESS</span><div class="hud-readout"><b id="hudStreak">0</b><small>DAY STREAK</small></div><div class="hud-readout"><b id="hudWorkouts">0</b><small>MISSIONS CLEARED</small></div></div>
   </aside>
   <main class="system-core-wrap">
@@ -162,7 +162,7 @@
         <span class="rank-badge__label" id="rankLabel">E-Rank</span>
       </div>
       <div class="player-card__info">
-        <p class="player-card__name" id="playerName">Awakened Hunter</p>
+        <p class="player-card__name" id="playerName">Awakened Hunter</p><p class="player-card__title" id="playerCombatTitle" hidden></p>
         <div class="player-card__level-row">
           <span class="player-card__level" id="playerLevel">Level 1</span>
           <span class="player-card__streak" id="playerStreak">🔥 0 day streak</span>
