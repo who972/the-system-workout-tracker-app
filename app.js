@@ -1867,9 +1867,9 @@ function ascensionMarks(){
 function ascendLegacy(){
  const artifact=legacyArtifact(),old=legacyAscension();if(!artifact.unlocked)return false;
  const ctx=cachedLegacyContext(),profile=ctx.profile||(typeof buildSocialIdentity==='function'?buildSocialIdentity():{missions:state.totalQuestsCompleted,gates:0,streak:state.currentStreak}),components=ctx.hunter?.components||{},base={missions:Number(profile.missions||components.missions||0),gates:Number(profile.gates||components.gates||0),streak:Number(profile.streak||components.streak||0),raids:Number(components.raids||0),mvp:Number(components.mvp||0)};
- const next={cycle:old.cycle+1,baseline:base,history:[...(old.history||[]),...(Number(old.cycle||0)>=1?[{cycle:Number(old.cycle),completedAt:new Date().toISOString()}]:[])]};
+ const completedCycle=Number(old.cycle||0),reward=completedCycle>=1?ascensionRewardProfile():null; const next={cycle:completedCycle+1,baseline:base,history:[...(old.history||[]),...(completedCycle>=1?[{cycle:completedCycle,completedAt:new Date().toISOString(),prestigeTitle:reward?.title||'ASCENDED HUNTER',xpBonus:reward?.xpBonus||0}]:[])]};
  localStorage.setItem(LEGACY_ASCENSION_KEY,JSON.stringify(next));localStorage.setItem(LEGACY_TRIAL_KEY,'[]');localStorage.setItem(LEGACY_MISSION_KEY,'[]');
- queueReward({title:'LEGACY ASCENSION',detail:'ASCENSION '+next.cycle+' // NEW LEGACY CYCLE INITIALIZED',amount:0,intensity:'major',source:'achievement'});window.SystemOS?.notify('ASCENSION '+next.cycle+' ONLINE','LEGACY // NEW CYCLE');renderLegacyMissions();return true
+ queueReward({title:'LEGACY ASCENSION',detail:'ASCENSION '+next.cycle+' // NEW LEGACY CYCLE INITIALIZED',amount:0,intensity:'major',source:'achievement'}); const post=ascensionRewardProfile(); if(post.completed!==0||post.marks>0) queueReward({title:'PRESTIGE UPDATED',detail:post.title+' • +'+post.xpBonus+'% XP AMPLIFIER',amount:0,intensity:'major',source:'ascension'});window.SystemOS?.notify('ASCENSION '+next.cycle+' ONLINE','LEGACY // NEW CYCLE');renderLegacyMissions();return true
 }
 const LEGACY_MISSION_KEY='systemLegacyMissionClaims';
 function legacyMissionClaims(){try{return JSON.parse(localStorage.getItem(LEGACY_MISSION_KEY)||'[]')}catch(e){return[]}}
