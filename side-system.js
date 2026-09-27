@@ -165,35 +165,38 @@ function renderBossCommand(){
  const host=document.getElementById('bossStageSystem');if(!host)return;
  let panel=document.getElementById('weeklyGatePanel');
  if(!panel){panel=document.createElement('section');panel.id='weeklyGatePanel';panel.className='weekly-gate-panel';const list=host.querySelector('#bossStageList');host.insertBefore(panel,list||host.firstChild)}
- const safeState=loadSideSystem();
- const rank=currentClass(safeState)||'E';
- const def=WEEKLY_BOSS_CLASSES[rank]||WEEKLY_BOSS_CLASSES.E;
- const key=weekKey();
- safeState.weeklyGate=safeState.weeklyGate||{};
- if(safeState.weeklyGate.key!==key||safeState.weeklyGate.rank!==rank)safeState.weeklyGate={key:key,rank:rank,damage:0,defeated:false,claimed:false};
- const gate=safeState.weeklyGate;
- const completed=Array.isArray(safeState.completed)?safeState.completed:[];
- let sideDone=0;try{const ids=dailySideMissions().map(m=>m.id);sideDone=completed.filter(id=>ids.includes(id)).length}catch(e){}
- const quests=(typeof state!=='undefined'&&Array.isArray(state.dailyQuests))?state.dailyQuests.filter(q=>q&&q.completed).length:0;
- const streak=(typeof state!=='undefined'&&Number.isFinite(Number(state.currentStreak)))?Number(state.currentStreak):0;
- const todayDamage=Math.max(0,quests*900+sideDone*450+Math.min(7,streak)*180);
- gate.damage=Math.min(def.hp,Math.max(Number(gate.damage)||0,todayDamage));
- gate.defeated=gate.damage>=def.hp;
- saveSideSystem(safeState);
- const hp=Math.max(0,def.hp-gate.damage),pct=Math.max(0,Math.min(100,Math.round(hp/def.hp*100)));
- let intel={strength:'Baseline pending',weak:'Baseline pending',directive:'Complete a logged training session to generate combat strategy.'};
- try{if(typeof systemIntelligence==='function'){const x=systemIntelligence();if(x)intel={...intel,...x}}}catch(e){console.warn('Boss Intel unavailable',e)}
- let next=null;try{next=typeof nextPromotion==='function'?nextPromotion(safeState):null}catch(e){}
- let trialText='MAX RANK // ALL PROMOTION TRIALS CLEARED';
- if(next){let ready=false;try{ready=eligible(next,safeState)}catch(e){}trialText=ready?'QUALIFIED // TRIAL READY':'LOCKED // COMPLETE PROMOTION REQUIREMENTS'}
- panel.innerHTML='<div class="gate-tabs"><button class="active" type="button">WEEKLY GATE</button><button type="button" data-jump-rank>RANK TRIAL</button></div>'+
- '<div class="gate-threat"><div><span class="side-tag">'+def.type+' // '+rank+'-RANK GATE</span><h2>'+def.name+'</h2><p>'+(gate.defeated?'GATE CLEARED // BOSS DEFEATED':'HOSTILE ENTITY DETECTED // WEEKLY ENCOUNTER ACTIVE')+'</p></div><div class="gate-rank">'+rank+'</div></div>'+
- '<div class="gate-hp-head"><span>BOSS HP</span><strong>'+hp.toLocaleString()+' / '+def.hp.toLocaleString()+'</strong></div><div class="gate-hp"><i style="width:'+pct+'%"></i></div>'+
- '<div class="gate-grid"><article><span class="side-tag">BOSS INTEL</span><p><b>Primary Strength:</b> '+intel.strength+'</p><p><b>Weakness:</b> '+intel.weak+'</p><p><b>System Strategy:</b> '+intel.directive+'</p></article>'+
- '<article><span class="side-tag">COMBAT CONTRIBUTION</span><p>Main objectives cleared: <b>'+quests+'</b></p><p>Side Missions: <b>'+sideDone+'/5</b></p><p>Damage dealt: <b>'+gate.damage.toLocaleString()+'</b></p></article>'+
- '<article><span class="side-tag">REWARDS</span><p><b>Gate Clear XP</b></p><p>Boss victory record</p><p>Rank progression credit</p></article></div>'+
- '<div class="gate-phase"><span>PHASE '+(pct>66?'I':pct>33?'II':'III')+'</span><b>'+(pct>66?'ARMOR INTACT':pct>33?'DEFENSE BREAKING':'FINAL PHASE')+'</b></div>'+
- (next?'<div class="rank-trial-preview"><span class="side-tag">NEXT RANK TRIAL</span><strong>'+next.rank+'-CLASS PROMOTION</strong><small>'+trialText+'</small></div>':'<div class="rank-trial-preview"><span class="side-tag">RANK STATUS</span><strong>APEX RANK</strong><small>'+trialText+'</small></div>');
+ panel.innerHTML='<div class="gate-tabs"><button class="active" type="button">WEEKLY GATE</button><button type="button" data-jump-rank>RANK TRIAL</button></div><div class="gate-threat"><div><span class="side-tag">GATE BOSS // E-RANK GATE</span><h2>IRONHIDE BRUTE</h2><p>HOSTILE ENTITY DETECTED // WEEKLY ENCOUNTER ACTIVE</p></div><div class="gate-rank">E</div></div><div class="gate-hp-head"><span>BOSS HP</span><strong>6,000 / 6,000</strong></div><div class="gate-hp"><i style="width:100%"></i></div><div class="gate-grid"><article><span class="side-tag">BOSS INTEL</span><p><b>Primary Strength:</b> Baseline pending</p><p><b>Weakness:</b> Baseline pending</p><p><b>System Strategy:</b> Complete training to generate combat strategy.</p></article><article><span class="side-tag">COMBAT CONTRIBUTION</span><p>Main objectives cleared: <b>0</b></p><p>Side Missions: <b>0/5</b></p><p>Damage dealt: <b>0</b></p></article><article><span class="side-tag">REWARDS</span><p><b>Gate Clear XP</b></p><p>Boss victory record</p><p>Rank progression credit</p></article></div><div class="gate-phase"><span>PHASE I</span><b>ARMOR INTACT</b></div><div class="rank-trial-preview"><span class="side-tag">NEXT RANK TRIAL</span><strong>D-CLASS PROMOTION</strong><small>LOCKED // COMPLETE PROMOTION REQUIREMENTS</small></div>';
+ try{
+  const ss=loadSideSystem();
+  const rank=currentClass(ss)||'E';
+  const def=WEEKLY_BOSS_CLASSES[rank]||WEEKLY_BOSS_CLASSES.E;
+  const key=weekKey();
+  ss.weeklyGate=ss.weeklyGate||{};
+  if(ss.weeklyGate.key!==key||ss.weeklyGate.rank!==rank)ss.weeklyGate={key:key,rank:rank,damage:0,defeated:false,claimed:false};
+  const gate=ss.weeklyGate;
+  let sideDone=0;
+  try{const daily=dailySideMissions();const ids=Array.isArray(daily)?daily.map(m=>m.id):[];sideDone=(ss.completed||[]).filter(id=>ids.includes(id)).length}catch(e){}
+  const quests=(typeof state!=='undefined'&&Array.isArray(state.dailyQuests))?state.dailyQuests.filter(q=>q&&q.completed).length:0;
+  const streak=(typeof state!=='undefined')?(Number(state.currentStreak)||0):0;
+  const damage=Math.max(0,quests*900+sideDone*450+Math.min(7,streak)*180);
+  gate.damage=Math.min(def.hp,Math.max(Number(gate.damage)||0,damage));gate.defeated=gate.damage>=def.hp;saveSideSystem(ss);
+  const hp=Math.max(0,def.hp-gate.damage),pct=Math.max(0,Math.min(100,Math.round(hp/def.hp*100)));
+  let intel={strength:'Baseline pending',weak:'Baseline pending',directive:'Complete training to generate combat strategy.'};
+  try{if(typeof systemIntelligence==='function'){const x=systemIntelligence();if(x)intel=Object.assign(intel,x)}}catch(e){}
+  let next=null,ready=false;try{next=typeof nextPromotion==='function'?nextPromotion(ss):null;if(next)ready=eligible(next,ss)}catch(e){}
+  panel.querySelector('.gate-threat .side-tag').textContent=def.type+' // '+rank+'-RANK GATE';
+  panel.querySelector('.gate-threat h2').textContent=def.name;
+  panel.querySelector('.gate-threat p').textContent=gate.defeated?'GATE CLEARED // BOSS DEFEATED':'HOSTILE ENTITY DETECTED // WEEKLY ENCOUNTER ACTIVE';
+  panel.querySelector('.gate-rank').textContent=rank;
+  panel.querySelector('.gate-hp-head strong').textContent=hp.toLocaleString()+' / '+def.hp.toLocaleString();
+  panel.querySelector('.gate-hp i').style.width=pct+'%';
+  const cards=panel.querySelectorAll('.gate-grid article');
+  cards[0].innerHTML='<span class="side-tag">BOSS INTEL</span><p><b>Primary Strength:</b> '+intel.strength+'</p><p><b>Weakness:</b> '+intel.weak+'</p><p><b>System Strategy:</b> '+intel.directive+'</p>';
+  cards[1].innerHTML='<span class="side-tag">COMBAT CONTRIBUTION</span><p>Main objectives cleared: <b>'+quests+'</b></p><p>Side Missions: <b>'+sideDone+'/5</b></p><p>Damage dealt: <b>'+gate.damage.toLocaleString()+'</b></p>';
+  panel.querySelector('.gate-phase span').textContent='PHASE '+(pct>66?'I':pct>33?'II':'III');
+  panel.querySelector('.gate-phase b').textContent=pct>66?'ARMOR INTACT':pct>33?'DEFENSE BREAKING':'FINAL PHASE';
+  if(next){panel.querySelector('.rank-trial-preview strong').textContent=next.rank+'-CLASS PROMOTION';panel.querySelector('.rank-trial-preview small').textContent=ready?'QUALIFIED // TRIAL READY':'LOCKED // COMPLETE PROMOTION REQUIREMENTS'}
+ }catch(err){console.error('Weekly Gate telemetry update failed',err)}
  panel.querySelector('[data-jump-rank]')?.addEventListener('click',()=>host.querySelector('#bossStageList')?.scrollIntoView({behavior:'smooth',block:'start'}));
 }
 function renderSideSystem(){renderPlayerStatus();renderBossCommand();renderRankPath();const root=document.getElementById('sideMissionSystem');if(!root)return;const s=loadSideSystem(),missions=document.getElementById('sideMissionList');
