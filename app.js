@@ -1809,16 +1809,25 @@ function hunterLegacyState(profile,trophies=null,legacy=null){
  const title=lvl>=10?'SOVEREIGN LEGACY':lvl>=7?'MYTHIC HUNTER':lvl>=5?'VETERAN HUNTER':lvl>=3?'ASCENDANT':'AWAKENED LEGACY';
  return{score,level:lvl,title,progress,next:Math.max(0,next-score),components:{missions,gates,streak,classes,raids,mvp},active:level>=50||classes>=2}
 }
+const LEGACY_ASCENSION_KEY='systemLegacyAscension';
+function legacyAscension(){try{return Object.assign({cycle:0,history:[],baseline:null},JSON.parse(localStorage.getItem(LEGACY_ASCENSION_KEY)||'{}'))}catch(e){return{cycle:0,history:[],baseline:null}}}
+function ascendLegacy(){
+ const artifact=legacyArtifact(),old=legacyAscension();if(!artifact.unlocked)return false;
+ const profile=typeof buildSocialIdentity==='function'?buildSocialIdentity():{missions:state.totalQuestsCompleted,gates:0,streak:state.currentStreak},base={missions:Number(profile.missions||0),gates:Number(profile.gates||0),streak:Number(profile.streak||0),raids:0,mvp:0};
+ const next={cycle:old.cycle+1,baseline:base,history:[...(old.history||[]),{cycle:old.cycle||0,completedAt:new Date().toISOString()}]};
+ localStorage.setItem(LEGACY_ASCENSION_KEY,JSON.stringify(next));localStorage.setItem(LEGACY_TRIAL_KEY,'[]');localStorage.setItem(LEGACY_MISSION_KEY,'[]');
+ queueReward({title:'LEGACY ASCENSION',detail:'ASCENSION '+next.cycle+' // NEW LEGACY CYCLE INITIALIZED',amount:0,intensity:'major',source:'achievement'});window.SystemOS?.notify('ASCENSION '+next.cycle+' ONLINE','LEGACY // NEW CYCLE');renderLegacyMissions();return true
+}
 const LEGACY_MISSION_KEY='systemLegacyMissionClaims';
 function legacyMissionClaims(){try{return JSON.parse(localStorage.getItem(LEGACY_MISSION_KEY)||'[]')}catch(e){return[]}}
 function legacyMissions(x){
- const c=x.components||{},defs=[
-  {id:'mission_100',chapter:1,name:'CENTURY OF DISCIPLINE',detail:'Complete 100 missions',value:c.missions,target:100,lp:300},
-  {id:'streak_30',chapter:1,name:'UNBROKEN ROUTINE',detail:'Maintain a 30-day streak',value:c.streak,target:30,lp:350},
-  {id:'gates_10',chapter:2,name:'GATE VETERAN',detail:'Record 10 Gate clears',value:c.gates,target:10,lp:400},
-  {id:'raids_10',chapter:2,name:'RAID CAMPAIGN',detail:'Complete 10 Squad raids',value:c.raids,target:10,lp:500},
-  {id:'classes_5',chapter:3,name:'ARCHIVE DOMINION',detail:'Collect all 5 Boss trophy classes',value:c.classes,target:5,lp:600},
-  {id:'mvp_3',chapter:3,name:'VANGUARD COMMAND',detail:'Earn 3 Squad Raid MVPs',value:c.mvp,target:3,lp:650}
+ const c=x.components||{},asc=legacyAscension(),n=asc.cycle||0,b=asc.baseline||{},scale=1+n*.35,delta=(k)=>n?Math.max(0,Number(c[k]||0)-Number(b[k]||0)):Number(c[k]||0),defs=[
+  {id:'mission_100',chapter:1,name:'CENTURY OF DISCIPLINE',detail:'Complete 100 missions',value:delta('missions'),target:Math.round(100*scale),lp:300},
+  {id:'streak_30',chapter:1,name:'UNBROKEN ROUTINE',detail:'Maintain a 30-day streak',value:n?Number(c.streak||0):delta('streak'),target:Math.round(30*scale),lp:350},
+  {id:'gates_10',chapter:2,name:'GATE VETERAN',detail:'Record 10 Gate clears',value:delta('gates'),target:Math.round(10*scale),lp:400},
+  {id:'raids_10',chapter:2,name:'RAID CAMPAIGN',detail:'Complete 10 Squad raids',value:delta('raids'),target:Math.round(10*scale),lp:500},
+  {id:'classes_5',chapter:3,name:'ARCHIVE DOMINION',detail:'Collect all 5 Boss trophy classes',value:Number(c.classes||0),target:5,lp:600},
+  {id:'mvp_3',chapter:3,name:'VANGUARD COMMAND',detail:'Earn 3 Squad Raid MVPs',value:delta('mvp'),target:Math.round(3*scale),lp:650}
  ];const claimed=legacyMissionClaims();return defs.map(m=>({...m,complete:Number(m.value)>=m.target,claimed:claimed.includes(m.id),progress:Math.min(100,Number(m.value)/m.target*100)}))
 }
 const LEGACY_TRIAL_KEY='systemLegacyTrials';
@@ -1850,8 +1859,9 @@ function runLegacyTrial(id){
 }
 function renderLegacyMissions(){
  const panel=document.getElementById('legacyMissions'),list=document.getElementById('legacyMissionList'),meta=document.getElementById('legacyMissionMeta');if(!panel||!list)return;
- const x=hunterLegacyState(typeof buildSocialIdentity==='function'?buildSocialIdentity():null,null,null);panel.hidden=!x.active;if(!x.active)return;const ms=legacyMissions(x),campaign=legacyCampaign(ms);meta.textContent=campaign.complete?'CAMPAIGN COMPLETE':'CHAPTER '+campaign.active.id+' // '+campaign.active.name;
- list.innerHTML='<div class="legacy-campaign-map">'+campaign.chapters.map(c=>'<section class="legacy-chapter '+(c.complete?'complete ':c.unlocked?'active ':'locked ')+'"><header><span>CHAPTER '+String(c.id).padStart(2,'0')+'</span><b>'+escapeHtml(c.name)+'</b><small>'+escapeHtml(c.subtitle)+'</small><em>'+Math.round(c.progress)+'%</em></header><div class="legacy-chapter-track"><i style="width:'+c.progress+'%"></i></div>'+c.missions.map(m=>'<article class="'+(m.complete?'complete ':'')+(m.claimed?'claimed':'')+(c.unlocked?'':' chapter-locked')+'"><div><small>LEGACY DIRECTIVE // +'+m.lp+' LP MILESTONE</small><b>'+escapeHtml(m.name)+'</b><span>'+escapeHtml(m.detail)+'</span></div><strong>'+Math.min(m.target,Number(m.value||0))+' / '+m.target+'</strong><div class="legacy-mission-track"><i style="width:'+m.progress+'%"></i></div><em>'+(m.claimed?'RECORDED':m.complete?'DIRECTIVE COMPLETE':c.unlocked?'IN PROGRESS':'CHAPTER LOCKED')+'</em></article>').join('')+(c.trialUnlocked?'<button class="legacy-trial-btn" data-legacy-trial="'+c.id+'">'+(c.trialCleared?'TRIAL CLEARED':'BEGIN '+escapeHtml(c.trial))+'<small>'+escapeHtml(c.guardian)+'</small></button>':'<div class="legacy-trial-lock">FINAL TRIAL // '+(c.directivesComplete?'AWAITING PREVIOUS CHAPTER':'COMPLETE ALL CHAPTER DIRECTIVES')+'</div>')+'</section>').join('')+'</div>';
+ const x=hunterLegacyState(typeof buildSocialIdentity==='function'?buildSocialIdentity():null,null,null);panel.hidden=!x.active;if(!x.active)return;const ms=legacyMissions(x),campaign=legacyCampaign(ms);const asc=legacyAscension();meta.textContent=(asc.cycle?'ASCENSION '+asc.cycle+' // ':'')+(campaign.complete?'CAMPAIGN COMPLETE':'CHAPTER '+campaign.active.id+' // '+campaign.active.name);
+ list.innerHTML='<div class="legacy-campaign-map">'+campaign.chapters.map(c=>'<section class="legacy-chapter '+(c.complete?'complete ':c.unlocked?'active ':'locked ')+'"><header><span>CHAPTER '+String(c.id).padStart(2,'0')+'</span><b>'+escapeHtml(c.name)+'</b><small>'+escapeHtml(c.subtitle)+'</small><em>'+Math.round(c.progress)+'%</em></header><div class="legacy-chapter-track"><i style="width:'+c.progress+'%"></i></div>'+c.missions.map(m=>'<article class="'+(m.complete?'complete ':'')+(m.claimed?'claimed':'')+(c.unlocked?'':' chapter-locked')+'"><div><small>LEGACY DIRECTIVE // +'+m.lp+' LP MILESTONE</small><b>'+escapeHtml(m.name)+'</b><span>'+escapeHtml(m.detail)+'</span></div><strong>'+Math.min(m.target,Number(m.value||0))+' / '+m.target+'</strong><div class="legacy-mission-track"><i style="width:'+m.progress+'%"></i></div><em>'+(m.claimed?'RECORDED':m.complete?'DIRECTIVE COMPLETE':c.unlocked?'IN PROGRESS':'CHAPTER LOCKED')+'</em></article>').join('')+(c.trialUnlocked?'<button class="legacy-trial-btn" data-legacy-trial="'+c.id+'">'+(c.trialCleared?'TRIAL CLEARED':'BEGIN '+escapeHtml(c.trial))+'<small>'+escapeHtml(c.guardian)+'</small></button>':'<div class="legacy-trial-lock">FINAL TRIAL // '+(c.directivesComplete?'AWAITING PREVIOUS CHAPTER':'COMPLETE ALL CHAPTER DIRECTIVES')+'</div>')+(campaign.complete&&legacyArtifact().unlocked?'<button class="legacy-ascend-btn" id="legacyAscendBtn">INITIATE LEGACY ASCENSION<small>PRESERVE IDENTITY • TROPHIES • HISTORY // RESET CAMPAIGN ONLY</small></button>':'')+'</div>';
+ const ascendBtn=document.getElementById('legacyAscendBtn');if(ascendBtn)ascendBtn.onclick=()=>{if(confirm('Begin a new Legacy Ascension cycle? Campaign directives and Trials reset. Identity, trophies and training history are preserved.'))ascendLegacy()};
  list.querySelectorAll('[data-legacy-trial]').forEach(b=>{b.disabled=b.textContent.includes('CLEARED');b.onclick=()=>runLegacyTrial(b.dataset.legacyTrial)});
  const claims=legacyMissionClaims(),fresh=ms.filter(m=>m.complete&&!m.claimed);if(fresh.length){localStorage.setItem(LEGACY_MISSION_KEY,JSON.stringify([...claims,...fresh.map(m=>m.id)]));fresh.forEach((m,i)=>setTimeout(()=>queueReward({title:'LEGACY DIRECTIVE COMPLETE',detail:m.name+' • +'+m.lp+' LP MILESTONE',amount:0,intensity:'major',source:'achievement'}),i*900))}
 }
@@ -2227,4 +2237,4 @@ window.SystemSocialNetwork={search:searchSocialPlayers,sync:syncSocialProfile,re
 window.SystemFriends={request:sendFriendRequest,respond:respondFriend,remove:removeFriend,refresh:renderSocialCommand};
 
 /* V43 // SQUAD IDENTITY + ROSTER */
-window.SystemSquads={community:fetchCommunityNetwork,identity:getIdentityCard,identityUnlocks:identityUnlockState,rewardVault:openRewardVault,rewardDetail:openVaultDetail,trophies:trophyCollection,hunterLegacy:hunterLegacyState,legacyTrialRewards,legacyArtifact,legacyMissions,legacyCampaign,runLegacyTrial,refreshIdentityUnlocks,openPlayer:openPlayerDossier,openSquad:openSquadDossier,legacy:squadLegacyMap,create:createSquad,join:joinSquad,leave:leaveSquad,challenge:squadChallenge,progress:squadProgress,achievements:squadAchievementState,gate:fetchSquadGateIntel,victories:fetchSquadVictories,attack:applySquadGateDamage,refresh:renderSocialCommand};
+window.SystemSquads={community:fetchCommunityNetwork,identity:getIdentityCard,identityUnlocks:identityUnlockState,rewardVault:openRewardVault,rewardDetail:openVaultDetail,trophies:trophyCollection,hunterLegacy:hunterLegacyState,legacyTrialRewards,legacyArtifact,legacyAscension,ascendLegacy,legacyMissions,legacyCampaign,runLegacyTrial,refreshIdentityUnlocks,openPlayer:openPlayerDossier,openSquad:openSquadDossier,legacy:squadLegacyMap,create:createSquad,join:joinSquad,leave:leaveSquad,challenge:squadChallenge,progress:squadProgress,achievements:squadAchievementState,gate:fetchSquadGateIntel,victories:fetchSquadVictories,attack:applySquadGateDamage,refresh:renderSocialCommand};
