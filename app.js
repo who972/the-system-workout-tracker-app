@@ -1850,12 +1850,12 @@ function ascensionRewardProfile(){
   {at:5,name:'EXALTED HUNTER',detail:'+10% XP bonus • Exalted identity frame',unlocked:marks>=5},
   {at:10,name:'ETERNAL ASCENDANT',detail:'+20% XP bonus • Eternal prestige aura',unlocked:marks>=10}
  ];
- return{marks,current,title,xpBonus,legacyBonus,rewards,next:rewards.find(x=>!x.unlocked)||null};
+ const next=rewards.find(x=>!x.unlocked)||null,progress=next?Math.min(100,Math.round(marks/next.at*100)):100;return{marks,current,title,xpBonus,legacyBonus,rewards,next,progress};
 }
 function ascensionRewardMultiplier(){return 1+(ascensionRewardProfile().xpBonus/100)}
 function ascensionRewardPanel(){
  const p=ascensionRewardProfile(),next=p.next;
- return '<div class="ascension-rewards"><strong>ASCENSION // PRESTIGE</strong><span><small>PRESTIGE TITLE</small><b>'+escapeHtml(p.title)+'</b></span><span><small>ASCENSION MARKS</small><b>'+p.marks+'</b></span><span><small>XP AMPLIFIER</small><b>+'+p.xpBonus+'%</b></span><span><small>LEGACY BONUS</small><b>+'+p.legacyBonus+'%</b></span>'+(next?'<p>NEXT REWARD // A'+next.at+' • '+escapeHtml(next.name)+'<br><small>'+escapeHtml(next.detail)+'</small></p>':'<p>MAXIMUM PRESTIGE // ETERNAL REWARD TRACK COMPLETE</p>')+'</div>';
+ return '<div class="ascension-rewards"><strong>ASCENSION // PRESTIGE</strong><span><small>PRESTIGE TITLE</small><b>'+escapeHtml(p.title)+'</b></span><span><small>ASCENSION MARKS</small><b>'+p.marks+'</b></span><span><small>XP AMPLIFIER</small><b>+'+p.xpBonus+'%</b></span><span><small>LEGACY BONUS</small><b>+'+p.legacyBonus+'%</b></span>'+(next?'<p>NEXT REWARD // A'+next.at+' • '+escapeHtml(next.name)+'<br><small>'+escapeHtml(next.detail)+'</small><i class="ascension-reward-track"><u style="width:'+p.progress+'%"></u></i><small>'+p.marks+' / '+next.at+' ASCENSIONS</small></p>':'<p>MAXIMUM PRESTIGE // ETERNAL REWARD TRACK COMPLETE</p>')+'</div>';
 }
 const ASCENSION_REWARD_SEEN_KEY='systemAscensionRewardSeenV1';
 function checkAscensionPrestigeUnlocks(){
