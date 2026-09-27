@@ -13,7 +13,6 @@ on:
       - "health-connect.js"
       - "manifest.webmanifest"
       - "icon.svg"
-      - "system-entry-hero.jpg"
       - "enter_the_system_landscape.jpg"
 
 permissions:
@@ -44,7 +43,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js styles.css side-system.js health-connect.js manifest.webmanifest icon.svg system-entry-hero.jpg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp index.html app.js styles.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           echo "Packaged web assets:"
