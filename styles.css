@@ -2216,3 +2216,6 @@ body.system-os-ready .core-orbit-menu button:hover{
 /* V39 // PLAYER IDENTITY TITLE SURFACES */
 .player-card__title{margin:3px 0 0;font:700 9px 'JetBrains Mono',monospace;letter-spacing:.14em;color:#8cecff;text-transform:uppercase;text-shadow:0 0 10px rgba(88,226,255,.25)}
 .hud-combat-title{display:block;margin-top:5px!important;color:#8cecff!important;letter-spacing:.12em!important;text-transform:uppercase}.hud-combat-title[hidden],.player-card__title[hidden]{display:none!important}
+
+/* V41 // SOCIAL PLAYER SEARCH */
+.social-player-search{grid-column:1/-1}.player-search-results{margin-top:10px}.player-search-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:14px;padding:10px;border-top:1px solid rgba(98,228,255,.1)}.player-search-row strong,.player-search-row small{display:block}.player-search-row small{margin-top:3px;font-size:7px;opacity:.55}.player-search-row>div:nth-child(2){text-align:right}.player-search-row button{padding:7px 10px;border:1px solid rgba(98,228,255,.3);background:rgba(60,210,255,.06);color:inherit;font:700 8px 'JetBrains Mono',monospace}@media(max-width:760px){.player-search-row{grid-template-columns:1fr auto}.player-search-row>div:nth-child(2){display:none}}
