@@ -2406,3 +2406,20 @@ body.system-os-ready .core-orbit-menu button:hover{
   pointer-events:none;
 }
 .system-entry-screen__enter{z-index:3!important}
+
+/* Use the button painted into the full-resolution entry artwork as the tap target. */
+.system-entry-screen__enter{
+  top:87%!important;
+  width:40%!important;
+  height:14%!important;
+  min-width:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  clip-path:none!important;
+  animation:none!important;
+  color:transparent!important;
+  text-shadow:none!important;
+}
+.system-entry-screen__enter:focus-visible{outline:2px solid #d5f8ff;outline-offset:3px}
