@@ -114,7 +114,6 @@ function dailySideMissions(){return [
  {...dailyPick(SIDE_MISSION_POOLS.recovery,'recovery'),tag:'RECOVERY'},
  growthMission()
 ]}
-const SIDE_MISSIONS=dailySideMissions();
 function task(text,damage,attack,seconds=0){return{text,damage,attack,seconds}}
 function variants(sq,pu,lu,pl,cardio){return[
 {name:'Strength Trial',focus:'Strength / Core',time:(cardio+10)+'–'+(cardio+18)+' min',tasks:[task(sq+' squats',30,'POWER STRIKE'),task(pu+' push-ups',30,'POWER STRIKE'),task(lu+' alternating lunges',15,'LEG BREAK'),task(pl+'-second plank',15,'CORE BREAK',pl),task(cardio+'-minute cardio',10,'ENDURANCE HIT',cardio*60)]},
