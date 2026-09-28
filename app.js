@@ -2632,7 +2632,7 @@ function initPlanetaryCommandOrbit(){
  if(!frontPlane){frontPlane=document.createElement('div');frontPlane.className='core-orbit-menu core-orbit-front';frontPlane.setAttribute('aria-hidden','true');core.appendChild(frontPlane)}
  const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
  let phase=-Math.PI/2,last=performance.now(),raf=0,paused=false;
- let dragging=false,dragPointer=null,dragLastX=0,dragLastT=0,velocity=0,resumeTimer=0;
+ let dragging=false,dragPointer=null,dragLastX=0,dragLastT=0,dragDirection=-1,velocity=0,resumeTimer=0;
  const speed=(Math.PI*2)/18;
  const dragSensitivity=.0105;
  function render(){
@@ -2671,6 +2671,10 @@ function initPlanetaryCommandOrbit(){
  function setPaused(v){paused=v;core.classList.toggle('orbit-paused',v)}
  function dragStart(e){
   if(e.pointerType==='mouse'&&e.button!==0)return;
+  const grabbed=e.target.closest?.('button[data-holo]');
+  const index=nodes.indexOf(grabbed);
+  // Front and back icons travel in opposite screen directions on a 3D orbit.
+  dragDirection=index>=0&&Math.sin(phase+index*(Math.PI*2/nodes.length))<0?1:-1;
   dragging=true;dragPointer=e.pointerId;dragLastX=e.clientX;dragLastT=performance.now();velocity=0;
   clearTimeout(resumeTimer);core.classList.add('orbit-dragging');
   try{core.setPointerCapture(e.pointerId)}catch(_){}
@@ -2678,8 +2682,8 @@ function initPlanetaryCommandOrbit(){
  function dragMove(e){
   if(!dragging||e.pointerId!==dragPointer)return;
   const now=performance.now(),dx=e.clientX-dragLastX,dt=Math.max(8,now-dragLastT);
-  phase=(phase+dx*dragSensitivity)%(Math.PI*2);
-  velocity=(dx*dragSensitivity)/(dt/1000);
+  phase=(phase+dx*dragSensitivity*dragDirection)%(Math.PI*2);
+  velocity=(dx*dragSensitivity*dragDirection)/(dt/1000);
   dragLastX=e.clientX;dragLastT=now;render();
  }
  function dragEnd(e){
