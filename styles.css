@@ -2182,6 +2182,7 @@ body.system-os-ready .os-dock{display:grid;grid-template-columns:repeat(9,minmax
 body.system-os-ready .os-dock__primary{grid-column:1/-1;display:flex;justify-content:center;align-items:center;min-width:0}
 body.system-os-ready .os-dock>button{width:100%;min-width:0;box-sizing:border-box;padding-inline:2px}
 body.system-os-ready .os-dock .core-action{position:static;transform:none;width:min(210px,44vw);min-width:160px;min-height:32px;margin:0;padding:6px 16px;border:1px solid rgba(0,229,255,.55);color:var(--system-white);background:linear-gradient(90deg,rgba(0,229,255,.12),rgba(41,121,255,.14));font:800 10px var(--font-mono);letter-spacing:.18em}
+#orbitRuntimeProbe{position:absolute;z-index:21;top:8px;left:50%;transform:translateX(-50%);padding:3px 6px;border:1px solid rgba(57,255,136,.55);background:rgba(5,8,13,.82);color:#39ff88;font:700 6px var(--font-mono);letter-spacing:.12em;white-space:nowrap;pointer-events:none}
 .momentum-prompt{position:fixed;right:3vw;top:18%;z-index:9998;width:min(340px,38vw);padding:15px 18px;border:1px solid rgba(91,226,255,.45);border-radius:8px;background:rgba(3,13,22,.94);box-shadow:0 0 28px rgba(50,215,255,.18);backdrop-filter:blur(8px);opacity:0;transform:translateX(24px);pointer-events:none;transition:.25s ease}
 .momentum-prompt--visible{opacity:1;transform:translateX(0);pointer-events:auto}
 .momentum-prompt small,.momentum-prompt strong,.momentum-prompt b,.momentum-prompt span{display:block}

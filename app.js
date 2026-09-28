@@ -2714,13 +2714,14 @@ else initPlanetaryCommandOrbit();
  function probe(){
   const core=document.querySelector('.system-core');
   if(!core)return;
+  const deck=core.closest('.command-deck');
+  if(!deck)return;
   let badge=document.getElementById('orbitRuntimeProbe');
   if(!badge){
    badge=document.createElement('div');
    badge.id='orbitRuntimeProbe';
    badge.textContent='ORBIT V42 // BOOT';
-   badge.style.cssText='position:absolute;right:8px;bottom:8px;z-index:9999;padding:3px 6px;border:1px solid rgba(57,255,136,.55);background:rgba(5,8,13,.82);color:#39ff88;font:700 6px monospace;letter-spacing:.12em;pointer-events:none';
-   core.appendChild(badge);
+   deck.appendChild(badge);
   }
   const menu=core.querySelector('.core-orbit-menu');
   const ready=menu&&menu.dataset.planetaryReady==='1';
