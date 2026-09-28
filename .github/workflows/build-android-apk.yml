@@ -52,6 +52,7 @@ jobs:
           file "$WEB/enter_the_system_landscape.jpg" | grep -q '1672x941'
           grep -q 'src="enter_the_system_landscape.jpg?v=86"' "$WEB/index.html"
           grep -q 'not(.workout-mode):not(.mission-launch-confirm)' "$WEB/styles.css"
+          grep -q 'grid-template-columns:minmax(230px,32%)' "$WEB/styles.css"
           grep -q 'function sideFmt(n)' "$WEB/side-system.js"
           echo "Verified full-resolution landscape entry artwork"
           echo "Packaged web assets:"
@@ -94,7 +95,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v89-timer-debug-apk
+          name: the-system-v90-landscape-layout-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14

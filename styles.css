@@ -2423,3 +2423,36 @@ body.system-os-ready .core-orbit-menu button:hover{
   text-shadow:none!important;
 }
 .system-entry-screen__enter:focus-visible{outline:2px solid #d5f8ff;outline-offset:3px}
+
+/* Landscape workout: keep the timer and current set visible together. */
+@media (orientation:landscape) and (min-width:700px) and (max-height:620px){
+ body.workout-open #workoutMode.workout-mode.active{
+  display:grid;grid-template-columns:minmax(230px,32%) minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;gap:10px 16px;
+  align-items:stretch;overflow:hidden;box-sizing:border-box;
+  padding:34px 18px max(12px,env(safe-area-inset-bottom));
+ }
+ body.workout-open .workout-mode__top{grid-column:1;grid-row:1;max-width:none;margin:0;padding:0 0 8px;min-width:0}
+ body.workout-open .workout-mode__top h2{font-size:clamp(18px,2.7vw,28px);line-height:1.1}
+ body.workout-open .workout-exit{position:fixed;right:16px;top:16px;z-index:5;width:38px;height:38px}
+ body.workout-open .workout-clock{grid-column:1;grid-row:2;display:grid;place-items:center;min-width:0;margin:0;font-size:clamp(36px,6vw,72px)}
+ body.workout-open .workout-progress{grid-column:1;grid-row:3;width:100%;max-width:none;margin:0;box-sizing:border-box}
+ body.workout-open .workout-stage{grid-column:2;grid-row:1 / span 2;min-width:0;max-width:none;min-height:0;margin:0;padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;justify-content:center}
+ body.workout-open .workout-stage h1{font-size:clamp(24px,4vw,44px);line-height:1.08;margin:4px 0}
+ body.workout-open .workout-stage p{margin:2px 0}
+ body.workout-open .live-set-grid{margin:12px 0;gap:8px}
+ body.workout-open .live-set-grid input{padding:9px 11px;margin-top:4px;font-size:18px}
+ body.workout-open .workout-main-btn{padding:11px;min-height:44px}
+ body.workout-open .workout-live-stats{grid-column:2;grid-row:3;width:100%;max-width:none;margin:0;font-size:10px}
+ body.system-os-ready .os-module-stage:not(.minimized){width:min(94vw,1200px);height:90dvh}
+ body.system-os-ready .os-module-body{padding:8px 12px 10px}
+ body.system-os-ready .os-module-body #daily-mission{padding:10px 14px!important}
+ body.system-os-ready #daily-mission .section-header{margin-bottom:4px}
+ body.system-os-ready #daily-mission .home-mission-summary{margin:5px 0;padding:7px 10px}
+ body.system-os-ready #daily-mission .mission-mode-choices{margin:7px 0}
+ body.system-os-ready #daily-mission .mission-mode-choices button{padding:7px 5px}
+ body.system-os-ready #daily-mission #start-mission-btn{min-height:44px}
+ .mlc-card{width:min(94vw,1100px);max-height:94dvh;padding:12px 16px}
+ .mlc-objectives{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+ .mlc-objectives>div{min-width:0;margin:0}
+}
