@@ -47,8 +47,9 @@ jobs:
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
-          grep -q "enter_the_system_landscape.jpg" "$WEB/styles.css"
-          echo "Verified final landscape entry artwork"
+          file "$WEB/enter_the_system_landscape.jpg" | grep -q '1672x941'
+          grep -q 'src="enter_the_system_landscape.jpg?v=86"' "$WEB/index.html"
+          echo "Verified full-resolution landscape entry artwork"
           echo "Packaged web assets:"
           find "$WEB" -maxdepth 1 -type f -printf "%f\n" | sort
 
@@ -80,7 +81,8 @@ jobs:
           "$AAPT" dump badging "$APK" | head -1
           unzip -p "$APK" assets/www/app.js | grep -q "ORBIT V42 // LIVE"
           unzip -l "$APK" | grep -q "assets/www/enter_the_system_landscape.jpg"
-          unzip -p "$APK" assets/www/styles.css | grep -q "enter_the_system_landscape.jpg"
+          cmp enter_the_system_landscape.jpg <(unzip -p "$APK" assets/www/enter_the_system_landscape.jpg)
+          unzip -p "$APK" assets/www/index.html | grep -q 'src="enter_the_system_landscape.jpg?v=86"'
           echo "APK signature, package metadata, and current runtime verified"
 
       - name: Upload APK
