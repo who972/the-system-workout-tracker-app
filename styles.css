@@ -2178,8 +2178,9 @@ body.system-os-ready .core-orbit-menu button:hover{
  body.system-os-ready .analysis-stat{margin:4px 0}
 }
 body.system-os-ready .os-dock,body.system-os-ready .os-taskbar{bottom:0}
-body.system-os-ready .os-dock{flex-wrap:wrap;justify-content:center;gap:4px 5px}
-body.system-os-ready .os-dock__primary{flex:0 0 100%;display:flex;justify-content:center;align-items:center;min-height:34px}
+body.system-os-ready .os-dock{display:grid;grid-template-columns:repeat(9,minmax(0,1fr));grid-template-rows:34px auto;width:min(860px,calc(100vw - 300px));box-sizing:border-box;gap:4px;align-items:stretch}
+body.system-os-ready .os-dock__primary{grid-column:1/-1;display:flex;justify-content:center;align-items:center;min-width:0}
+body.system-os-ready .os-dock>button{width:100%;min-width:0;box-sizing:border-box;padding-inline:2px}
 body.system-os-ready .os-dock .core-action{position:static;transform:none;width:min(210px,44vw);min-width:160px;min-height:32px;margin:0;padding:6px 16px;border:1px solid rgba(0,229,255,.55);color:var(--system-white);background:linear-gradient(90deg,rgba(0,229,255,.12),rgba(41,121,255,.14));font:800 10px var(--font-mono);letter-spacing:.18em}
 .momentum-prompt{position:fixed;right:3vw;top:18%;z-index:9998;width:min(340px,38vw);padding:15px 18px;border:1px solid rgba(91,226,255,.45);border-radius:8px;background:rgba(3,13,22,.94);box-shadow:0 0 28px rgba(50,215,255,.18);backdrop-filter:blur(8px);opacity:0;transform:translateX(24px);pointer-events:none;transition:.25s ease}
 .momentum-prompt--visible{opacity:1;transform:translateX(0);pointer-events:auto}
