@@ -1,5 +1,5 @@
-const CACHE = "the-system-os-v37-health-connect";
-const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "the-system-os-v38-account-data";
+const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./account-data.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });
