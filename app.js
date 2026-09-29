@@ -999,29 +999,6 @@ document.getElementById('exerciseForm').addEventListener('submit',(e)=>{
   e.target.reset();
 });
 
-// --- Reset ---
-document.getElementById('resetBtn').addEventListener('click', () => {
-  document.getElementById('confirmModal').setAttribute('aria-hidden', 'false');
-});
-
-document.getElementById('confirmNo').addEventListener('click', () => {
-  document.getElementById('confirmModal').setAttribute('aria-hidden', 'true');
-});
-
-document.getElementById('confirmBackdrop').addEventListener('click', () => {
-  document.getElementById('confirmModal').setAttribute('aria-hidden', 'true');
-});
-
-document.getElementById('confirmYes').addEventListener('click', () => {
-  state = defaultState();
-  saveState();
-  document.getElementById('confirmModal').setAttribute('aria-hidden', 'true');
-  // Clear system log
-  systemLog.innerHTML = '<p class="system-log__entry system-log__entry--idle">SYSTEM ONLINE. Complete your daily quests to grow stronger.</p>';
-  renderAll();
-  addSystemMessage('System reset. Your journey begins anew.', 'warning');
-});
-
 // --- Theme Toggle ---
 (function() {
   const toggle = document.querySelector('[data-theme-toggle]');
@@ -1305,9 +1282,76 @@ function renderSystemSettings(){const x=getSystemSettings();const n=document.get
 function systemBackup(){const data={app:'The System - Workout Tracker',version:11,exportedAt:new Date().toISOString(),localStorage:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);data.localStorage[k]=localStorage.getItem(k);}return data;}
 function exportSystemBackup(){const blob=new Blob([JSON.stringify(systemBackup(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='the-system-workout-tracker-backup-'+getTodayStr()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('backupStatus').textContent='Backup exported successfully.';}
 async function importSystemBackup(file){const status=document.getElementById('backupStatus');try{const data=JSON.parse(await file.text());if(!data||data.app!=='The System - Workout Tracker'||!data.localStorage)throw new Error('Invalid backup');if(!confirm('Import this backup? Current app data will be replaced.'))return;localStorage.clear();Object.entries(data.localStorage).forEach(([k,v])=>localStorage.setItem(k,v));status.textContent='Backup restored. Reloading…';setTimeout(()=>location.reload(),500);}catch(e){status.textContent='Backup could not be imported.';}}
-function resetTrainingData(){if(!confirm('Reset workout history, missions, exercise records, streaks and progression? Profile/settings will be kept.'))return;['systemWorkoutSessions','systemMissionRecords','systemProgressionOverrides','systemProgressionDecisions','theSystemCustomWorkouts','systemCustomExercises'].forEach(k=>localStorage.removeItem(k));Object.keys(localStorage).filter(k=>k.startsWith('systemMission:')||k.startsWith('customMissionDone:')).forEach(k=>localStorage.removeItem(k));state.history=[];state.exerciseRecords=[];state.currentStreak=0;state.bestStreak=0;saveState();location.reload();}
-function factoryResetSystem(){if(!confirm('FACTORY RESET: Delete ALL app data on this device? This cannot be undone unless you exported a backup.'))return;if(!confirm('Final confirmation: erase THE SYSTEM data?'))return;localStorage.clear();location.reload();}
-function initSystemSettings(){renderSystemSettings();const f=document.getElementById('profileForm');if(f)f.onsubmit=e=>{e.preventDefault();const x={name:document.getElementById('profileName').value.trim()||'Player',units:document.getElementById('unitSystem').value,goal:document.getElementById('workoutGoal').value,sounds:document.getElementById('soundSetting').checked};saveSystemSettings(x);document.getElementById('backupStatus').textContent='Settings saved.';addSystemMessage(`Profile updated — ${x.name} • ${x.goal}`,'quest');};document.getElementById('exportDataBtn')?.addEventListener('click',exportSystemBackup);document.getElementById('importDataInput')?.addEventListener('change',e=>{if(e.target.files[0])importSystemBackup(e.target.files[0]);});document.getElementById('resetTrainingBtn')?.addEventListener('click',resetTrainingData);document.getElementById('resetAllBtn')?.addEventListener('click',factoryResetSystem);}
+// Account operations are separate; destructive cloud changes must succeed before local changes.
+let accountDataBusy=false;
+function accountDataStatus(message){document.getElementById('backupStatus').textContent=message;const status=document.getElementById('deleteAccountStatus');if(status)status.textContent=message;}
+function accountConfirmation(message,word=''){
+  const dialog=document.getElementById('accountConfirmDialog');
+  if(dialog.open||accountDataBusy)return Promise.resolve(false);
+  const form=document.getElementById('accountConfirmForm'),input=form.elements.confirmation;
+  document.getElementById('accountConfirmMessage').textContent=message;
+  document.getElementById('accountConfirmLabel').hidden=!word;
+  input.required=!!word;input.value='';input.pattern=word;dialog.showModal();
+  return new Promise(resolve=>{
+    const finish=value=>{form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelAccountConfirm').onclick=null;dialog.close();resolve(value);};
+    form.onsubmit=e=>{e.preventDefault();finish(!word||input.value===word)};
+    dialog.oncancel=e=>{e.preventDefault();finish(false)};
+    document.getElementById('cancelAccountConfirm').onclick=()=>finish(false);
+  });
+}
+async function runAccountOperation(operation){
+  if(accountDataBusy)return;
+  accountDataBusy=true;
+  document.querySelectorAll('[data-account-operation]').forEach(b=>b.disabled=true);
+  try{await operation()}catch(e){accountDataStatus(e.message||'Operation failed. Your local data was kept.');}
+  finally{accountDataBusy=false;document.querySelectorAll('[data-account-operation]').forEach(b=>b.disabled=false);}
+}
+async function factoryResetSystem(){
+  if(!await accountConfirmation('Factory Reset signs you out and clears this device’s app data, settings, cache and onboarding. Your account and saved cloud progress stay intact. Unsynced progress will be lost. Continue?'))return;
+  return runAccountOperation(async()=>{
+    // No network request: never upload, reset, or delete cloud data here.
+    await AccountData.clearDevice(localStorage,sessionStorage,window.caches);
+    location.reload();
+  });
+}
+async function resetTrainingData(){
+  if(!await accountConfirmation('Reset Progress restarts XP, rank, missions, streaks, achievements, boss progress and your assessment. Your account, profile and settings stay. Type RESET to continue.','RESET'))return;
+  return runAccountOperation(async()=>{
+    const fresh=defaultState();fresh.weight=state.weight;
+    const next=AccountData.resetSnapshot(systemBackup().localStorage,fresh);
+    if(getCloudSession()?.user?.id){
+      accountDataStatus('Resetting saved cloud progress…');
+      await cloudRequest('/rest/v1/rpc/reset_my_progress',{method:'POST',body:JSON.stringify({replacement:{app:'The System - Workout Tracker',version:12,localStorage:AccountData.cloudData(next)}})});
+    }
+    AccountData.applySnapshot(localStorage,next);
+    state=fresh;
+    location.reload(); // onboarding.assessmentPending resumes the Initial Assessment.
+  });
+}
+async function deleteSystemAccount(){
+  const session=getCloudSession();
+  if(!session?.user?.id){accountDataStatus('Sign in before deleting your account.');return;}
+  const dialog=document.getElementById('deleteAccountDialog');
+  if(accountDataBusy||dialog.open)return;
+  document.getElementById('deleteAccountForm').reset();
+  document.getElementById('deleteAccountStatus').textContent='';
+  dialog.oncancel=()=>document.getElementById('deleteAccountForm').reset();
+  dialog.showModal();
+  document.getElementById('deleteAccountPassword').focus();
+}
+async function submitDeleteAccount(e){
+  e.preventDefault();
+  const form=e.currentTarget,password=form.elements.password.value,confirmation=form.elements.confirmation.value;
+  if(confirmation!=='DELETE'||!password){accountDataStatus('Enter your password and type DELETE exactly.');return;}
+  return runAccountOperation(async()=>{
+    accountDataStatus('Verifying password and deleting account…');
+    await cloudRequest('/functions/v1/delete-account',{method:'POST',body:JSON.stringify({password,confirmation})});
+    form.reset();document.getElementById('deleteAccountDialog').close();
+    await AccountData.clearDevice(localStorage,sessionStorage,window.caches);
+    location.reload();
+  });
+}
+function initSystemSettings(){renderSystemSettings();const f=document.getElementById('profileForm');if(f)f.onsubmit=e=>{e.preventDefault();const x={name:document.getElementById('profileName').value.trim()||'Player',units:document.getElementById('unitSystem').value,goal:document.getElementById('workoutGoal').value,sounds:document.getElementById('soundSetting').checked};saveSystemSettings(x);document.getElementById('backupStatus').textContent='Settings saved.';addSystemMessage(`Profile updated — ${x.name} • ${x.goal}`,'quest');};document.getElementById('exportDataBtn')?.addEventListener('click',exportSystemBackup);document.getElementById('importDataInput')?.addEventListener('change',e=>{if(e.target.files[0])importSystemBackup(e.target.files[0]);});document.getElementById('resetTrainingBtn')?.addEventListener('click',resetTrainingData);document.getElementById('resetAllBtn')?.addEventListener('click',factoryResetSystem);document.getElementById('deleteAccountBtn')?.addEventListener('click',deleteSystemAccount);document.getElementById('deleteAccountForm')?.addEventListener('submit',submitDeleteAccount);document.getElementById('cancelDeleteAccount')?.addEventListener('click',()=>{document.getElementById('deleteAccountForm').reset();document.getElementById('deleteAccountDialog').close();});}
 document.addEventListener('DOMContentLoaded',initSystemSettings);
 
 // --- Shared Supabase Cloud Sync ---

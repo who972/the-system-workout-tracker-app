@@ -562,14 +562,14 @@
     <div class="quest-section__header"><h2 class="quest-section__title">Profile & Settings</h2><span class="quest-section__meta">SYSTEM SETTINGS</span></div>
     <div class="settings-grid">
       <article class="dashboard-card"><h3>Player Profile</h3><form id="profileForm" class="settings-form"><input id="profileName" class="form-input" placeholder="Player name"><select id="unitSystem" class="form-input"><option value="imperial">Imperial (lb)</option><option value="metric">Metric (kg)</option></select><select id="workoutGoal" class="form-input"><option value="balanced">Balanced</option><option value="strength">Strength</option><option value="endurance">Endurance</option><option value="weight-loss">Weight loss</option><option value="mobility">Mobility</option></select><label class="settings-check"><input id="soundSetting" type="checkbox"> System sounds</label><button class="btn-primary" type="submit">Save Settings</button></form></article>
-      <article class="dashboard-card"><h3>Data Management</h3><p class="quest-section__desc">Your data lives on this device unless you export a backup.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label><button id="resetTrainingBtn" type="button">Reset Training Data</button><button id="resetAllBtn" class="danger-btn" type="button">Factory Reset</button></div><div id="backupStatus" class="backup-status"></div></article>
+      <article class="dashboard-card"><h3>Account &amp; Data</h3><p class="quest-section__desc">Device data and saved cloud data are managed separately. Export or upload a backup before clearing unsynced progress.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label><button id="resetAllBtn" data-account-operation type="button">Factory Reset</button></div><p>Factory Reset clears this device and signs you out. Your account and saved cloud progress stay intact.</p><fieldset class="account-danger"><legend>Danger Zone</legend><p>Reset Progress restarts your training and assessment. Delete Account permanently removes your account and server data.</p><div class="settings-actions"><button id="resetTrainingBtn" data-account-operation class="danger-btn" type="button">Reset Progress</button><button id="deleteAccountBtn" data-account-operation class="danger-btn" type="button">Delete Account</button></div></fieldset><div id="backupStatus" class="backup-status" role="status" aria-live="polite"></div></article>
     </div>
   </section>
 
   <!-- Footer -->
   <footer class="footer">
     <p>THE SYSTEM — WORKOUT TRACKER</p>
-    <button class="btn-reset" id="resetBtn" aria-label="Reset all progress">Reset Progress</button>
+
   </footer>
 
   <!-- Level-Up Modal -->
@@ -587,24 +587,6 @@
       <button class="levelup-modal__btn" id="levelupClose">Continue</button>
     </div>
   </div>
-
-  <!-- Reset Confirm Modal -->
-  <div class="confirm-modal" id="confirmModal" aria-hidden="true">
-    <div class="confirm-modal__backdrop" id="confirmBackdrop"></div>
-    <div class="confirm-modal__content">
-      <h3 class="confirm-modal__title">Reset All Progress?</h3>
-      <p class="confirm-modal__desc">This will erase your level, XP, stats, and achievements. This cannot be undone.</p>
-      <div class="confirm-modal__buttons">
-        <button class="btn-secondary" id="confirmNo">Cancel</button>
-        <button class="btn-danger" id="confirmYes">Reset Everything</button>
-      </div>
-    </div>
-  </div>
-
-  
-
-
-
 
 <div id="workoutMode" class="workout-mode" aria-hidden="true">
   <div class="workout-mode__top"><div><span class="eyebrow">LIVE WORKOUT</span><h2 id="liveMissionName">SYSTEM MISSION</h2></div><button id="exitWorkoutBtn" class="workout-exit" type="button">✕</button></div>
@@ -627,7 +609,21 @@
 
 
 <datalist id="exerciseLibraryNames"></datalist>
-<script src="app.js?v=entry92"></script>
+<dialog id="accountConfirmDialog" class="account-delete-dialog" aria-labelledby="accountConfirmTitle">
+<form id="accountConfirmForm" class="settings-form"><h2 id="accountConfirmTitle">Account &amp; Data</h2>
+<p id="accountConfirmMessage"></p><label id="accountConfirmLabel">Type RESET<input name="confirmation" class="form-input" autocomplete="off"></label>
+<button class="danger-btn" type="submit">Continue</button><button id="cancelAccountConfirm" type="button">Cancel</button></form></dialog>
+<dialog id="deleteAccountDialog" aria-labelledby="deleteAccountTitle" class="account-delete-dialog">
+<form id="deleteAccountForm" class="settings-form">
+<h2 id="deleteAccountTitle">Delete Account permanently?</h2><p>Your account, cloud backup and server records will be removed. This cannot be undone.</p>
+<label>Current password<input id="deleteAccountPassword" name="password" class="form-input" type="password" autocomplete="current-password" required></label>
+<label>Type DELETE<input name="confirmation" class="form-input" autocomplete="off" pattern="DELETE" required></label>
+<p id="deleteAccountStatus" role="status" aria-live="polite"></p>
+<button data-account-operation class="danger-btn" type="submit">Permanently Delete Account</button>
+<button id="cancelDeleteAccount" type="button">Cancel</button>
+</form></dialog>
+<script src="account-data.js?v=1"></script>
+<script src="app.js?v=account-data1"></script>
 <script src="health-connect.js?v=37"></script>
 <script src="side-system.js?v=side54"></script>
 <script>

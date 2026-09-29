@@ -8,6 +8,8 @@ on:
       - "android-wrapper/**"
       - "index.html"
       - "app.js"
+      - "account-data.js"
+      - "tests/account-data.test.cjs"
       - "styles.css"
       - "side-system.js"
       - "health-connect.js"
@@ -41,11 +43,14 @@ jobs:
         run: |
           set -euo pipefail
           node --check app.js
+          node --check account-data.js
+          node tests/account-data.test.cjs
+          node tests/health-connect.test.cjs
           node --check side-system.js
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js styles.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp index.html app.js account-data.js styles.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -91,6 +96,7 @@ jobs:
           cmp enter_the_system_landscape.jpg <(unzip -p "$APK" assets/www/enter_the_system_landscape.jpg)
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
+          cmp account-data.js <(unzip -p "$APK" assets/www/account-data.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)
           unzip -l "$APK" | grep -q "res/drawable-nodpi-v4/ic_system_launcher.jpg"
           cmp side-system.js <(unzip -p "$APK" assets/www/side-system.js)
