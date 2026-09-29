@@ -92,6 +92,7 @@ jobs:
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)
+          unzip -l "$APK" | grep -q "res/drawable-nodpi-v4/ic_system_launcher.jpg"
           cmp side-system.js <(unzip -p "$APK" assets/www/side-system.js)
           unzip -p "$APK" assets/www/index.html | grep -q 'src="enter_the_system_landscape.jpg?v=86"'
           echo "APK signature, package metadata, and current runtime verified"
@@ -99,7 +100,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v91-timed-set-debug-apk
+          name: the-system-v92-launcher-icon-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
