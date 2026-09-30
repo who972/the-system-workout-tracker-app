@@ -127,7 +127,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v50-briefing-entry-debug-apk
+          name: the-system-v51-compact-briefing-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14

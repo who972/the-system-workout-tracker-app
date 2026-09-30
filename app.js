@@ -1400,11 +1400,6 @@ function enterMainInterface(){
   const boot=document.getElementById('systemBoot');
   if(boot)boot.hidden=true;
   document.body.classList.remove('system-boot-open','system-entering');
-  try{
-    const d=new Date();
-    const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    localStorage.setItem('theSystemDailyBriefing',day);
-  }catch(_){}
   window.scrollTo({top:0,left:0,behavior:'auto'});
   document.dispatchEvent(new Event('system:ready'));
 }

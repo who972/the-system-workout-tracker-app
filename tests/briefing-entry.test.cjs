@@ -4,7 +4,7 @@ const root=path.resolve(__dirname,'..');
 const server=http.createServer((req,res)=>{
  const name=new URL(req.url,'http://localhost').pathname,file=path.join(root,name==='/'?'index.html':name);
  if(!file.startsWith(root+path.sep))return res.writeHead(403).end();
- const types={'.html':'text/html','.js':'application/javascript','.css':'text/css'};
+ const types={'.html':'text/html','.js':'application/javascript','.css':'text/css','.svg':'image/svg+xml'};
  fs.readFile(file,(err,data)=>{res.writeHead(err?404:200,{'Content-Type':types[path.extname(file)]||'application/octet-stream'});res.end(err?'':data)});
 });
 (async()=>{
@@ -40,7 +40,10 @@ const server=http.createServer((req,res)=>{
   assert(!(await page.locator('#systemEntryScreen').isVisible()));assert(!(await page.locator('#authGate').isVisible()));
   for(let i=0;i<4;i++)await page.locator('#obNext').click();
   await page.locator('#awakeningAssessment.active').waitFor();
-  console.log('PASS: fresh sign-in enters setup, then assessment, after ENTER and authentication');await page.close();
+  assert(!(await page.locator('#systemBoot').isVisible()));
+  for(let i=0;i<5;i++)await page.locator('#awNext').click();await page.locator('#systemBoot').waitFor({state:'visible'});
+  assert.equal(await page.locator('.system-onboarding.active').count(),0);
+  console.log('PASS: fresh sign-in enters setup after authentication; briefing opens after assessment');await page.close();
   page=await openPage({theSystemCloudSession:session});await page.locator('#enterTheSystem').click();await page.locator('#systemOnboarding.active').waitFor();
   console.log('PASS: remembered new account waits for entry/authentication before setup');await page.close();
   page=await openPage({theSystemCloudSession:session,systemOnboardingV2:{assessmentPending:true,path:'Balanced'}});
@@ -49,12 +52,20 @@ const server=http.createServer((req,res)=>{
   page=await openPage({theSystemCloudSession:session,systemOnboardingV2:{assessmentPending:false},systemAwakeningAssessmentV1:{rank:'E'}});
   await page.locator('#enterTheSystem').click();await page.locator('#systemEntryScreen').waitFor({state:'hidden'});
   assert.equal(await page.locator('.system-onboarding.active').count(),0,'Completed users do not repeat setup');
+  await page.locator('#systemBoot').waitFor({state:'visible'});
+  await page.waitForFunction(()=>document.querySelector('.compact-briefing-header img')?.naturalWidth>0);
+  await page.locator('#briefingDismiss').click();
+  await page.evaluate(()=>enterMainInterface());await page.waitForTimeout(400);assert(!(await page.locator('#systemBoot').isVisible()),'Briefing only opens automatically once daily');
+  await page.evaluate(()=>{const ss=loadSideSystem();ss.completed=dailySideMissions().slice(0,2).map(x=>x.id);saveSideSystem(ss);saveMissionProgress({'0-0':{done:true}});replayDailyBriefing()});
+  assert.equal(await page.locator('.briefing-sides li.done').count(),2);assert.match(await page.locator('#systemBeginDay').textContent(),/RESUME/);
+  await page.locator('#briefingDismiss').click();await page.evaluate(()=>saveMissionProgress({}));
+  console.log('PASS: automatic briefing opens once daily; replay refreshes side progress and resume status');
   for(const [width,height] of [[568,240],[568,256],[640,320],[667,375],[740,360],[812,375],[844,390],[915,412],[960,432],[1024,500]]){
    await page.setViewportSize({width,height});await page.evaluate(()=>replayDailyBriefing());
    async function check(id){
     const result=await page.locator(id).evaluate(e=>{
      const box=e.getBoundingClientRect(),bad=[];
-     for(const n of e.querySelectorAll('h1,p,strong,small,button,.system-boot__eyebrow')){
+     for(const n of e.querySelectorAll('h1,p,strong,small,button,.system-boot__eyebrow,li')){
       const r=n.getBoundingClientRect();if(r.top<box.top||r.bottom>box.bottom||r.left<box.left||r.right>box.right)bad.push(n.textContent);
       if(n.scrollHeight>n.clientHeight+1||n.scrollWidth>n.clientWidth+1)bad.push('text overflow: '+n.textContent);
      }
@@ -64,25 +75,23 @@ const server=http.createServer((req,res)=>{
     assert.deepEqual(result.bad,[],`${id} ${width}x${height}`);
     assert(result.box.top>=-1&&result.box.bottom<=height+1&&result.box.left>=-1&&result.box.right<=width+1,`${id} ${width}x${height}: ${JSON.stringify(result)}`);
    }
-   await check('#systemWelcome');
-   if(process.env.BRIEFING_SCREENSHOT&&width===1024)await page.screenshot({path:process.env.BRIEFING_SCREENSHOT.replace('.png','-welcome.png')});
-   await page.locator('#systemWelcomeContinue').click();await page.locator('#systemBriefing').waitFor({state:'visible'});
-   await page.waitForFunction(()=>document.querySelector('#systemBriefing').classList.contains('panel-enter-active'));
    await page.locator('#systemBriefing').evaluate(async e=>await Promise.all(e.getAnimations().map(a=>a.finished.catch(()=>{}))));
    await check('#systemBriefing');
    if(process.env.BRIEFING_SCREENSHOT&&width===1024)await page.screenshot({path:process.env.BRIEFING_SCREENSHOT});
    await page.locator('#systemBootClose').click();assert(!(await page.locator('#systemBoot').isVisible()));
-   console.log(`PASS ${width}x${height}: welcome and daily briefing fit without scrolling; controls visible`);
+   console.log(`PASS ${width}x${height}: compact briefing fits without scrolling; controls visible`);
    if(width===1024){
     await page.emulateMedia({reducedMotion:'reduce'});await page.evaluate(()=>replayDailyBriefing());
-    await page.locator('#systemWelcomeContinue').click();await page.locator('#systemBriefing').waitFor({state:'visible'});
-    await page.waitForFunction(()=>document.querySelector('#systemBriefing').classList.contains('panel-enter-active'));
+    await page.locator('#systemBriefing').waitFor({state:'visible'});
+
     await check('#systemBriefing');await page.locator('#systemBootClose').click();
     await page.emulateMedia({reducedMotion:'no-preference'});console.log('PASS: reduced-motion briefing is fully visible and fits');
    }
   }
-  await page.evaluate(()=>replayDailyBriefing());await page.locator('#systemWelcomeContinue').click();await page.locator('#systemBeginDay').click();
+  await page.evaluate(()=>replayDailyBriefing());await page.locator('#systemBeginDay').click();
   await page.waitForFunction(()=>document.querySelector('.os-module-stage.active')?.dataset.module==='missions');
-  console.log('PASS: Briefing Begin Mission still opens Mission Control');await page.close();
+  console.log('PASS: Briefing Begin Mission still opens Mission Control');
+  await page.evaluate(()=>{localStorage.setItem('systemMission:'+today(),'true');replayDailyBriefing()});
+  assert.equal(await page.locator('.briefing-status').textContent(),'COMPLETED');assert.match(await page.locator('#systemBeginDay').textContent(),/VIEW MISSIONS/);await page.close();
  }finally{await browser?.close();server.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

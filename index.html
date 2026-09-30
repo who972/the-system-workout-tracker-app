@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css?v=entry-fit4" />
   <link rel="stylesheet" href="side-system.css?v=assessment-timers15" />
-  <link rel="stylesheet" href="window-layout.css?v=50" />
+  <link rel="stylesheet" href="window-layout.css?v=51" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#05080D" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -74,22 +74,11 @@
   <section id="systemBoot" class="system-boot" hidden aria-live="polite">
     <div class="system-boot__scan" aria-hidden="true"></div>
     <button id="systemBootClose" class="system-boot__close" type="button" aria-label="Close briefing">×</button>
-    <div id="systemWelcome" class="system-boot__panel">
-      <span class="system-boot__eyebrow">SYSTEM // INITIALIZATION</span>
-      <div class="system-boot__hero" aria-hidden="true"><div class="system-boot__portal"></div><div class="system-boot__hunter"><i></i><b></b><span></span></div><img src="icon.svg" class="system-boot__brandmark" alt=""></div>
-      <h1>THE SYSTEM</h1>
-      <p class="system-boot__online">● SYSTEM ONLINE</p>
-      <p id="systemWelcomePlayer">Welcome back, Hunter.</p>
-      <strong id="systemWelcomeRank">LEVEL 1 • E-CLASS</strong>
-      <button id="systemWelcomeContinue" type="button">CONTINUE</button>
-    </div>
-    <div id="systemBriefing" class="system-boot__panel system-briefing" hidden>
-      <div class="briefing-header"><span class="system-boot__eyebrow">SYSTEM // DAILY BRIEFING</span>
-      <h1>TODAY'S DIRECTIVE</h1>
-      <p id="briefingDate" class="system-boot__online"></p></div>
+    <div id="systemBriefing" class="system-boot__panel system-briefing compact-briefing">
+      <header class="compact-briefing-header"><img src="icon.svg" alt="The System" /><div><span class="system-boot__eyebrow">SYSTEM // DAILY BRIEFING</span><h1>WELCOME BACK, HUNTER</h1><p id="briefingDate" class="system-boot__online"></p></div></header>
       <div id="briefingGrid" class="briefing-grid"></div>
       <div id="briefingDirective" class="briefing-directive"></div>
-      <button id="systemBeginDay" type="button">BEGIN DAY →</button>
+      <footer class="compact-briefing-actions"><button id="briefingDismiss" type="button">CLOSE</button><button id="systemBeginDay" type="button">BEGIN MISSION →</button></footer>
     </div>
   </section>
 
@@ -626,9 +615,9 @@
 <button id="cancelDeleteAccount" type="button">Cancel</button>
 </form></dialog>
 <script src="account-data.js?v=1"></script>
-<script src="app.js?v=50"></script>
+<script src="app.js?v=51"></script>
 <script src="health-connect.js?v=49"></script>
-<script src="side-system.js?v=50"></script>
+<script src="side-system.js?v=51"></script>
 <script>
 if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.net"){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 (function(){

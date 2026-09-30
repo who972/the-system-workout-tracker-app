@@ -181,55 +181,36 @@ body.system-os-ready .os-module-body .builder-exercise {grid-template-columns:mi
 body.system-os-ready .os-module-body :is(input,select,textarea).form-input {width:100%;min-width:0;box-sizing:border-box;}
 @media(max-width:800px){body.system-os-ready .os-module-body .builder-grid{grid-template-columns:1fr;}body.system-os-ready .os-module-body :is(.builder-row,.builder-exercise){grid-template-columns:repeat(2,minmax(0,1fr));}}
 
-/* Briefing has a finite landscape composition, including its welcome screen. */
-.system-boot {padding:var(--window-gap);}
-.system-boot .system-boot__panel {
-  box-sizing:border-box;width:var(--window-width);height:var(--window-height);
-  max-height:var(--window-height);padding:var(--window-padding);overflow:visible;
+/* Compact daily briefing preserves the original glow and leaves the HUD visible. */
+.system-boot {padding:var(--window-gap);background:rgba(2,7,14,.55);backdrop-filter:blur(3px);}
+.system-boot::before,.system-boot::after {display:none;}
+.system-boot #systemBriefing.compact-briefing {
+ box-sizing:border-box;width:min(880px,var(--window-width));height:min(460px,var(--window-height));max-height:var(--window-height);
+ display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;gap:clamp(5px,1.5dvh,12px);
+ padding:clamp(8px,2dvh,20px);overflow:visible;text-align:left;
+ background:linear-gradient(155deg,#0b1722,#050b14);border:1px solid #217786;
 }
-.system-boot #systemWelcome {
-  display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);
-  grid-template-rows:auto minmax(0,1fr) repeat(4,auto);gap:clamp(4px,1.2dvh,12px) 20px;
-  align-items:center;
-}
-#systemWelcome>.system-boot__eyebrow {grid-column:1/-1;padding-right:48px;}
-#systemWelcome>.system-boot__hero {
-  grid-column:1;grid-row:2/7;width:min(100%,42dvh);height:100%;max-height:65dvh;
-  margin:0 auto;min-height:0;
-}
-#systemWelcome .system-boot__portal {width:min(82%,52dvh);}
-#systemWelcome .system-boot__brandmark {width:min(35%,20dvh);}
-.system-boot #systemWelcome h1 {grid-column:2;grid-row:2;margin:0;font-size:clamp(22px,7dvh,52px);letter-spacing:.08em;}
-#systemWelcome>.system-boot__online {grid-column:2;grid-row:3;margin:0;}
-#systemWelcomePlayer {grid-column:2;grid-row:4;margin:0;font-size:clamp(12px,3.2dvh,20px);}
-.system-boot #systemWelcomeRank {grid-column:2;grid-row:5;margin:0;font-size:clamp(11px,3dvh,18px);}
-#systemWelcomeContinue {grid-column:2;grid-row:6;}
-.system-boot #systemBriefing {
-  display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
-  gap:clamp(4px,1.2dvh,12px);text-align:left;
-}
-.briefing-header {display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:44px;}
-.system-briefing .briefing-header h1 {margin:0;font-size:clamp(14px,4dvh,26px);letter-spacing:.04em;}
-.briefing-header .system-boot__eyebrow {font-size:clamp(8px,2dvh,11px);letter-spacing:.08em;}
-.briefing-header .system-boot__online {margin:0;font-size:clamp(8px,2dvh,11px);letter-spacing:.04em;}
-.system-briefing .briefing-grid {
-  min-height:0;grid-template-columns:repeat(3,minmax(0,1fr));
-  grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(4px,1dvh,10px);margin:0;
-}
-.system-briefing .briefing-grid article {
-  min-width:0;min-height:0;padding:clamp(4px,1.5dvh,12px);
-  display:flex;flex-direction:column;justify-content:center;overflow:visible;
-}
-.system-briefing .briefing-boss {grid-column:auto;}
-.system-briefing .briefing-directive {margin:0;padding:clamp(4px,1.2dvh,10px);}
-.system-briefing :is(.briefing-grid article,.briefing-directive) span {margin:0 0 3px;font-size:clamp(8px,2dvh,11px);letter-spacing:.06em;}
-.system-briefing :is(.briefing-grid article,.briefing-directive) strong {font-size:clamp(11px,2.9dvh,18px);line-height:1.15;}
-.system-briefing :is(.briefing-grid article,.briefing-directive) small {margin-top:3px;font-size:clamp(9px,2.3dvh,13px);line-height:1.2;}
-.system-boot :is(#systemBeginDay,#systemWelcomeContinue) {min-height:30px;height:clamp(30px,8dvh,48px);padding:3px 12px;font-size:clamp(10px,2.6dvh,14px);}
-.system-boot .system-boot__close {width:34px;height:34px;min-height:34px;font-size:24px;}
-@media(orientation:landscape) and (max-height:300px){
-  .system-briefing .briefing-header .system-boot__eyebrow {max-width:110px;}
-  .system-briefing .briefing-header .system-boot__online {max-width:110px;text-align:right;}
-}
-
-@media(prefers-reduced-motion:reduce){.system-boot__panel.panel-enter-active{opacity:1;transform:none;}}
+.compact-briefing-header {display:flex;align-items:center;gap:14px;padding-right:30px;min-width:0;}
+.compact-briefing-header img {width:clamp(38px,12dvh,66px);height:clamp(38px,12dvh,66px);object-fit:contain;filter:drop-shadow(0 0 9px #00bcd4);}
+.compact-briefing-header>div {min-width:0;}
+.system-boot .compact-briefing-header h1 {margin:3px 0;font-size:clamp(14px,3.7dvh,24px);letter-spacing:.04em;overflow-wrap:anywhere;}
+.compact-briefing-header .system-boot__online {margin:0;font-size:clamp(9px,2.3dvh,12px);letter-spacing:.06em;}
+.compact-briefing-header .system-boot__eyebrow {font-size:clamp(8px,2dvh,11px);}
+.compact-briefing .briefing-grid {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr);gap:10px;margin:0;min-height:0;}
+.compact-briefing .briefing-grid article {min-width:0;min-height:0;padding:clamp(6px,2dvh,14px);overflow:visible;display:flex;flex-direction:column;justify-content:center;}
+.compact-briefing .briefing-grid article>span,.compact-briefing .briefing-directive>span {font-size:clamp(8px,2dvh,11px);margin-bottom:4px;letter-spacing:.06em;}
+.compact-briefing .briefing-grid article>strong {font-size:clamp(14px,4dvh,24px);line-height:1.15;}
+.compact-briefing .briefing-grid article>small {font-size:clamp(10px,2.6dvh,13px);margin-top:5px;}
+.briefing-status {align-self:flex-start;color:#7afbc1;border:1px solid #285f55;padding:4px 8px;margin-top:8px;font-size:clamp(9px,2.3dvh,12px);}
+.briefing-status[data-status="IN PROGRESS"] {color:#ffdd83;}
+.briefing-sides ul {padding:0;margin:0;list-style:none;display:grid;gap:clamp(2px,1dvh,7px);}
+.briefing-sides li {display:flex;align-items:center;gap:8px;min-width:0;font-size:clamp(10px,2.8dvh,14px);line-height:1.15;}
+.compact-briefing .briefing-sides li span {font-size:inherit;margin:0;letter-spacing:0;color:#d9faff;font-weight:500;}
+.briefing-sides li b {color:#52d9ff;}.briefing-sides li.done b,.briefing-sides li.done span {color:#72ffb2;}
+.compact-briefing .briefing-directive {margin:0;padding:clamp(5px,1.5dvh,10px);}
+.compact-briefing .briefing-directive strong {font-size:clamp(10px,2.6dvh,14px);line-height:1.15;}
+.compact-briefing .briefing-directive small {font-size:clamp(9px,2.1dvh,12px);margin-top:3px;line-height:1.15;}
+.compact-briefing-actions {display:flex;justify-content:flex-end;gap:8px;}
+.system-boot .compact-briefing-actions button {min-height:30px;height:clamp(30px,8dvh,42px);padding:3px 14px;font-size:clamp(10px,2.6dvh,13px);}
+.system-boot .system-boot__close {position:fixed;top:calc(50% - min(230px, var(--window-height)/2) + 8px);right:calc(50% - min(440px, var(--window-width)/2) + 8px);width:30px;height:30px;min-height:30px;font-size:22px;}
+@media(max-height:300px){.compact-briefing-header img{width:36px;height:36px}.briefing-status{margin-top:5px;padding:2px 5px}.compact-briefing .briefing-directive>span{display:inline;margin-right:8px}.compact-briefing .briefing-directive strong{display:inline}.compact-briefing .briefing-grid article{padding:5px 8px}}
