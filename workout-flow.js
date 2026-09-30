@@ -19,7 +19,7 @@
  missionForMode=function(m,mode){
   if(reportContext&&report)return report.mission;
   if(!shared()){
-   const pending=saved?.storageKey===key()?saved:read(key());
+   const pending=running&&saved?.storageKey===key()?saved:read(key());
    if(pending?.mission&&(!mode||mode===pending.mission.mode))return pending.mission;
   }
   return original.mission(m,mode);
@@ -130,6 +130,7 @@
   el('completeLiveSet').onclick=completeLiveSet;el('exitWorkoutBtn').onclick=closeWorkout;
   for(const id of ['liveReps','liveWeight'])el(id).addEventListener('input',checkpoint);
   for(const id of ['timedSetToggle','timedSetReset'])el(id).addEventListener('click',checkpoint);
+  el('restPanel').insertAdjacentHTML('beforeend','<button type="button" id="restSaveExit" class="rest-save-exit">SAVE & EXIT</button>');el('restSaveExit').onclick=closeWorkout;
   el('exitWorkoutBtn').textContent='SAVE & EXIT';el('exitWorkoutBtn').setAttribute('aria-label','Save workout progress and exit');
   el('missionDebriefGrowth').parentNode.insertAdjacentHTML('afterend','<p id="missionDebriefBoss"></p>');
  });
