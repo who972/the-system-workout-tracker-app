@@ -143,3 +143,40 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
   #awakeningAssessment.ob-summary .ob-card { padding-block:6px; }
   #awakeningAssessment.ob-summary .ob-actions { margin-top:4px; }
 }
+
+.ob-countdown { margin-bottom:8px; padding:8px; border:1px solid rgba(76,201,240,.45); border-radius:9px; background:rgba(76,201,240,.06); }
+.ob-countdown > span,.ob-countdown > small { display:block; font-size:11px; line-height:1.2; }
+.ob-countdown > strong { display:block; font:800 30px 'JetBrains Mono',monospace; line-height:1.15; }
+.ob-countdown > div { display:flex; gap:6px; margin:4px 0; }
+.ob-countdown button { padding:5px 8px; border:1px solid rgba(76,201,240,.5); border-radius:6px; font-size:12px; }
+@media (orientation:landscape) and (max-height:500px) {
+  #awakeningAssessment .ob-countdown { display:grid; grid-template-columns:1fr auto; gap:2px 6px; padding:4px 6px; margin-bottom:4px; }
+  #awakeningAssessment .ob-countdown > strong { grid-column:2; grid-row:1/3; align-self:center; font-size:24px; }
+  #awakeningAssessment .ob-countdown > div { margin:0; }
+  #awakeningAssessment .ob-countdown > small { grid-column:1/-1; }
+  #awakeningAssessment .ob-countdown button { padding:3px 5px; font-size:11px; }
+}
+/* Expand to the available screen and increase type/targets where height permits. */
+@media (orientation:landscape) and (min-height:300px) and (max-height:500px) {
+  .system-onboarding:not(.ob-path-screen) .ob-card { width:min(1100px,100%); min-height:calc(100dvh - 24px); display:flex; flex-direction:column; padding:10px 18px; }
+  .system-onboarding:not(.ob-path-screen) .ob-content { flex:1; }
+  .system-onboarding:not(.ob-path-screen) h1 { font-size:clamp(24px,7dvh,34px); }
+  .system-onboarding:not(.ob-path-screen) .ob-intro p,
+  .system-onboarding:not(.ob-path-screen) .ob-fields p { font-size:14px; }
+  .system-onboarding:not(.ob-path-screen) .ob-days { font-size:14px; }
+  .system-onboarding:not(.ob-path-screen) .ob-days input { height:34px; font-size:16px; }
+  .system-onboarding:not(.ob-path-screen) .ob-actions button { min-height:38px; font-size:14px; }
+  .system-onboarding:not(.ob-path-screen) .ob-options button { min-height:32px; font-size:14px; }
+  #awakeningAssessment .ob-countdown > strong { font-size:32px; }
+  #awakeningAssessment .ob-countdown button { font-size:13px; min-height:30px; }
+  #awakeningAssessment .ob-summary .ob-awaken strong { font-size:28px; }
+}
+@media (orientation:landscape) and (max-height:280px) {
+  #awakeningAssessment .ob-countdown > span { grid-column:1/-1; font-size:10px; }
+  #awakeningAssessment .ob-countdown > strong { grid-column:1; grid-row:2; font-size:22px; }
+  #awakeningAssessment .ob-countdown > div { grid-column:2; grid-row:2; align-items:center; gap:3px; }
+  #awakeningAssessment .ob-countdown button { white-space:nowrap; font-size:10px; padding:3px; }
+}
+@media (orientation:landscape) and (max-height:280px) {
+  #awakeningAssessment .ob-countdown button { height:24px; min-height:24px; line-height:1.2; }
+}
