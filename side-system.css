@@ -42,3 +42,49 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
 #sideMissionSystem .side-card h3{margin:8px 0;font-size:18px}
 #sideMissionSystem .side-card .side-reward{margin:12px 0;color:#a5f3fc}
 #sideMissionSystem .side-card.is-done{opacity:1;border-color:rgba(74,222,128,.5);border-left-color:#4ade80}
+
+/* Keep all five path choices and navigation within short landscape viewports.
+   Scope to this step so the longer assessment screens retain their scrolling. */
+@media (orientation: landscape) and (max-height: 500px) {
+  .system-onboarding.ob-path-screen {
+    padding: 6px 12px;
+    padding: max(6px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(6px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+  }
+  .ob-path-screen .ob-card {
+    padding: clamp(8px, 3vh, 16px) clamp(12px, 3vw, 26px);
+    padding-block: clamp(8px, 3dvh, 16px);
+  }
+  .ob-path-screen .ob-card h1 {
+    margin: 4px 0;
+    font-size: clamp(22px, 7vh, 34px);
+    font-size: clamp(22px, 7dvh, 34px);
+    line-height: 1.05;
+  }
+  .ob-path-screen .side-tag { display: block; line-height: 1.2; }
+  .ob-path-screen .ob-card > p {
+    margin: 4px 0;
+    font-size: clamp(12px, 3.5vh, 14px);
+    font-size: clamp(12px, 3.5dvh, 14px);
+    line-height: 1.25;
+  }
+  .ob-path-screen .ob-options {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(4px, 1.5vh, 8px);
+    gap: clamp(4px, 1.5dvh, 8px);
+    margin: 6px 0;
+  }
+  .ob-path-screen .ob-options button {
+    min-height: clamp(30px, 11vh, 44px);
+    min-height: clamp(30px, 11dvh, 44px);
+    padding: 4px 8px;
+    font-size: clamp(12px, 3.5vh, 14px);
+    font-size: clamp(12px, 3.5dvh, 14px);
+    line-height: 1.2;
+  }
+  .ob-path-screen .ob-actions { margin-top: 6px; }
+  .ob-path-screen .ob-actions button {
+    min-height: clamp(32px, 11vh, 44px);
+    min-height: clamp(32px, 11dvh, 44px);
+    padding-block: 4px;
+  }
+}
