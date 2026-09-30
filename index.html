@@ -585,9 +585,9 @@
   <div class="workout-clock" id="workoutClock">00:00</div>
   <div class="workout-progress"><div id="workoutProgressFill"></div></div>
   <div class="workout-stage">
-    <span id="liveExerciseCount" class="eyebrow">EXERCISE 1</span><h1 id="liveExerciseName">Ready</h1><p id="liveTarget">Press start to begin.</p>
+    <span id="liveExerciseCount" class="eyebrow">EXERCISE 1</span><h1 id="liveExerciseName">Ready</h1><p id="liveTarget">Press start to begin.</p><p id="liveSetGuidance" role="status"></p>
     <div id="timedSet" class="timed-set" hidden><div><small>TIMED SET</small><strong id="timedSetClock">00:30</strong></div><div class="timed-set__actions"><button id="timedSetToggle" type="button">START COUNTDOWN</button><button id="timedSetReset" type="button">RESET</button></div><small id="timedSetStatus" role="status">Start when you're ready.</small></div>
-    <div class="live-set-grid"><label><span id="liveRepsLabel">REPS / SEC</span><input id="liveReps" type="number" min="0" inputmode="decimal"></label><label>WEIGHT (LB)<input id="liveWeight" type="number" min="0" step="0.5" inputmode="decimal"></label></div>
+    <div class="live-set-grid"><label><span id="liveRepsLabel">REPS / SEC</span><input id="liveReps" type="number" min="0" inputmode="decimal"></label><label><span id="liveWeightLabel">WEIGHT (LB • OPTIONAL)</span><input id="liveWeight" type="number" min="0" step="0.5" inputmode="decimal"></label></div>
     <button id="completeLiveSet" class="workout-main-btn" type="button">COMPLETE SET</button>
   </div>
   <div id="restPanel" class="rest-panel" hidden><span class="eyebrow">REST</span><div id="restClock">00:45</div><button id="skipRestBtn" type="button">SKIP REST</button></div>
@@ -674,5 +674,6 @@ if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.
 })();
 </script>
 <script src="train-together.js?v=1"></script>
+<script src="workout-flow.js?v=52"></script>
 </body>
 </html>
