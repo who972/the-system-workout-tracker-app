@@ -51,8 +51,8 @@
     panel.id = 'systemHealthConnectDialog';
     panel.className = 'health-connect-dialog';
     panel.setAttribute('aria-labelledby', 'systemHealthConnectTitle');
-    panel.style.cssText = 'background:#091723;color:#d9f7ff;border:1px solid #36cddd;width:min(780px,90vw);max-height:85dvh;overflow:auto;padding:18px;';
-    panel.innerHTML = '<h3 id="systemHealthConnectTitle" style="margin:0">SYSTEM // HEALTH CONNECT</h3><p data-status></p><p>Galaxy Watch → Samsung Health → Health Connect. Enable sharing in Samsung Health, then allow access here. Read-only; refresh to see synced data.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button data-connect>CONNECT / PERMISSIONS</button><button data-refresh>REFRESH</button><button data-settings>SETTINGS / INSTALL</button><button data-close>CLOSE</button></div><p data-updated></p><div data-values style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px"></div><small>Today’s totals • Sleep sessions: past 24 hours. Missing data means no shared records or permission. Sleep sessions may include awake time; overlapping sources are shown separately.</small>';
+
+    panel.innerHTML = '<header class="health-connect-window-head"><h3 id="systemHealthConnectTitle">SYSTEM // HEALTH CONNECT</h3><button type="button" data-exit aria-label="Exit Health Connect">EXIT ×</button></header><div class="health-connect-window-body"><p data-status></p><p>Galaxy Watch → Samsung Health → Health Connect. Enable sharing in Samsung Health, then allow access here. Read-only; refresh to see synced data.</p><div class="health-connect-toolbar"><button data-connect>CONNECT / PERMISSIONS</button><button data-refresh>REFRESH</button><button data-settings>SETTINGS / INSTALL</button><button data-close>CLOSE</button></div><p data-updated></p><div data-values class="health-connect-values"></div><small>Today’s totals • Sleep sessions: past 24 hours. Missing data means no shared records or permission. Sleep sessions may include awake time; overlapping sources are shown separately.</small></div>';
     document.body.append(panel);
     const bridge = () => window.AndroidHealthConnect;
     const status = panel.querySelector('[data-status]');
@@ -126,6 +126,7 @@
       try { await bridge()?.openSettings(); } catch (_) { status.textContent = 'Could not open settings. Open Health Connect from Android Settings.'; }
     };
     panel.querySelector('[data-close]').onclick = () => panel.close();
+    panel.querySelector('[data-exit]').onclick = () => panel.close();
     panel.addEventListener('close', () => { generation++; reset(); });
     document.addEventListener('visibilitychange', () => {
       if (document.visibilityState === 'visible' && panel.open) refresh();

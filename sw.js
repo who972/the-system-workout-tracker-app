@@ -1,5 +1,5 @@
-const CACHE = "the-system-os-v48-health-dialog";
-const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./train-together.js", "./account-data.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
+const CACHE = "the-system-os-v49-responsive-windows";
+const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./window-layout.css", "./app.js", "./train-together.js", "./account-data.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
 });

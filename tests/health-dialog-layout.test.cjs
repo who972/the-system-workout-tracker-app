@@ -11,6 +11,7 @@ const {chromium}=require('playwright');
    await page.route('**/*',r=>r.abort());
    await page.setContent(html);
    await page.addStyleTag({content:fs.readFileSync('styles.css','utf8')});
+   await page.addStyleTag({content:fs.readFileSync('window-layout.css','utf8')});
    await page.evaluate(()=>{
     document.body.classList.add('system-os-ready');
     window.AndroidHealthConnect={getStatus:async()=>({availability:'available',connected:false,permissions:[]}),requestPermissions:async()=>({granted:false})};
@@ -25,8 +26,11 @@ const {chromium}=require('playwright');
    const box=await modal.boundingBox();
    assert(box.width>0&&box.height>0&&box.x>=0&&box.y>=0&&box.x+box.width<=width+1&&box.y+box.height<=height+1,`${width}x${height}`);
    assert.match(await modal.locator('[data-status]').textContent(),/Disconnected/);
+   await page.evaluate(()=>{const data=document.querySelector('[data-values]');data.innerHTML=Array.from({length:60},()=>'<p>Long session history</p>').join('');document.querySelector('.health-connect-window-body').scrollTop=99999});
+   const exit=await modal.locator('[data-exit]').boundingBox();
+   assert(exit&&exit.y>=0&&exit.y+exit.height<=height,'Exit must remain visible after scrolling');
    await modal.locator('[data-connect]').click();
-   await modal.locator('[data-close]').click();
+   await modal.locator('[data-exit]').click();
    assert.equal(await modal.isVisible(),false);
    assert.equal(await modal.evaluate(e=>e.matches(':modal')),false);
    // HEALTH tab's legacy button must route to the same working dialog.
@@ -36,7 +40,7 @@ const {chromium}=require('playwright');
    });
    await modal.waitFor({state:'visible'});
    assert.equal(await page.evaluate(()=>window.legacyClicked),undefined);
-   await modal.locator('[data-close]').click();
+   await modal.locator('[data-exit]').click();
    await page.close();
   }
   console.log('PASS: Health dialog visible with real OS CSS, centered at four landscape sizes, closes cleanly, and opens from the HEALTH tab');

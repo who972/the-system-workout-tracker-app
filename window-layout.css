@@ -1,0 +1,182 @@
+/* Shared window geometry. Center the composition; keep labels left aligned. */
+:root {
+  --window-gap: clamp(8px, 2vmin, 20px);
+  --window-width: min(1400px, calc(100vw - 2 * var(--window-gap)));
+  --window-height: min(900px, calc(100dvh - 2 * var(--window-gap)));
+  --window-padding: clamp(10px, 2vmin, 22px);
+  --window-duration: 240ms;
+}
+body.system-os-ready .os-module-stage:not(.minimized) {
+  position:fixed; inset:auto; left:50%; top:50%;
+  width:var(--window-width); height:var(--window-height);
+  transform:translate(-50%,-50%); box-sizing:border-box;
+  grid-template-rows:auto minmax(0,1fr);
+}
+body.system-os-ready .os-module-stage.active:not(.minimized) {
+  animation:systemWindowProject var(--window-duration) cubic-bezier(.16,1,.3,1);
+}
+body.system-os-ready .os-module-head {
+  position:relative; z-index:6; padding:clamp(7px,1.6dvh,16px) var(--window-padding);
+  align-items:center; gap:10px;
+}
+body.system-os-ready .os-module-head > div:first-child {min-width:0;}
+body.system-os-ready .os-module-head strong {font-size:clamp(14px,3.6dvh,24px);}
+body.system-os-ready .os-module-controls {flex-shrink:0;}
+body.system-os-ready .os-module-controls button {min-width:38px;min-height:34px;width:auto;padding:5px 10px;}
+body.system-os-ready .os-module-body {
+  min-height:0; min-width:0; padding:var(--window-padding);
+  display:flex; flex-direction:column; justify-content:safe center;
+  overflow:auto; overscroll-behavior:contain;
+}
+body.system-os-ready .os-module-body > * {
+  flex-shrink:0; width:100%; box-sizing:border-box; min-width:0;
+  margin-inline:auto!important;
+}
+body.system-os-ready .os-module-body > #achievementGrid {align-content:center;}
+body.system-os-ready .os-module-body .section-header {align-items:center;}
+body.system-os-ready .os-module-body :is(.status-stat-grid,.adaptive-mission-grid,.health-connect-grid) {
+  gap:clamp(8px,1.5vmin,16px);
+}
+/* Long lists scroll in the content area; window controls remain outside it. */
+body.system-os-ready .os-module-body :is(.side-list,.boss-list) {grid-template-columns:repeat(2,minmax(0,1fr));align-items:stretch;}
+body.system-os-ready .os-module-body .side-board-progress {grid-column:1/-1;}
+body.system-os-ready .os-module-body .side-card {display:flex;flex-direction:column;justify-content:space-between;}
+body.system-os-ready .os-module-body .side-card > button {margin-top:auto;}
+
+/* Native telemetry dialog: fixed header with an exit above the scrolling data. */
+.health-connect-dialog[open] {
+  display:grid; grid-template-rows:auto minmax(0,1fr);
+  width:var(--window-width); max-width:var(--window-width);
+  height:var(--window-height); max-height:var(--window-height);
+  padding:0; overflow:hidden; background:#091723; color:#d9f7ff;
+  border:1px solid #36cddd; border-radius:12px;
+  animation:systemPanelProject var(--window-duration) ease-out;
+}
+.health-connect-window-head {
+  display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding:clamp(8px,1.6dvh,16px) var(--window-padding);
+  border-bottom:1px solid #285969;background:#091723;
+}
+.health-connect-window-head h3 {margin:0;font-size:clamp(14px,3.6dvh,22px);}
+.health-connect-window-head [data-exit] {flex-shrink:0;min-width:76px;}
+.health-connect-window-body {min-height:0;overflow:auto;padding:var(--window-padding);overscroll-behavior:contain;}
+.health-connect-window-body > p {margin:0 0 10px;line-height:1.35;}
+.health-connect-toolbar {display:flex;flex-wrap:wrap;gap:8px;margin-bottom:10px;}
+.health-connect-values {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;}
+.health-connect-values > div {min-width:0;display:flex;flex-direction:column;justify-content:center;min-height:65px;}
+.health-connect-values > div p {margin:8px 0 0;font-size:clamp(13px,3dvh,20px);}
+.health-connect-values > p {overflow-wrap:anywhere;}
+.health-connect-window-body > small {display:block;margin-top:10px;}
+
+/* Short message windows stay proportional; they don't stretch sentences across the screen. */
+:is(.account-delete-dialog[open],.path-picker-card,.mlc-card,.mission-debrief__card) {
+  box-sizing:border-box; max-height:var(--window-height); overflow:auto;
+}
+.account-delete-dialog[open] {width:min(680px,var(--window-width));padding:var(--window-padding);animation:systemPanelProject var(--window-duration) ease-out;}
+.path-picker.active,.mission-launch-confirm.active,.mission-debrief.active {padding:var(--window-gap);}
+.path-picker.active .path-picker-card {width:min(1100px,var(--window-width));padding:var(--window-padding);animation:systemPanelProject var(--window-duration) ease-out;}
+.path-picker.active .path-options {grid-template-columns:repeat(2,minmax(0,1fr));}
+.path-picker-head {position:sticky;top:0;background:#0d1118;z-index:2;}
+.mission-launch-confirm.active:not(.launching) .mlc-card {width:min(1200px,var(--window-width));padding:var(--window-padding);animation:systemPanelProject var(--window-duration) ease-out;}
+.mission-debrief.active .mission-debrief__card {width:min(1000px,var(--window-width));padding:var(--window-padding);animation:systemPanelProject var(--window-duration) ease-out;}
+.system-onboarding.active {animation:systemWindowFade var(--window-duration) ease-out;}
+.workout-mode.active {animation:systemWindowFade var(--window-duration) ease-out;}
+.system-alert-center.active {animation:systemWindowFade var(--window-duration) ease-out;}
+
+/* Setup retains its tested small-phone controls; taller screens gain balanced space. */
+@media (orientation:landscape) and (min-height:320px) {
+  .system-onboarding:not(.ob-path-screen) .ob-card {
+    box-sizing:border-box;width:var(--window-width);max-height:var(--window-height);
+    min-height:var(--window-height);padding:var(--window-padding);
+    display:flex;flex-direction:column;
+  }
+  .system-onboarding:not(.ob-path-screen) .ob-content {flex:1;min-height:0;align-items:center;}
+  .system-onboarding:not(.ob-path-screen) .ob-actions {flex-shrink:0;}
+}
+/* Classification fills the middle, with a rank card, six stat cards, and path cards. */
+#awakeningAssessment.ob-summary .ob-card {display:flex;flex-direction:column;box-sizing:border-box;}
+#awakeningAssessment.ob-summary .ob-content {display:flex;flex-direction:column;gap:10px;flex:1;min-height:0;}
+#awakeningAssessment.ob-summary .ob-intro {display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;margin:0;}
+#awakeningAssessment.ob-summary .ob-intro h1 {font-size:clamp(18px,4.4dvh,34px);margin:0;}
+#awakeningAssessment.ob-summary .ob-fields {display:flex;flex:1;min-height:0;width:100%;}
+.classification-dashboard {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);grid-template-rows:minmax(0,1fr) auto auto;gap:12px;width:100%;min-height:0;}
+#awakeningAssessment.ob-summary .ob-awaken {margin:0;padding:clamp(8px,2dvh,22px);align-content:center;gap:clamp(4px,1dvh,10px);}
+#awakeningAssessment.ob-summary .ob-awaken strong {font-size:clamp(26px,9dvh,64px);line-height:1.1;}
+#awakeningAssessment.ob-summary .ob-awaken small {font-size:clamp(10px,2.4dvh,15px);line-height:1.25;letter-spacing:.02em;}
+#awakeningAssessment.ob-summary .ob-awaken span {font-size:clamp(10px,2.6dvh,16px);}
+#awakeningAssessment.ob-summary .assessment-list {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:8px;}
+#awakeningAssessment.ob-summary .assessment-list p {display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;margin:0!important;padding:8px;border:1px solid #285969;border-radius:9px;background:#091923;line-height:1.2;}
+#awakeningAssessment.ob-summary .assessment-list b {font-size:clamp(11px,2.8dvh,17px);}
+#awakeningAssessment.ob-summary .assessment-list strong {font-size:clamp(22px,6dvh,40px);color:#9feeff;}
+#awakeningAssessment.ob-summary .assessment-list small {font-size:clamp(9px,2dvh,12px);text-align:center;}
+.classification-path {display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;border:1px solid #285969;border-radius:9px;background:#091923;}
+.classification-path span {font:700 clamp(9px,2.4dvh,14px) var(--font-mono);letter-spacing:.05em;}
+.classification-path strong {font-size:clamp(13px,3.2dvh,22px);}
+.classification-note {grid-column:1/-1;font-size:clamp(10px,2.6dvh,14px);line-height:1.3;}
+#awakeningAssessment.ob-summary .ob-actions {margin-top:10px;padding-top:8px;border-top:1px solid #285969;}
+@media (orientation:landscape) and (max-height:319px) {
+  #awakeningAssessment.ob-summary .ob-content {gap:4px;}
+  .classification-dashboard {gap:5px;}
+  #awakeningAssessment.ob-summary .assessment-list {gap:4px;}
+  #awakeningAssessment.ob-summary .assessment-list p {padding:3px;gap:2px;}
+  #awakeningAssessment.ob-summary .ob-awaken {padding:5px;gap:3px;}
+  #awakeningAssessment.ob-summary .ob-awaken strong {font-size:24px;}
+  #awakeningAssessment.ob-summary .ob-awaken small {font-size:9px;line-height:1.15;}
+  #awakeningAssessment.ob-summary .ob-awaken span {font-size:9px;}
+  #awakeningAssessment.ob-summary .assessment-list strong {font-size:18px;}
+  #awakeningAssessment.ob-summary .assessment-list b {font-size:10px;}
+  #awakeningAssessment.ob-summary .assessment-list small {font-size:8px;}
+  .classification-path {padding:4px 6px;}
+  .classification-note {font-size:9px;line-height:1.1;}
+  #awakeningAssessment.ob-summary .ob-actions {margin-top:4px;padding-top:3px;}
+}
+@media (max-width:600px) {
+  .health-connect-values {grid-template-columns:repeat(2,minmax(0,1fr));}
+  body.system-os-ready .os-module-body :is(.side-list,.boss-list) {grid-template-columns:1fr;}
+}
+@media (orientation:portrait) {
+  .classification-dashboard {grid-template-columns:1fr;grid-template-rows:auto;}
+  #awakeningAssessment.ob-summary .ob-intro {align-items:flex-start;flex-direction:column;}
+  .classification-note {grid-column:1;}
+}
+@keyframes systemWindowProject {
+  from {opacity:0;transform:translate(-50%,-50%) scale(.96);}
+  to {opacity:1;transform:translate(-50%,-50%) scale(1);}
+}
+@keyframes systemPanelProject {from{opacity:0;transform:translateY(8px) scale(.97);}to{opacity:1;transform:none;}}
+@keyframes systemWindowFade {from{opacity:0;}to{opacity:1;}}
+@media (prefers-reduced-motion:reduce) {
+  :is(.os-module-stage.active,.health-connect-dialog[open],.account-delete-dialog[open],.system-onboarding.active,.workout-mode.active,.system-alert-center.active),
+  :is(.path-picker.active,.mission-launch-confirm.active,.mission-debrief.active) > * {animation:none!important;transition:none!important;}
+}
+@media (orientation:landscape) and (max-height:319px) {
+  #awakeningAssessment.ob-summary .ob-card {width:var(--window-width);height:var(--window-height);min-height:0;padding:6px 10px;}
+  #awakeningAssessment.ob-summary .assessment-list {grid-template-columns:repeat(2,minmax(0,1fr));grid-template-rows:repeat(3,minmax(0,1fr));}
+  #awakeningAssessment.ob-summary .assessment-list p {display:grid;grid-template-columns:minmax(0,1fr) auto;align-content:center;padding:2px 4px;}
+  #awakeningAssessment.ob-summary .assessment-list strong {font-size:16px;}
+  #awakeningAssessment.ob-summary .assessment-list small {grid-column:1/-1;line-height:1;}
+  #awakeningAssessment.ob-summary .ob-awaken small {font-size:8px;}
+  #awakeningAssessment.ob-summary .ob-awaken {padding:4px;gap:2px;}
+  #awakeningAssessment.ob-summary .ob-actions button {min-height:30px;}
+  .classification-path strong {font-size:12px;}
+  .classification-note {font-size:8px;}
+}
+.auth-gate:not([hidden]) .auth-card,.system-boot:not([hidden]) .system-boot__panel:not([hidden]) {animation:systemPanelProject var(--window-duration) ease-out;}
+@media(prefers-reduced-motion:reduce){.auth-gate .auth-card,.system-boot .system-boot__panel{animation:none!important;}}
+/* Alerts follow the same centered shell; long feeds use the available width. */
+.system-alert-center {display:none;left:50%;top:50%;right:auto;width:var(--window-width);height:var(--window-height);transform:translate(-50%,-50%);border:1px solid rgba(0,229,255,.35);border-radius:12px;transition:none;}
+.system-alert-center.active {display:grid;right:auto;animation:systemWindowProject var(--window-duration) ease-out;}
+.system-alert-center header {padding:var(--window-padding);}
+.system-alert-center header button {min-width:40px;min-height:36px;}
+.system-alert-center .alert-feed {min-height:0;display:grid;grid-template-columns:repeat(auto-fit,minmax(min(280px,100%),1fr));align-content:start;gap:10px;padding:var(--window-padding);}
+.system-alert-center .system-alert {border:1px solid rgba(0,229,255,.12);border-radius:7px;font-size:12px;padding:12px;}
+.system-alert-center .system-alert strong,.system-alert-center .system-alert p {font-size:12px;}
+.system-alert-center .system-alert small {font-size:10px;}
+@media(prefers-reduced-motion:reduce){.system-alert-center.active{animation:none!important;}}
+/* Grid tracks may shrink with the window instead of inheriting input widths. */
+body.system-os-ready .os-module-body .builder-grid {grid-template-columns:minmax(0,1.3fr) minmax(0,1fr);}
+body.system-os-ready .os-module-body :is(.builder-card,.builder-form,.builder-row,.builder-exercise) {min-width:0;}
+body.system-os-ready .os-module-body .builder-row {grid-template-columns:minmax(0,2fr) repeat(3,minmax(0,1fr));}
+body.system-os-ready .os-module-body .builder-exercise {grid-template-columns:minmax(0,1.6fr) minmax(0,.6fr) minmax(0,.8fr) minmax(0,.8fr) auto;}
+body.system-os-ready .os-module-body :is(input,select,textarea).form-input {width:100%;min-width:0;box-sizing:border-box;}
+@media(max-width:800px){body.system-os-ready .os-module-body .builder-grid{grid-template-columns:1fr;}body.system-os-ready .os-module-body :is(.builder-row,.builder-exercise){grid-template-columns:repeat(2,minmax(0,1fr));}}
