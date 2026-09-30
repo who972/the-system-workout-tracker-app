@@ -36,3 +36,34 @@ PGLITE_MODULE=/path/to/node_modules/@electric-sql/pglite node tests/account-data
 ```
 
 The database test uses an isolated PostgreSQL runtime, loads the migrations, and checks reset isolation, rollback, authentication, deletion permissions and cascades. It does not touch live accounts.
+
+## Train Together
+
+From BEGIN MISSION / the workout briefing, choose TRAIN TOGETHER, then HOST SESSION
+or JOIN SESSION with the host's code. Two signed-in players follow the host's
+workout and advance when both have completed the current set. Reps, weights,
+records, XP and account progression stay individual. XP uses each player's own
+mission reward scaled to the shared workout mode. Solo LAUNCH MISSION is unchanged.
+Sessions expire after four hours; exiting cancels the shared session. Connection
+failures retain entered sets and allow safe retries. Session synchronization polls
+Supabase every 1.5 seconds while connected. Reloading the app ends the local link;
+start a new session after a reload. Saved individual entries remain available.
+
+Apply `supabase/migrations/20260930010956_train_together.sql` before releasing.
+Clients can only read sessions they participate in; authenticated RPCs enforce
+joining, two-player capacity, readiness, expiry and cancellation atomically.
+No reps or weights are stored in the shared table. Existing private backup and
+social profile sync paths continue to handle individual account data.
+
+The Android packaging workflow includes `train-together.js`. To run the integration
+test, install `@electric-sql/pglite@0.3.14` and `jsdom@26.1.0` in an isolated test
+folder and point these environment variables to their module directories:
+
+```sh
+JSDOM_MODULE=/path/to/node_modules/jsdom PGLITE_MODULE=/path/to/node_modules/@electric-sql/pglite node tests/train-together.test.cjs
+```
+
+This exercises production solo start/set/finish functions and the cooperative UI
+against migrated PostgreSQL, including separate player storage/rewards, network
+failure, retries, membership, capacity, cancellation and expiry. It does not replace
+a live two-device check after migration deployment.
