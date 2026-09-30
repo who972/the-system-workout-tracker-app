@@ -1,7 +1,7 @@
 /* Device-only clearing and progress snapshots. No cloud or account deletion here. */
 (function(root){
   const owned=k=>/^(theSystem|system[A-Z]|the_system_|workoutStartedAt:|customMissionDone:|weeklyTrainingCredit:|weeklyWorkoutCredit:|competitiveResultsSeen:)/.test(k);
-  const progress=k=>/^(systemMission|systemWorkoutSessions$|systemProgression|systemAwakeningAssessment|systemLegacy|systemIdentity|systemAscension|systemSocialIdentityCard$|systemAlerts|workoutStartedAt:|customMissionDone:|weeklyTrainingCredit:|weeklyWorkoutCredit:|competitiveResultsSeen:)/.test(k);
+  const progress=k=>/^(systemTrainTogetherProgress|systemMission|systemWorkoutSessions$|systemProgression|systemAwakeningAssessment|systemLegacy|systemIdentity|systemAscension|systemSocialIdentityCard$|systemAlerts|workoutStartedAt:|customMissionDone:|weeklyTrainingCredit:|weeklyWorkoutCredit:|competitiveResultsSeen:)/.test(k);
   function resetSnapshot(source,fresh){
     const next=Object.fromEntries(Object.entries(source).filter(([k])=>!progress(k)));
     next.the_system_workout_tracker_state=JSON.stringify(fresh);

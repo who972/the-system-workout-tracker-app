@@ -8,6 +8,9 @@ on:
       - "android-wrapper/**"
       - "index.html"
       - "app.js"
+      - "train-together.js"
+      - "tests/train-together.test.cjs"
+      - "supabase/migrations/**"
       - "account-data.js"
       - "tests/account-data.test.cjs"
       - "styles.css"
@@ -39,10 +42,17 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
+      - name: Verify solo and Train Together flows
+        shell: bash
+        run: |
+          npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/train-together.test.cjs
+
       - name: Package SYSTEM web app
         shell: bash
         run: |
           set -euo pipefail
+          node --check train-together.js
           node --check app.js
           node --check account-data.js
           node tests/account-data.test.cjs
@@ -51,7 +61,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp index.html app.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"

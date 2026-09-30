@@ -2525,3 +2525,10 @@ body.system-os-ready .os-module-body > #achievementGrid .achievement-card--locke
 .system-entry-screen{display:grid;place-items:center}
 .system-entry-screen__frame{position:relative;width:min(100vw,calc(100dvh * 1672 / 941));height:min(100dvh,calc(100vw * 941 / 1672));flex:none}
 .system-entry-screen__frame .system-entry-screen__image{object-fit:contain;object-position:center}
+
+/* Secondary cooperative launch, sized for landscape phones. */
+.tt-secondary{display:block;width:100%;margin-top:8px;padding:10px;border:1px solid #4ddfff;background:#102338;color:#aeeeff;cursor:pointer}
+#trainTogetherPanel{padding:12px;border:1px solid #4ddfff;margin-top:8px;max-height:35vh;overflow:auto}
+#trainTogetherPanel button,#trainTogetherPanel input{padding:8px;margin:4px;max-width:100%}
+#ttLive{position:relative;z-index:2;background:#102338;padding:8px;color:#aeeeff;text-align:center}
+#ttLive[hidden],#trainTogetherPanel[hidden]{display:none}
