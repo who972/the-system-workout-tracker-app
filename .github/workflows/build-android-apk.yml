@@ -12,6 +12,7 @@ on:
       - "tests/account-data.test.cjs"
       - "styles.css"
       - "side-system.js"
+      - "side-system.css"
       - "health-connect.js"
       - "manifest.webmanifest"
       - "icon.svg"
@@ -50,7 +51,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js account-data.js styles.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp index.html app.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -95,6 +96,7 @@ jobs:
           unzip -l "$APK" | grep -q "assets/www/enter_the_system_landscape.jpg"
           cmp enter_the_system_landscape.jpg <(unzip -p "$APK" assets/www/enter_the_system_landscape.jpg)
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
+          cmp side-system.css <(unzip -p "$APK" assets/www/side-system.css)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
           cmp account-data.js <(unzip -p "$APK" assets/www/account-data.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)
@@ -110,3 +112,4 @@ jobs:
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+

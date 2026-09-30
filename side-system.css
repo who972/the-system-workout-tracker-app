@@ -34,3 +34,11 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
 
 /* v35 Boss victory report */
 .bb-victory .bb-new-rank{margin:18px auto 8px;font-size:clamp(2.4rem,10vw,5rem);font-weight:900;letter-spacing:.08em}.bb-victory .bb-result-stats{margin-top:18px}.bb-victory .bb-analysis{margin-top:4px}
+
+
+/* Keep each optional objective visually separate inside its OS window. */
+#sideMissionSystem .side-list{display:grid;gap:16px}
+#sideMissionSystem .side-card{padding:18px;border:1px solid rgba(103,232,249,.45);border-left:4px solid #22d3ee;border-radius:12px;background:linear-gradient(135deg,rgba(12,35,48,.96),rgba(5,17,28,.98));box-shadow:0 4px 16px rgba(0,0,0,.28)}
+#sideMissionSystem .side-card h3{margin:8px 0;font-size:18px}
+#sideMissionSystem .side-card .side-reward{margin:12px 0;color:#a5f3fc}
+#sideMissionSystem .side-card.is-done{opacity:1;border-color:rgba(74,222,128,.5);border-left-color:#4ade80}
