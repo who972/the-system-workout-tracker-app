@@ -46,9 +46,11 @@ jobs:
       - name: Verify solo and Train Together flows
         shell: bash
         run: |
-          npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0
+          npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0 playwright@1.51.1
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/train-together.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node --test tests/health-panel.test.cjs
+          node "$RUNNER_TEMP/train-tests/node_modules/playwright/cli.js" install --with-deps chromium
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/health-dialog-layout.test.cjs
 
       - name: Package SYSTEM web app
         shell: bash
@@ -120,7 +122,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v47-health-connect-debug-apk
+          name: the-system-v48-health-connect-dialog-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14

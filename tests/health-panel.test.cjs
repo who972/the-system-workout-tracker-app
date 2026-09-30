@@ -3,14 +3,15 @@ const assert=require('node:assert/strict');
 const {JSDOM}=require(process.env.JSDOM_MODULE||'jsdom');
 const fs=require('node:fs');
 async function setup(bridge){
- const dom=new JSDOM('<div class="hud-module"></div>',{runScripts:'outside-only'});
+ const dom=new JSDOM('<div class="hud-module" id="playerStatus"></div><div class="hud-module" id="hudHealthTelemetry"></div>',{runScripts:'outside-only'});
  const w=dom.window;
  w.HTMLDialogElement.prototype.showModal=function(){this.open=true};
  w.HTMLDialogElement.prototype.close=function(){this.open=false;this.dispatchEvent(new w.Event('close'))};
  if(bridge) w.AndroidHealthConnect=bridge;
  w.eval(fs.readFileSync('health-connect.js','utf8'));
  await new Promise(r=>setImmediate(r));
- w.document.querySelector('.hud-module button').click();
+ assert.equal(w.document.querySelector('#playerStatus button'),null);
+ w.document.querySelector('#openHealthConnect').click();
  await new Promise(r=>setImmediate(r));
  return {dom,w,el:s=>w.document.querySelector(s)};
 }

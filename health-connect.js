@@ -40,14 +40,19 @@
 (() => {
   if (typeof document === 'undefined') return;
   const install = () => {
-    const host = document.querySelector('.hud-module');
+    const host = document.getElementById('hudHealthTelemetry');
     if (!host) return;
     const button = document.createElement('button');
+    button.type = 'button';
+    button.id = 'openHealthConnect';
     button.textContent = 'HEALTH CONNECT';
     host.append(button);
     const panel = document.createElement('dialog');
+    panel.id = 'systemHealthConnectDialog';
+    panel.className = 'health-connect-dialog';
+    panel.setAttribute('aria-labelledby', 'systemHealthConnectTitle');
     panel.style.cssText = 'background:#091723;color:#d9f7ff;border:1px solid #36cddd;width:min(780px,90vw);max-height:85dvh;overflow:auto;padding:18px;';
-    panel.innerHTML = '<h3 style="margin:0">SYSTEM // HEALTH CONNECT</h3><p data-status></p><p>Galaxy Watch → Samsung Health → Health Connect. Enable sharing in Samsung Health, then allow access here. Read-only; refresh to see synced data.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button data-connect>CONNECT / PERMISSIONS</button><button data-refresh>REFRESH</button><button data-settings>SETTINGS / INSTALL</button><button data-close>CLOSE</button></div><p data-updated></p><div data-values style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px"></div><small>Today’s totals • Sleep sessions: past 24 hours. Missing data means no shared records or permission. Sleep sessions may include awake time; overlapping sources are shown separately.</small>';
+    panel.innerHTML = '<h3 id="systemHealthConnectTitle" style="margin:0">SYSTEM // HEALTH CONNECT</h3><p data-status></p><p>Galaxy Watch → Samsung Health → Health Connect. Enable sharing in Samsung Health, then allow access here. Read-only; refresh to see synced data.</p><div style="display:flex;gap:8px;flex-wrap:wrap"><button data-connect>CONNECT / PERMISSIONS</button><button data-refresh>REFRESH</button><button data-settings>SETTINGS / INSTALL</button><button data-close>CLOSE</button></div><p data-updated></p><div data-values style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px"></div><small>Today’s totals • Sleep sessions: past 24 hours. Missing data means no shared records or permission. Sleep sessions may include awake time; overlapping sources are shown separately.</small>';
     document.body.append(panel);
     const bridge = () => window.AndroidHealthConnect;
     const status = panel.querySelector('[data-status]');
@@ -105,7 +110,16 @@
         panel.querySelectorAll('button').forEach(b => b.disabled = false);
       }
     };
-    button.onclick = () => { panel.showModal(); refresh(); };
+    const openPanel = () => { if (!panel.open) panel.showModal(); refresh(); };
+    button.onclick = openPanel;
+    // The existing HEALTH tab also opens this full permissions/data panel.
+    document.addEventListener('click', event => {
+      if (event.target.closest?.('#healthConnectAction')) {
+        event.preventDefault();
+        event.stopImmediatePropagation();
+        openPanel();
+      }
+    }, true);
     panel.querySelector('[data-connect]').onclick = () => refresh(true);
     panel.querySelector('[data-refresh]').onclick = () => refresh();
     panel.querySelector('[data-settings]').onclick = async () => {
