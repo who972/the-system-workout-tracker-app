@@ -47,6 +47,7 @@ jobs:
         run: |
           npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/train-together.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node --test tests/health-panel.test.cjs
 
       - name: Package SYSTEM web app
         shell: bash
