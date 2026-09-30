@@ -2520,3 +2520,8 @@ body.system-os-ready .os-module-body > #achievementGrid .achievement-card--locke
 .account-danger .danger-btn,.account-delete-dialog button{min-height:44px;padding:10px 14px;border:1px solid #f87171;border-radius:8px;background:rgba(248,113,113,.10);color:#fff;cursor:pointer}
 .account-danger .danger-btn:focus-visible,.account-delete-dialog button:focus-visible{outline:2px solid #67e8f9;outline-offset:3px}
 .account-delete-dialog .settings-form{min-width:0}
+
+/* Fit the complete 1672 x 941 artwork; keep its embedded button aligned. */
+.system-entry-screen{display:grid;place-items:center}
+.system-entry-screen__frame{position:relative;width:min(100vw,calc(100dvh * 1672 / 941));height:min(100dvh,calc(100vw * 941 / 1672));flex:none}
+.system-entry-screen__frame .system-entry-screen__image{object-fit:contain;object-position:center}
