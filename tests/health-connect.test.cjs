@@ -106,3 +106,15 @@ test('transport correlates concurrent responses, propagates errors, and times ou
   await assert.rejects(timeout, /timeout/);
   reply(sent[3].id, {steps:999}); // Late response is ignored.
 });
+test('Phase 1 transport supports status, granular access, data and settings', async () => {
+  const sent=[];const timers=new Map();let sequence=0;
+  const window={SystemHealthNative:{postMessage:v=>sent.push(JSON.parse(v))}};
+  vm.runInNewContext(fs.readFileSync(path.join(root,'health-connect.js'),'utf8'),{window,setTimeout:fn=>{timers.set(++sequence,fn);return sequence},clearTimeout:id=>timers.delete(id)});
+  const api=window.AndroidHealthConnect;
+  for (const [method,result] of [['getStatus',{availability:'unavailable',permissions:[]}],['requestPermissions',{granted:false,permissions:['steps']}],['readHealthData',{steps:0,errors:{heartRate:'permission-required'}}],['openSettings',{opened:true}]]) {
+    const pending=api[method]();const request=sent.at(-1);assert.equal(request.method,method);
+    window.SystemHealthNative.onmessage({data:JSON.stringify({id:request.id,result})});
+    assert.deepEqual(JSON.parse(JSON.stringify(await pending)),result);
+  }
+  assert.equal(timers.size,0);
+});

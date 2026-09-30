@@ -108,6 +108,7 @@ const server = http.createServer((req, res) => {
       console.log(`PASS ${width}x${height}: all 9 onboarding/assessment screens fit and completion saves input`);
     }
     await page.clock.install();
+    await page.clock.pauseAt(new Date());
     await page.setViewportSize({width:740,height:360});
     await page.evaluate(()=>SystemOnboarding.assessment());
     assert.match(await page.locator('#awakeningAssessment .ob-intro').innerText(),/one untimed set/);

@@ -3,17 +3,20 @@ name: Build Android Debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, feat/health-connect-phase1]
     paths:
+      - ".github/workflows/build-android-apk.yml"
       - "android-wrapper/**"
       - "index.html"
       - "app.js"
       - "train-together.js"
+      - "workout-flow.js"
       - "tests/train-together.test.cjs"
       - "supabase/migrations/**"
       - "account-data.js"
       - "tests/account-data.test.cjs"
       - "styles.css"
+      - "window-layout.css"
       - "side-system.js"
       - "side-system.css"
       - "health-connect.js"
@@ -45,14 +48,22 @@ jobs:
       - name: Verify solo and Train Together flows
         shell: bash
         run: |
-          npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0
+          npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0 playwright@1.51.1
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/train-together.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node --test tests/health-panel.test.cjs
+          node "$RUNNER_TEMP/train-tests/node_modules/playwright/cli.js" install --with-deps chromium
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/health-dialog-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/window-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/onboarding-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/briefing-entry.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/workout-flow.test.cjs
 
       - name: Package SYSTEM web app
         shell: bash
         run: |
           set -euo pipefail
           node --check train-together.js
+          node --check workout-flow.js
           node --check app.js
           node --check account-data.js
           node tests/account-data.test.cjs
@@ -61,7 +72,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp index.html app.js train-together.js workout-flow.js account-data.js styles.css side-system.css window-layout.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -106,7 +117,9 @@ jobs:
           unzip -l "$APK" | grep -q "assets/www/enter_the_system_landscape.jpg"
           cmp enter_the_system_landscape.jpg <(unzip -p "$APK" assets/www/enter_the_system_landscape.jpg)
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
+          cmp window-layout.css <(unzip -p "$APK" assets/www/window-layout.css)
           cmp side-system.css <(unzip -p "$APK" assets/www/side-system.css)
+          cmp workout-flow.js <(unzip -p "$APK" assets/www/workout-flow.js)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
           cmp account-data.js <(unzip -p "$APK" assets/www/account-data.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)
@@ -118,8 +131,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v92-launcher-icon-debug-apk
+          name: the-system-v52-workout-flow-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
-
