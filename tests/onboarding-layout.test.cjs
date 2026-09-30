@@ -37,7 +37,7 @@ const server = http.createServer((req, res) => {
       const result = await page.evaluate(() => {
         const overlay = document.getElementById('systemOnboarding');
         const options = overlay.querySelector('.ob-options');
-        const nodes = [...overlay.querySelectorAll('.side-tag, h1, .ob-card > p, [data-goal], .ob-actions button')];
+        const nodes = [...overlay.querySelectorAll('.side-tag, h1, .ob-intro > p, [data-goal], .ob-actions button')];
         return {
           count: overlay.querySelectorAll('[data-goal]').length,
           columns: getComputedStyle(options).gridTemplateColumns.split(' ').length,
@@ -70,10 +70,44 @@ const server = http.createServer((req, res) => {
       assert.equal(await page.locator('[data-goal="balanced"].selected').count(), 1);
       console.log(`PASS ${width}x${height}: all goals, text and navigation fit; selection and Next/Back work`);
     }
+    for (const [width,height] of sizes) {
+      await page.setViewportSize({width,height});
+      await page.evaluate(() => {
+        document.getElementById('awakeningAssessment')?.classList.remove('active');
+        SystemOnboarding.reset(); SystemOnboarding.show();
+      });
+      await page.locator('#obName').fill('Landscape Tester');
+      for (let step=0;step<9;step++) {
+        const id=step<4?'systemOnboarding':'awakeningAssessment';
+        const report=await page.evaluate(id=>{
+          const el=document.getElementById(id);
+          return {overflow:el.scrollHeight-el.clientHeight, nodes:[...el.querySelectorAll('h1,p,small,strong,.side-tag,button,input')].map(n=>{
+            const r=n.getBoundingClientRect();
+            return {text:n.textContent||n.id,top:r.top,bottom:r.bottom,left:r.left,right:r.right};
+          })};
+        },id);
+        if (report.overflow>1 && process.env.LAYOUT_SCREENSHOT) await page.screenshot({path:process.env.LAYOUT_SCREENSHOT});
+        assert.ok(report.overflow<=1,`${width}x${height} step ${step+1}: overflow ${report.overflow}`);
+        for(const n of report.nodes) assert.ok(n.top>=0&&n.bottom<=height&&n.left>=0&&n.right<=width,`${width}x${height} step ${step+1}: clipped ${n.text}`);
+        if(width===740 && process.env.LAYOUT_SCREENSHOT) await page.screenshot({path:process.env.LAYOUT_SCREENSHOT.replace('.png',`-${step+1}.png`)});
+        if(step>=4 && step<8) assert.equal(await page.locator('#awakeningAssessment .ob-safety').count(),1);
+        if(step===2) await page.locator('[data-exp="intermediate"]').click();
+        if(step===3) { await page.locator('[data-eq="Dumbbells"]').click(); await page.locator('#obDays').fill('3'); }
+        if(step===4) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5');}
+        if(step===5) await page.locator('#awWalk').fill('4');
+        if(step===6) await page.locator('#awMarch').fill('3');
+        if(step===7) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
+        await page.locator(step<4?'#obNext':'#awNext').click();
+      }
+      assert.equal(await page.locator('#awakeningAssessment.active').count(),0);
+      const saved=await page.evaluate(()=>({ob:onboardingData(),assessment:JSON.parse(localStorage.getItem(ASSESSMENT_KEY))}));
+      assert.equal(saved.ob.experience,'intermediate');
+      assert.ok(saved.ob.equipment.includes('Dumbbells'));
+      assert.equal(saved.ob.days,3);
+      assert.equal(saved.assessment.raw.sit,10);
+      console.log(`PASS ${width}x${height}: all 9 onboarding/assessment screens fit and completion saves input`);
+    }
     if (process.env.LAYOUT_SCREENSHOT) await page.screenshot({ path: process.env.LAYOUT_SCREENSHOT });
-    await page.locator('#obBack').click();
-    assert.equal(await page.locator('#obName').count(), 1);
-    assert.equal(await page.locator('#systemOnboarding.ob-path-screen').count(), 0);
   } finally {
     if (browser) await browser.close();
     server.close();
