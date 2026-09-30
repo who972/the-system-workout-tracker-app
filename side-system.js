@@ -398,7 +398,7 @@ function dailyBriefingData(){
  const ss=loadSideSystem(),daily=dailySideMissions(),day=today(),mission=missionForMode(adaptiveSystemMission()),progress=getMissionProgress();
  let result=null;try{result=JSON.parse(localStorage.getItem('systemMissionResult:'+day)||'null')}catch(_){}
  const completed=result?.mode==='full'||localStorage.getItem('systemMission:'+day)==='true';
- const partial=Object.values(progress).some(x=>x?.done)||!!result;
+ const partial=Object.values(progress).some(x=>x?.done)||!!result||!!localStorage.getItem('systemMissionResume:'+day+':'+getWorkoutMode());
  const sessions=workoutHistory().filter(x=>x.date===day),xp=(state.history||[]).filter(x=>x.date===day).reduce((n,x)=>n+(Number(x.xpEarned)||0),0);
  return {daily:daily.map(m=>({...m,done:ss.completed.includes(m.id)})),mission,status:completed?'COMPLETED':partial?'IN PROGRESS':'READY',sessions,xp,level:state.level,rank:currentClass(ss),streak:state.currentStreak||0};
 }

@@ -243,7 +243,7 @@ body.system-os-ready .os-module-body :is(input,select,textarea).form-input {widt
  .mission-debrief__growth>small {margin-bottom:3px}
  .mission-debrief p {margin:2px 0;font-size:11px}
  .mission-debrief button {margin:3px 0 0;padding:8px;font-size:11px;min-height:32px}
- @media (max-height:300px) {
+ @media (max-height:375px) {
   body.workout-open #workoutMode.workout-mode.active {padding:6px 10px;gap:4px 8px}
   body.workout-open .workout-stage {padding:5px 8px}
   body.workout-open .workout-stage h1 {font-size:21px;margin:2px 0}
@@ -258,7 +258,17 @@ body.system-os-ready .os-module-body :is(input,select,textarea).form-input {widt
   body.workout-open .workout-progress {position:fixed;left:10px;bottom:33px;width:180px;height:4px}
   body.workout-open .workout-main-btn {min-height:28px;padding:5px}
   .mission-debrief.active .mission-debrief__card {padding:6px 10px;gap:2px}
-  .mission-debrief h1 {font-size:24px}
+  .mission-debrief h1 {font-size:22px;line-height:1.1}
+  .mission-debrief small {font-size:8px;line-height:1.2}
+  .mission-debrief__stats {margin:0}
+  .mission-debrief__stats>div {padding:3px 4px}
+  .mission-debrief__stats span {margin-top:2px}
+  .mission-debrief__growth {padding:3px;margin:0}
+  .mission-debrief__growth>small {font-size:7px;margin-bottom:2px}
+  .mission-debrief p {font-size:10px;line-height:1.2;margin:1px 0}
+  .mission-debrief button {min-height:28px;padding:5px;margin:2px 0 0}
+  .rest-panel {padding:20px 12px 8px;box-sizing:border-box}
+  .rest-panel #restClock {font-size:70px;margin:4px}
  }
 }
 .rest-panel .rest-save-exit {position:absolute;right:12px;top:8px;font-size:10px;padding:6px 10px}

@@ -113,7 +113,7 @@
     const row=document.createElement('span'),name=document.createElement('b'),amount=document.createElement('i');
     name.textContent=stat;amount.textContent='+'+gain+' POINT'+(gain===1?'':'S');row.append(name,amount);growth.append(row);
    }
-   if(!growth.children.length)growth.textContent='Daily attribute growth limit reached. Your workout and XP are saved.';
+   if(!growth.children.length)growth.textContent='No additional attribute points this session. Your workout and XP are saved.';
   }
   const hit=workoutHistory().at(-1)?.bossDamage;
   el('missionDebriefBoss').textContent=hit?`${hit.boss}: ${hit.hp.toLocaleString()} / ${hit.maxHp.toLocaleString()} HP remaining${hit.defeated?' • GATE CLEARED':''}`:'Keep training and completing side missions to progress toward your next boss.';
