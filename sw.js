@@ -1,4 +1,4 @@
-const CACHE = "the-system-os-v38-account-data";
+const CACHE = "the-system-os-v39-account-dialog";
 const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./account-data.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -14,3 +14,4 @@ self.addEventListener("fetch", event => {
     return response;
   }).catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html"))));
 });
+

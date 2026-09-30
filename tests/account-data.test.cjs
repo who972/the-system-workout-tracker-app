@@ -29,3 +29,16 @@ test('confirmation dialog handles exact RESET, Cancel and Escape separately',asy
  result=ctx.accountConfirmation('Factory Reset');button.onclick();assert.equal(await result,false);
  result=ctx.accountConfirmation('Reset training','RESET');dialog.oncancel({preventDefault(){}});assert.equal(await result,false);
 });
+
+
+test('OS layout keeps account dialogs visible and Factory Reset inside Danger Zone',()=>{
+ const html=fs.readFileSync(require.resolve('../index.html'),'utf8'),css=fs.readFileSync(require.resolve('../styles.css'),'utf8');
+ const danger=html.match(/<fieldset class="account-danger">([\s\S]*?)<\/fieldset>/)[1];
+ assert.match(danger,/<button[^>]*id="resetAllBtn"[^>]*class="danger-btn"/);
+ assert.equal((html.match(/id="resetAllBtn"/g)||[]).length,1);
+ // Every OS sibling-hiding rule must exempt the native modal dialogs.
+ const hidingRules=css.match(/body\.system-os-ready>\.command-deck~[^{}]+\{display:none!important\}/g)||[];
+ assert.ok(hidingRules.length>0);for(const rule of hidingRules)assert.ok(rule.includes(':not(.account-delete-dialog)'),rule);
+ assert.match(css,/\.account-delete-dialog\[open\]\{display:block/);
+ assert.match(css,/\.account-delete-dialog:not\(\[open\]\)\{display:none/);
+});
