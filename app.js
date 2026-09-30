@@ -1406,6 +1406,7 @@ function enterMainInterface(){
     localStorage.setItem('theSystemDailyBriefing',day);
   }catch(_){}
   window.scrollTo({top:0,left:0,behavior:'auto'});
+  document.dispatchEvent(new Event('system:ready'));
 }
 function authDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
 function authProgress(stage,title,message){
@@ -2790,4 +2791,3 @@ window.SystemSquads={community:fetchCommunityNetwork,identity:getIdentityCard,id
 // V81 SYSTEM ENTRY FLOW // LIVE
 
 // V83 WORKFLOW REBUILD TRIGGER //
-

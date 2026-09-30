@@ -10,7 +10,7 @@
   <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="styles.css?v=entry-fit4" />
   <link rel="stylesheet" href="side-system.css?v=assessment-timers15" />
-  <link rel="stylesheet" href="window-layout.css?v=49" />
+  <link rel="stylesheet" href="window-layout.css?v=50" />
   <link rel="manifest" href="manifest.webmanifest" />
   <meta name="theme-color" content="#05080D" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
@@ -84,9 +84,9 @@
       <button id="systemWelcomeContinue" type="button">CONTINUE</button>
     </div>
     <div id="systemBriefing" class="system-boot__panel system-briefing" hidden>
-      <span class="system-boot__eyebrow">SYSTEM // DAILY BRIEFING</span>
+      <div class="briefing-header"><span class="system-boot__eyebrow">SYSTEM // DAILY BRIEFING</span>
       <h1>TODAY'S DIRECTIVE</h1>
-      <p id="briefingDate" class="system-boot__online"></p>
+      <p id="briefingDate" class="system-boot__online"></p></div>
       <div id="briefingGrid" class="briefing-grid"></div>
       <div id="briefingDirective" class="briefing-directive"></div>
       <button id="systemBeginDay" type="button">BEGIN DAY →</button>
@@ -626,9 +626,9 @@
 <button id="cancelDeleteAccount" type="button">Cancel</button>
 </form></dialog>
 <script src="account-data.js?v=1"></script>
-<script src="app.js?v=database-open3"></script>
+<script src="app.js?v=50"></script>
 <script src="health-connect.js?v=49"></script>
-<script src="side-system.js?v=side57"></script>
+<script src="side-system.js?v=50"></script>
 <script>
 if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.net"){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 (function(){
@@ -687,4 +687,3 @@ if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.
 <script src="train-together.js?v=1"></script>
 </body>
 </html>
-

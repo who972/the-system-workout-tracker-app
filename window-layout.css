@@ -161,7 +161,7 @@ body.system-os-ready .os-module-body .side-card > button {margin-top:auto;}
   .classification-path strong {font-size:12px;}
   .classification-note {font-size:8px;}
 }
-.auth-gate:not([hidden]) .auth-card,.system-boot:not([hidden]) .system-boot__panel:not([hidden]) {animation:systemPanelProject var(--window-duration) ease-out;}
+.auth-gate:not([hidden]) .auth-card,.system-boot:not([hidden]):not(.system-deploy) .system-boot__panel:not([hidden]):not(.panel-enter):not(.panel-exit) {animation:systemPanelProject var(--window-duration) ease-out;}
 @media(prefers-reduced-motion:reduce){.auth-gate .auth-card,.system-boot .system-boot__panel{animation:none!important;}}
 /* Alerts follow the same centered shell; long feeds use the available width. */
 .system-alert-center {display:none;left:50%;top:50%;right:auto;width:var(--window-width);height:var(--window-height);transform:translate(-50%,-50%);border:1px solid rgba(0,229,255,.35);border-radius:12px;transition:none;}
@@ -180,3 +180,56 @@ body.system-os-ready .os-module-body .builder-row {grid-template-columns:minmax(
 body.system-os-ready .os-module-body .builder-exercise {grid-template-columns:minmax(0,1.6fr) minmax(0,.6fr) minmax(0,.8fr) minmax(0,.8fr) auto;}
 body.system-os-ready .os-module-body :is(input,select,textarea).form-input {width:100%;min-width:0;box-sizing:border-box;}
 @media(max-width:800px){body.system-os-ready .os-module-body .builder-grid{grid-template-columns:1fr;}body.system-os-ready .os-module-body :is(.builder-row,.builder-exercise){grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+/* Briefing has a finite landscape composition, including its welcome screen. */
+.system-boot {padding:var(--window-gap);}
+.system-boot .system-boot__panel {
+  box-sizing:border-box;width:var(--window-width);height:var(--window-height);
+  max-height:var(--window-height);padding:var(--window-padding);overflow:visible;
+}
+.system-boot #systemWelcome {
+  display:grid;grid-template-columns:minmax(0,2fr) minmax(0,3fr);
+  grid-template-rows:auto minmax(0,1fr) repeat(4,auto);gap:clamp(4px,1.2dvh,12px) 20px;
+  align-items:center;
+}
+#systemWelcome>.system-boot__eyebrow {grid-column:1/-1;padding-right:48px;}
+#systemWelcome>.system-boot__hero {
+  grid-column:1;grid-row:2/7;width:min(100%,42dvh);height:100%;max-height:65dvh;
+  margin:0 auto;min-height:0;
+}
+#systemWelcome .system-boot__portal {width:min(82%,52dvh);}
+#systemWelcome .system-boot__brandmark {width:min(35%,20dvh);}
+.system-boot #systemWelcome h1 {grid-column:2;grid-row:2;margin:0;font-size:clamp(22px,7dvh,52px);letter-spacing:.08em;}
+#systemWelcome>.system-boot__online {grid-column:2;grid-row:3;margin:0;}
+#systemWelcomePlayer {grid-column:2;grid-row:4;margin:0;font-size:clamp(12px,3.2dvh,20px);}
+.system-boot #systemWelcomeRank {grid-column:2;grid-row:5;margin:0;font-size:clamp(11px,3dvh,18px);}
+#systemWelcomeContinue {grid-column:2;grid-row:6;}
+.system-boot #systemBriefing {
+  display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;
+  gap:clamp(4px,1.2dvh,12px);text-align:left;
+}
+.briefing-header {display:flex;align-items:center;justify-content:space-between;gap:8px;padding-right:44px;}
+.system-briefing .briefing-header h1 {margin:0;font-size:clamp(14px,4dvh,26px);letter-spacing:.04em;}
+.briefing-header .system-boot__eyebrow {font-size:clamp(8px,2dvh,11px);letter-spacing:.08em;}
+.briefing-header .system-boot__online {margin:0;font-size:clamp(8px,2dvh,11px);letter-spacing:.04em;}
+.system-briefing .briefing-grid {
+  min-height:0;grid-template-columns:repeat(3,minmax(0,1fr));
+  grid-template-rows:repeat(2,minmax(0,1fr));gap:clamp(4px,1dvh,10px);margin:0;
+}
+.system-briefing .briefing-grid article {
+  min-width:0;min-height:0;padding:clamp(4px,1.5dvh,12px);
+  display:flex;flex-direction:column;justify-content:center;overflow:visible;
+}
+.system-briefing .briefing-boss {grid-column:auto;}
+.system-briefing .briefing-directive {margin:0;padding:clamp(4px,1.2dvh,10px);}
+.system-briefing :is(.briefing-grid article,.briefing-directive) span {margin:0 0 3px;font-size:clamp(8px,2dvh,11px);letter-spacing:.06em;}
+.system-briefing :is(.briefing-grid article,.briefing-directive) strong {font-size:clamp(11px,2.9dvh,18px);line-height:1.15;}
+.system-briefing :is(.briefing-grid article,.briefing-directive) small {margin-top:3px;font-size:clamp(9px,2.3dvh,13px);line-height:1.2;}
+.system-boot :is(#systemBeginDay,#systemWelcomeContinue) {min-height:30px;height:clamp(30px,8dvh,48px);padding:3px 12px;font-size:clamp(10px,2.6dvh,14px);}
+.system-boot .system-boot__close {width:34px;height:34px;min-height:34px;font-size:24px;}
+@media(orientation:landscape) and (max-height:300px){
+  .system-briefing .briefing-header .system-boot__eyebrow {max-width:110px;}
+  .system-briefing .briefing-header .system-boot__online {max-width:110px;text-align:right;}
+}
+
+@media(prefers-reduced-motion:reduce){.system-boot__panel.panel-enter-active{opacity:1;transform:none;}}

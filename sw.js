@@ -1,4 +1,4 @@
-const CACHE = "the-system-os-v49-responsive-windows";
+const CACHE = "the-system-os-v50-briefing-entry";
 const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./window-layout.css", "./app.js", "./train-together.js", "./account-data.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
