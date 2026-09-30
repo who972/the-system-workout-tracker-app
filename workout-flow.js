@@ -78,6 +78,7 @@
  startRest=function(seconds){restEndsAt=Date.now()+seconds*1000;original.rest(seconds);checkpoint()};
  endRest=function(){restEndsAt=0;if(saved){saved.rest=0;saved.index=-1;}original.endRest();checkpoint()};
  function pause(){
+  if(!running)return;
   checkpoint();running=false;
   if(timedSetEndAt){stopTimedSet();updateTimedSetClock();el('timedSetStatus').textContent='Paused — resume when ready.'}
   clearInterval(liveTimer);clearInterval(restTimer);clearInterval(tick);restEndsAt=0;
@@ -89,7 +90,7 @@
  finishWorkout=function(){
   const m=missionForMode(adaptiveSystemMission()),p=getMissionProgress(),awardKey='systemMissionAward:'+missionProgressKey();
   if(finishing||localStorage.getItem(awardKey)||!flatSets(m).every(x=>p[x.ei+'-'+x.si]?.done))return;
-  finishing=true;const resumeKey=saved?.storageKey;
+  finishing=true;const resumeKey=shared()?null:saved?.storageKey;
   report={mission:JSON.parse(JSON.stringify(m)),progress:JSON.parse(JSON.stringify(p)),before:{...window.SystemBuild?.getBuild?.()?.stats}};
   if(!shared()&&saved)workoutStartedAt=Date.now()-elapsed();
   try{

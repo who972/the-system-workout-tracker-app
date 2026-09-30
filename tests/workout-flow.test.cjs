@@ -12,13 +12,13 @@ const server=http.createServer((req,res)=>{
   browser=await chromium.launch({executablePath:process.env.CHROMIUM_PATH,args:['--no-sandbox']});
   const page=await browser.newPage({viewport:{width:915,height:412},serviceWorkers:'block'});
   await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
-  async function ready(){
+  async function ready(actual=false){
    await page.goto(`http://127.0.0.1:${server.address().port}/`);await page.waitForFunction(()=>window.SystemOS&&document.getElementById('missionDebriefBoss'));
-   await page.evaluate(()=>{
+   await page.evaluate(actual=>{
     document.body.classList.add('system-os-ready');document.getElementById('systemEntryScreen').style.display='none';
     document.getElementById('systemBoot').classList.remove('active');
-    adaptiveSystemMission=()=>({name:'Beginner Strength',focus:'Strength',xp:300,exercises:[['Push-Ups',2,'8-12 reps',30],['Plank',1,'30 sec',0]],sourceDay:1});
-   });
+    if(!actual)adaptiveSystemMission=()=>({name:'Beginner Strength',focus:'Strength',xp:300,exercises:[['Push-Ups',2,'8-12 reps',30],['Plank',1,'30 sec',0]],sourceDay:1});
+   },actual);
   }
   async function launch(){await page.evaluate(()=>startWorkoutMode());await page.locator('#workoutMode.active').waitFor();}
   await ready();await launch();
@@ -60,7 +60,7 @@ const server=http.createServer((req,res)=>{
   assert.equal(await page.locator('.briefing-status').textContent(),'COMPLETED');
   console.log('PASS: one completion reward, real attribute gains, result layout and completed briefing');
   // Exercise the real adaptive beginner mission, including quick-to-full upgrade.
-  await page.evaluate(()=>localStorage.clear());await ready();
+  await page.evaluate(()=>localStorage.clear());await ready(true);
   await page.evaluate(()=>{localStorage.setItem('systemWorkoutMode:'+systemMissionKey(),'light')});await launch();
   async function finishAll(){
    await page.evaluate(async()=>{
@@ -72,9 +72,9 @@ const server=http.createServer((req,res)=>{
    });await page.locator('#missionDebrief.active').waitFor();
   }
   await finishAll();assert.equal(await page.evaluate(()=>SystemMissionPerformance.mode),'light');
-  const quickXp=await page.evaluate(()=>state.totalXp);
+  const quickXp=await page.evaluate(()=>state.totalXp),remainingXp=await page.evaluate(()=>adaptiveSystemMission().xp-JSON.parse(localStorage.getItem('systemMissionResult:'+systemMissionKey())).xp);
   await page.evaluate(()=>{document.getElementById('missionDebrief').classList.remove('active');setWorkoutMode('full')});await launch();await finishAll();
-  assert.equal(await page.evaluate(()=>state.totalXp),quickXp+180,'Upgrade awards only remaining mission XP');
+  assert.equal(await page.evaluate(()=>state.totalXp),quickXp+remainingXp,'Upgrade awards only remaining mission XP');
   console.log('PASS: quick mode grading and full-workout upgrade XP');await page.close();
  }finally{await browser?.close();server.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
