@@ -28,6 +28,7 @@
   }
   window.AndroidHealthConnect = {
     requestStepPermission: async () => (await call('requestStepPermission'))?.granted === true,
-    getTodaySteps: () => call('getTodaySteps')
+    getTodaySteps: () => call('getTodaySteps'),
+    getTodayMetrics: () => call('getTodayMetrics')
   };
 })();
