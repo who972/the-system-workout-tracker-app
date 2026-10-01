@@ -2532,3 +2532,9 @@ body.system-os-ready .os-module-body > #achievementGrid .achievement-card--locke
 #trainTogetherPanel button,#trainTogetherPanel input{padding:8px;margin:4px;max-width:100%}
 #ttLive{position:relative;z-index:2;background:#102338;padding:8px;color:#aeeeff;text-align:center}
 #ttLive[hidden],#trainTogetherPanel[hidden]{display:none}
+
+
+/* V87 // CENTRAL COMMAND TOPBAR COLLISION FIX */
+body.system-os-ready .hud-module--mission{padding-top:30px!important}
+.os-topbar__right{position:absolute;right:8px;top:0;gap:14px;white-space:nowrap}
+@media(max-height:520px){body.system-os-ready .hud-module--mission{padding-top:27px!important}.os-topbar__right{font-size:8px;gap:10px}}
