@@ -272,3 +272,38 @@ body.system-os-ready .os-module-body :is(input,select,textarea).form-input {widt
  }
 }
 .rest-panel .rest-save-exit {position:absolute;right:12px;top:8px;font-size:10px;padding:6px 10px}
+
+
+/* Landscape telemetry: seven fixed cards, with record details in card descriptions. */
+@media (orientation:landscape) {
+ .health-connect-window-body {overflow:hidden;display:grid;grid-template-rows:auto auto auto auto minmax(0,1fr) auto;gap:clamp(3px,1dvh,7px);padding:clamp(6px,1.8dvh,14px)}
+ .health-connect-window-body>p,.health-connect-window-body>small {margin:0;font-size:clamp(10px,2.7dvh,14px);line-height:1.15}
+ .health-connect-window-head {padding:5px 12px}
+ .health-connect-window-head [data-exit],.health-connect-toolbar button {min-height:26px;padding:4px 8px;font-size:clamp(10px,2.7dvh,14px)}
+ .health-connect-toolbar {flex-wrap:nowrap;margin:0;gap:5px}
+ .health-connect-values {grid-template-columns:repeat(4,minmax(0,1fr));grid-template-rows:repeat(2,minmax(0,1fr));gap:6px;min-height:0}
+ .health-connect-values>div {min-height:0;padding:5px 7px;border:1px solid #285969}
+ .health-metric-card strong {font-size:clamp(11px,3dvh,16px);line-height:1.1}
+ .health-connect-values>div p {margin:3px 0 0;font-size:clamp(12px,3.5dvh,20px);line-height:1.1}
+ .health-metric-card[data-state="permission-needed"] p {color:#ffdd83}
+ .health-metric-card[data-state="read-failed"] p {color:#ff9d9d}
+}
+@media (orientation:landscape) and (min-height:301px) {
+ .system-boot .compact-briefing-header h1 {font-size:clamp(20px,5dvh,30px)}
+ .compact-briefing-header .system-boot__online {font-size:clamp(12px,3dvh,16px)}
+ .compact-briefing-header .system-boot__eyebrow,.compact-briefing .briefing-grid article>span,.compact-briefing .briefing-directive>span {font-size:clamp(11px,2.8dvh,15px)}
+ .compact-briefing .briefing-grid article>strong {font-size:clamp(20px,5.5dvh,32px)}
+ .compact-briefing .briefing-grid article>small,.briefing-status {font-size:clamp(12px,3.2dvh,17px)}
+ .briefing-sides li {font-size:clamp(13px,3.7dvh,19px);line-height:1.2}
+ .compact-briefing .briefing-directive strong {font-size:clamp(13px,3.5dvh,18px)}
+ .compact-briefing .briefing-directive small {font-size:clamp(11px,2.8dvh,15px)}
+ .system-boot .compact-briefing-actions button {font-size:clamp(12px,3.2dvh,17px)}
+}
+
+@media (orientation:landscape) and (max-height:300px) {
+ .health-connect-window-body {gap:3px;padding:5px 7px}
+ .health-connect-window-body>p,.health-connect-window-body>small {font-size:10px;line-height:1.1}
+ .health-connect-values {gap:4px}
+ .health-connect-values>div {padding:4px 5px}
+ .health-connect-values>div p {font-size:12px;line-height:1.1}
+}

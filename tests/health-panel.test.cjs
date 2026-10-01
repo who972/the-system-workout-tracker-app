@@ -21,7 +21,7 @@ test('browser fallback remains usable',async()=>{
 test('partial access displays denied metrics, zero totals, sessions and safe source text',async()=>{
  let calls=0;
  const {dom,el}=await setup({getStatus:async()=>({availability:'available',connected:false,permissions:['steps']}),readHealthData:async()=>{calls++;return {steps:0,syncedAt:new Date().toISOString(),exerciseSessions:[{start:new Date().toISOString(),end:new Date().toISOString(),source:'<img src=x onerror=evil()>'}],errors:{heartRate:'permission-required'}}},requestPermissions:async()=>({granted:false})});
- assert.match(el('[data-status]').textContent,/Partially/);assert.match(el('[data-values]').textContent,/0 steps/);assert.match(el('[data-values]').textContent,/Permission required/);assert.equal(el('[data-values] img'),null);
+ assert.match(el('[data-status]').textContent,/Partially/);assert.match(el('[data-values]').textContent,/0 steps/);assert.match(el('[data-values]').textContent,/Permission needed/);assert.equal(el('[data-values] img'),null);
  el('[data-connect]').click();await new Promise(r=>setImmediate(r));assert.equal(calls,2);
  el('[data-close]').click();assert.equal(el('[data-values]').textContent,'');dom.window.close();
 });
@@ -32,3 +32,4 @@ test('late health response is discarded after closing',async()=>{
  let complete;const {dom,el}=await setup({getStatus:async()=>({availability:'available',connected:true,permissions:['steps']}),readHealthData:()=>new Promise(r=>complete=r)});
  el('[data-close]').click();complete({steps:123});await new Promise(r=>setImmediate(r));assert.equal(el('[data-values]').textContent,'');dom.window.close();
 });
+
