@@ -62,6 +62,10 @@ class HealthConnectWebBridge(private val activity: ComponentActivity) {
                             catch (e: Exception) { permissionReply = null; throw e }
                         }
                     }
+                    "getTodayMetrics" -> {
+                        val metrics = reader.todayMetrics()
+                        respond(JSONObject().put("steps", metrics.steps).put("activeMinutes", metrics.activeMinutes).put("date", metrics.date))
+                    }
                     "getTodaySteps" -> {
                         val total = reader.todaySteps()
                         respond(JSONObject().put("steps", total.steps).put("date", total.date))
