@@ -3,7 +3,7 @@ name: Build Android Debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, feat/health-connect-phase1]
+    branches: [main, feat/health-connect-phase1, review/v53-briefing-health-metrics]
     paths:
       - ".github/workflows/build-android-apk.yml"
       - "android-wrapper/**"
@@ -68,6 +68,7 @@ jobs:
           node --check account-data.js
           node tests/account-data.test.cjs
           node tests/health-connect.test.cjs
+          node --test tests/health-metric-states.test.cjs
           node --check side-system.js
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
@@ -131,7 +132,8 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v52-workout-flow-debug-apk
+          name: the-system-v53-health-metrics-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
+

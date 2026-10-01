@@ -138,15 +138,18 @@ class MainActivity : ComponentActivity() {
         }
     }
 
-    private fun todayRange(): TimeRangeFilter {
+    private fun todayRange(now: java.time.Instant = java.time.Instant.now()): TimeRangeFilter {
         val zone = ZoneId.systemDefault()
-        return TimeRangeFilter.between(LocalDate.now(zone).atStartOfDay(zone).toInstant(), java.time.Instant.now())
+        return TimeRangeFilter.between(now.atZone(zone).toLocalDate().atStartOfDay(zone).toInstant(), now)
     }
 
     private suspend fun readHealthData(): JSONObject {
         val granted = health.permissionController.getGrantedPermissions()
-        val range = todayRange()
-        val output = JSONObject().put("date", LocalDate.now().toString()).put("syncedAt", java.time.Instant.now().toString())
+        val now = java.time.Instant.now()
+        val range = todayRange(now)
+        val output = JSONObject().put("date", LocalDate.now().toString()).put("syncedAt", now.toString()).put("timeZone", ZoneId.systemDefault().id)
+            .put("todayStart", now.atZone(ZoneId.systemDefault()).toLocalDate().atStartOfDay(ZoneId.systemDefault()).toInstant().toString())
+            .put("sleepStart", now.minusSeconds(86400).toString())
         val errors = JSONObject()
         suspend fun read(key: String, permission: String, block: suspend () -> Any?) {
             if (!granted.contains(permission)) { errors.put(key, "permission-required"); return }
@@ -184,7 +187,6 @@ class MainActivity : ComponentActivity() {
         }
         read("sleepSessions", HealthPermission.getReadPermission(SleepSessionRecord::class)) {
             // Rolling 24 hours includes overnight sleep crossing local midnight.
-            val now = java.time.Instant.now()
             val sleepRange = TimeRangeFilter.between(now.minusSeconds(86400), now)
             val rows = JSONArray()
             var token: String? = null
@@ -199,3 +201,4 @@ class MainActivity : ComponentActivity() {
         return output.put("errors", errors)
     }
 }
+

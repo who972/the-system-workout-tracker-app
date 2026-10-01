@@ -29,8 +29,8 @@ android {
         applicationId = "com.thesystem.workouttracker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 52
-        versionName = "0.52"
+        versionCode = 53
+        versionName = "0.53"
     }
 
     buildTypes {
@@ -45,3 +45,4 @@ dependencies {
     implementation("androidx.webkit:webkit:1.12.1")
     implementation("androidx.health.connect:connect-client:1.1.0")
 }
+

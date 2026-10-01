@@ -1,4 +1,4 @@
-const CACHE = "the-system-os-v52-workout-flow";
+const CACHE = "the-system-os-v53-health-metrics";
 const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./window-layout.css", "./app.js", "./train-together.js", "./workout-flow.js", "./account-data.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));
@@ -14,4 +14,5 @@ self.addEventListener("fetch", event => {
     return response;
   }).catch(() => caches.match(event.request).then(cached => cached || caches.match("./index.html"))));
 });
+
 
