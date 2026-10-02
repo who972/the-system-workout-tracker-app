@@ -49,6 +49,8 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         webView = WebView(this)
         val viewport = FrameLayout(this)
+        viewport.setBackgroundColor(android.graphics.Color.rgb(2, 6, 13))
+        window.setBackgroundDrawable(android.graphics.drawable.ColorDrawable(android.graphics.Color.rgb(2, 6, 13)))
         viewport.addView(webView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
         setContentView(viewport)
         // Android 15+ enforces edge-to-edge. Keep the WebView viewport inside
