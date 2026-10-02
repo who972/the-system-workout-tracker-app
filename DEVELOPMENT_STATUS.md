@@ -16,6 +16,6 @@ Closing/switching modules, hiding the app, returning to TODAY, and changing rang
 - v55: history model/transport/DOM tests and existing HEALTH tests pass locally.
 - History charts: 7/14/30 days × seven metrics × ten landscape sizes (568×240 through 1024×500), keyboard selection, zero/gaps, return to TODAY, and permission revocation pass.
 - All 11 module windows, HEALTH today, classification layout and reduced-motion checks pass at ten landscape sizes.
-- Native calendar-range unit tests added for bounds, timezone dates, and both daylight-saving transitions; will run with Android compilation/lint in CI.
-- Signed v55 build and package verification: pending.
+- Native calendar-range unit tests pass for bounds, timezone dates, and both daylight-saving transitions.
+- Signed v55 Android build, lint, native unit tests, signature and packaged-asset verification pass in GitHub Actions run 37068622981 (commit 62d95600a2c7fb1a8b6bbf3486c30edccc743e6d). Artifact SHA-256: ae5b25cb278c934009f19b6575b4c8f85c9f7608c38fcbf956f5f489243f8924. APK delivered as The-System-v55-Health-History.apk.
 - Actual phone readings remain a physical-device check; watch apps must share the corresponding records with Health Connect.
