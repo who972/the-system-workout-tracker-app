@@ -430,3 +430,6 @@ body.system-os-ready #commandDeck .os-taskbar {max-width:124px;box-sizing:border
 body.system-os-ready #commandDeck .os-taskbar__label,
 body.system-os-ready #commandDeck .os-taskbar__hint {display:none;}
 body.system-os-ready #commandDeck .os-taskbar button {min-width:0;width:100%;padding:5px 4px;font-size:6px;}
+body.system-os-ready #commandDeck>.hud-wing--left {
+ height:100%;align-content:safe center;grid-auto-rows:max-content;overflow:auto;overscroll-behavior:contain;
+}

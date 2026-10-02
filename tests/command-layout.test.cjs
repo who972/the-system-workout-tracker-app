@@ -19,11 +19,12 @@ const server=http.createServer((req,res)=>{
    await page.waitForFunction(()=>{const dock=document.querySelector('.os-dock'),deck=document.getElementById('commandDeck');return parseFloat(deck.style.getPropertyValue('--command-dock-space'))>=dock.getBoundingClientRect().height+7});
    const report=await page.evaluate(()=>{
     const wing=document.querySelector('.hud-wing--right'),dock=document.querySelector('.os-dock'),r=wing.getBoundingClientRect(),d=dock.getBoundingClientRect();
-    return {wing:r.toJSON(),dock:d.toJSON(),scroll:wing.scrollHeight-wing.clientHeight,
+    return {left:document.querySelector('.hud-wing--left').getBoundingClientRect().toJSON(),wing:r.toJSON(),dock:d.toJSON(),scroll:wing.scrollHeight-wing.clientHeight,
       buttons:[...dock.querySelectorAll('button')].map(b=>{const r=b.getBoundingClientRect(),hit=document.elementFromPoint(r.x+r.width/2,r.y+r.height/2);return {label:b.textContent.trim(),rect:r.toJSON(),hit:b.contains(hit),coveredBy:hit?.outerHTML.slice(0,180)}}),
       cards:[...wing.children].map(e=>({h:e.clientHeight,scroll:e.scrollHeight,tag:e.querySelector('.hud-module__tag').textContent}))};
    });
    assert(report.wing.top>=0&&report.wing.right<=width&&report.wing.bottom<=report.dock.top-6,'Right column stays above dock');
+   assert(report.left.top>=0&&report.left.bottom<=report.dock.top-6,'Left column stays above dock');
    for(const button of report.buttons){assert(button.rect.top>=0&&button.rect.bottom<=height+1,button.label+' visible');assert(button.hit,button.label+' is not covered: '+button.coveredBy);}
    for(const card of report.cards)assert(card.scroll<=card.h+2,card.tag+' content is not clipped');
    if(height>=375)assert(report.scroll<=2,`${width}x${height}: normal landscape needs no panel scrolling`);
