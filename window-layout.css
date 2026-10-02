@@ -310,7 +310,7 @@ body.system-os-ready .os-module-body :is(input,select,textarea).form-input {widt
 
 /* HEALTH owns biometric readings; the exercise log stays in the database module. */
 .system-health-telemetry {display:none}
-.os-module-body>.system-health-telemetry {display:grid;grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:8px;height:100%;flex-shrink:1!important}
+.os-module-body>.system-health-telemetry {display:grid!important;grid-template-rows:auto auto minmax(0,1fr) auto auto;gap:8px;height:100%;flex-shrink:1!important}
 .system-health-telemetry>p,.system-health-telemetry>small {margin:0;font-size:clamp(10px,2.7dvh,15px);line-height:1.2}
 .system-health-telemetry .health-connect-values {min-height:0}
 .system-health-telemetry .health-connect-values>div {min-height:0;padding:clamp(5px,1.5dvh,12px);border:1px solid #285969;background:#091923}
@@ -322,5 +322,16 @@ body.system-os-ready .os-module-body :is(input,select,textarea).form-input {widt
 }
 @media (orientation:landscape) and (max-height:300px) {
  .os-module-body>.system-health-telemetry {gap:3px}
- .system-health-telemetry .health-metric-card p {font-size:12px}
+ .system-health-telemetry .health-metric-card p {font-size:12px;margin-top:2px}
+ .system-health-telemetry .health-connect-values>div {padding:3px 5px}
+ .system-health-telemetry button {min-height:26px;padding:4px 8px}
 }
+
+/* Social cards shrink with their module rather than their intrinsic form widths. */
+body.system-os-ready .os-module-body :is(.social-command,.social-v25-grid) {grid-template-columns:minmax(0,1.2fr) minmax(0,.8fr);}
+body.system-os-ready .os-module-body :is(.social-v25,.social-card,.social-v25-grid,.reward-vault-launch) {min-width:0;box-sizing:border-box;}
+body.system-os-ready .os-module-body .social-v25 {grid-column:1/-1;}
+@media(max-width:800px){body.system-os-ready .os-module-body .social-command{grid-template-columns:minmax(0,1fr);}}
+body.system-os-ready .os-module-body .duel-console .challenge-form {grid-template-columns:minmax(0,1fr)!important;min-width:0;}
+body.system-os-ready .os-module-body .duel-console :is(label,input,select,button) {min-width:0;max-width:100%;box-sizing:border-box;}
+body.system-os-ready .os-module-body .social-command.social-v25 {grid-template-columns:minmax(0,1fr);}
