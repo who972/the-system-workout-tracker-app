@@ -335,3 +335,51 @@ body.system-os-ready .os-module-body .social-v25 {grid-column:1/-1;}
 body.system-os-ready .os-module-body .duel-console .challenge-form {grid-template-columns:minmax(0,1fr)!important;min-width:0;}
 body.system-os-ready .os-module-body .duel-console :is(label,input,select,button) {min-width:0;max-width:100%;box-sizing:border-box;}
 body.system-os-ready .os-module-body .social-command.social-v25 {grid-template-columns:minmax(0,1fr);}
+
+/* HEALTH switches its reading area between today's cards and daily history. */
+.os-module-body>.system-health-telemetry {grid-template-rows:auto auto auto minmax(0,1fr) auto auto;}
+.health-telemetry-content {min-width:0;min-height:0;}
+.health-telemetry-content>.health-connect-values {height:100%;}
+.system-health-telemetry [hidden] {display:none!important;}
+.health-history-toolbar {display:flex;gap:5px;align-items:center;min-width:0;}
+.health-history-ranges {display:flex;gap:4px;flex-shrink:0;}
+.system-health-telemetry .health-history-toolbar button {min-height:28px;padding:4px 8px;white-space:nowrap;font:700 11px var(--font-mono);}
+.health-history-ranges button[aria-pressed="true"] {background:#174c60;color:#a5ffff;box-shadow:inset 0 -2px #53e7f4;}
+.health-history-toolbar label {min-width:0;flex:1;}
+.health-history-toolbar select {width:100%;min-width:0;max-width:220px;min-height:28px;padding:3px 6px;border:1px solid #285969;background:#091923;color:#d9f7ff;font-size:12px;}
+.health-history-sr {position:absolute;width:1px;height:1px;overflow:hidden;clip-path:inset(50%);}
+.health-history {height:100%;min-height:0;min-width:0;display:grid;grid-template-rows:auto minmax(0,1fr);gap:6px;}
+.health-history-heading {display:flex;justify-content:space-between;align-items:center;gap:8px;min-width:0;}
+.health-history-heading strong {font:700 clamp(11px,3dvh,17px) var(--font-mono);color:#80f5ff;}
+.health-history-heading span {font-size:clamp(10px,2.5dvh,13px);}
+.health-history-plot {display:grid;grid-template-columns:minmax(0,1fr) minmax(130px,22%);gap:10px;min-width:0;min-height:0;}
+[data-history-chart] {min-width:0;min-height:0;display:grid;place-items:center;border:1px solid #285969;background:#091923;}
+[data-history-chart] svg {display:block;width:100%;height:100%;min-height:0;}
+.health-chart-grid {stroke:#244252;stroke-width:1;}
+.health-chart-axis {fill:#b8d8e3;font:11px sans-serif;}
+.health-chart-line {stroke:#51e5ff;stroke-width:2;}
+.health-chart-point {fill:#51e5ff;stroke:#07151d;stroke-width:1;}
+.health-chart-missing {fill:#091923;stroke:#688d9c;stroke-width:1;}
+[data-chart-date] {cursor:pointer;outline:none;}
+[data-chart-date]:is(:focus,[aria-pressed="true"]) circle {stroke:#ffda78;stroke-width:3;}
+.health-history-plot aside {display:flex;flex-direction:column;justify-content:center;gap:6px;min-width:0;border-left:1px solid #285969;padding-left:10px;}
+.health-history-plot aside strong {font-size:clamp(14px,5dvh,28px);color:#b0fcff;line-height:1.1;overflow-wrap:anywhere;}
+.health-history-plot aside span {font-size:clamp(10px,2.7dvh,15px);line-height:1.2;}
+.health-history-mode>[data-status],.health-history-mode>[data-updated],.health-history-mode>#healthConnectAction {display:none!important;}
+.os-module-body>.system-health-telemetry.health-history-mode {grid-template-rows:auto minmax(0,1fr) auto;}
+@media (orientation:landscape) and (max-height:300px) {
+ .system-health-telemetry>[data-updated] {display:none;}
+ .os-module-body>.system-health-telemetry:not(.health-history-mode) {grid-template-rows:auto auto minmax(0,1fr) auto auto;}
+ .system-health-telemetry .health-history-toolbar button {min-height:24px;font-size:9px;padding:3px 6px;}
+ .health-history-toolbar select {min-height:24px;font-size:10px;}
+ .health-history-heading {gap:5px;}
+ .health-history-heading span {font-size:9px;}
+ .health-history-plot {grid-template-columns:minmax(0,1fr) 125px;gap:6px;}
+ .health-history-plot aside {gap:3px;padding-left:6px;}
+ .health-history-plot aside strong {font-size:15px;}
+ .health-history-plot aside span {font-size:9px;}
+ .health-history {gap:3px;}
+ .system-health-telemetry .health-metric-card p {font-size:11px;line-height:1.1;}
+ .system-health-telemetry .health-metric-card strong {font-size:10px;line-height:1;}
+ .system-health-telemetry .health-connect-values>div {padding:2px 4px;}
+}

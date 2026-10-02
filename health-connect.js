@@ -14,7 +14,7 @@
     if (message.result?.error) request.reject(new Error(message.result.error));
     else request.resolve(message.result);
   };
-  function call(method) {
+  function call(method, args = {}) {
     return new Promise((resolve, reject) => {
       const id = String(++sequence);
       const timer = setTimeout(() => {
@@ -22,7 +22,7 @@
         reject(new Error('health-connect-timeout'));
       }, ['requestStepPermission', 'requestPermissions'].includes(method) ? 120000 : 30000);
       pending.set(id, { resolve, reject, timer });
-      try { transport.postMessage(JSON.stringify({ id, method })); }
+      try { transport.postMessage(JSON.stringify({ ...args, id, method })); }
       catch (error) { clearTimeout(timer); pending.delete(id); reject(error); }
     });
   }
@@ -33,6 +33,7 @@
     getStatus: () => call('getStatus'),
     requestPermissions: () => call('requestPermissions'),
     readHealthData: () => call('readHealthData'),
+    readHealthHistory: days => call('readHealthHistory', { days }),
     openSettings: () => call('openSettings')
   };
 })();
@@ -80,10 +81,11 @@ window.SystemHealthUpdateHUD = (data = {}) => {
     module.id = 'systemHealthTelemetryPanel'; module.className = 'system-health-telemetry';
     module.innerHTML = '<p data-status>Choose HEALTH CONNECT to read your synced fitness data.</p><p data-updated></p><div data-values class="health-connect-values"></div><button type="button" id="healthConnectAction">HEALTH CONNECT / PERMISSIONS</button><small>Today: local midnight to now • Sleep: past 24 hours. Exercise time is recorded workouts, not all movement.</small>';
     document.body.append(module);
+    window.SystemHealthHistoryInstall?.(module);
     const panel = document.createElement('dialog');
     panel.id = 'systemHealthConnectDialog'; panel.className = 'health-connect-dialog';
     panel.setAttribute('aria-labelledby', 'systemHealthConnectTitle');
-    panel.innerHTML = '<header class="health-connect-window-head"><h3 id="systemHealthConnectTitle">SYSTEM // HEALTH CONNECT</h3><button type="button" data-exit aria-label="Exit Health Connect">EXIT ×</button></header><div class="health-connect-window-body"><p data-status></p><p>Galaxy Watch → Samsung Health → Health Connect. Enable sharing and allow read access.</p><div class="health-connect-toolbar"><button data-connect>CONNECT / PERMISSIONS</button><button data-refresh>REFRESH</button><button data-settings>SETTINGS / INSTALL</button><button data-close>CLOSE</button></div><p data-updated></p><div data-values class="health-connect-values"></div><small>Today: local midnight to now • Sleep: past 24 hours. No records? Check Samsung Health sharing.</small></div>';
+    panel.innerHTML = '<header class="health-connect-window-head"><h3 id="systemHealthConnectTitle">SYSTEM // HEALTH CONNECT</h3><button type="button" data-exit aria-label="Exit Health Connect">EXIT ×</button></header><div class="health-connect-window-body"><p data-status></p><p>Watch → compatible health app → Health Connect. Enable sharing and allow read access.</p><div class="health-connect-toolbar"><button data-connect>CONNECT / PERMISSIONS</button><button data-refresh>REFRESH</button><button data-settings>SETTINGS / INSTALL</button><button data-close>CLOSE</button></div><p data-updated></p><div data-values class="health-connect-values"></div><small>Today: local midnight to now • Sleep: past 24 hours. No records? Check your health app’s sharing.</small></div>';
     document.body.append(panel);
     const bridge = () => window.AndroidHealthConnect;
     let generation = 0, operation = null, lastReadDay = null;

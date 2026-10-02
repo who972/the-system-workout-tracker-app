@@ -1,30 +1,21 @@
-# The System — v54 development status
+# The System — v55 Health history
 
-Prepared on October 2, 2026, on branch `fix/v54-health-landscape`.
+Prepared October 2, 2026, on `feat/v55-health-history`. Based on the validated v54 Health/landscape branch; main has not been merged or released.
 
-## Changes ready for validation
+## Added
 
-Reconciled current main with the later Health Connect, responsive window, briefing and workout-flow fixes. This retains main's dynamic health-link direction and topbar collision fix, together with the established landscape OS, orbit, two-row dock, capped initial classification, solo workouts and individual Train Together progression.
+HEALTH offers TODAY, 7 DAYS, 14 DAYS, and 30 DAYS. History has interactive daily charts for steps, active calories, total calories, distance, average heart rate, recorded exercise time, and sleep time. Tap or keyboard-select a day to read its value. Daily averages exclude today and missing records. Today is labeled partial. Missing records remain gaps and recorded zero remains zero. Sleep duration is allocated to local calendar days, including overnight sessions.
 
-HEALTH now contains eight readings: steps, active calories, total calories, distance, average heart rate, exercise sessions, sleep sessions and recorded exercise time. The exercise logger remains available in DATABASE. HUD and HEALTH use the same foreground read. Permissions, empty records, valid zero, partial failures and unavailable providers have separate states. No permission dialog opens automatically. Close/reopen, revoked permission and previous-day responses cannot publish outdated readings.
+The production native bridge reads daily aggregate buckets from Health Connect using local calendar periods and source priorities. Each metric has independent permission and read-failure handling. No added permissions, automatic permission prompts, background collection, local health archive, or workout XP are introduced. Historical reads do not replace today's HUD values.
 
-The production native wrapper includes all seven read permissions and the permissions rationale activities. Exercise time uses the Health Connect duration aggregate. The compatibility `getTodayMetrics` method is implemented in the production wrapper. Android package identity and persistent signing configuration are preserved; target update is version 54.
+Closing/switching modules, hiding the app, returning to TODAY, and changing range invalidate pending history responses. Reopening refreshes permissions and data. Local day/offset changes and stale day responses require a new read. Health sharing instructions now cover compatible watch brands. Android update version: 55 / 0.55; existing application identity and signing key retained.
 
-Restored fixes cover entry-before-assessment sequencing, compact briefing, responsive module windows, saved solo workout inputs/countdowns/rests, and actual completion rewards. Native health data does not award workout XP. Existing manual step entry is retained.
+## Validation
 
-## Passed locally
-
-- 32 JavaScript/DOM tests covering health transport, metric states, stale responses, panel lifecycle and account operations.
-- Production solo and two-player Train Together integration tests against isolated PostgreSQL, including private player progression, retries, capacity and cancellation.
-- Database migration/reset/deletion tests covering isolation, authentication, rollback, privileges and cascades.
-- JavaScript syntax, stylesheet parsing, Android XML parsing, required APK web asset presence and whitespace checks.
-
-## Still required
-
-- Browser layout tests across ten landscape sizes, entry/briefing/onboarding and solo countdown/resume UI checks.
-- Native compilation, Android lint, native unit tests, signed APK build and packaged-asset/signature verification.
-- Actual Samsung Health/Galaxy Watch readings on a physical phone; mocked health transport cannot establish which records Samsung is sharing.
-
-Local Chromium cannot start because the execution host denies its required socket operations. This host has no Android SDK or persistent signing key. The existing GitHub Actions workflow has been prepared to run browser tests, native checks and the signed build, and save a landscape preview.
-
-The branch has **not** been pushed. Automatic approval review rejected the push because it classified external repository publication as outside the development/testing authorization. Approval to push this exact prepared branch is required before using that workflow. No merge or app release is needed to run the branch build.
+- v54 passed browser/workout/database integration, Android compilation/lint, signature and packaged-asset checks in GitHub Actions run 37066373292.
+- v55: history model/transport/DOM tests and existing HEALTH tests pass locally.
+- History charts: 7/14/30 days × seven metrics × ten landscape sizes (568×240 through 1024×500), keyboard selection, zero/gaps, return to TODAY, and permission revocation pass.
+- All 11 module windows, HEALTH today, classification layout and reduced-motion checks pass at ten landscape sizes.
+- Native calendar-range unit tests added for bounds, timezone dates, and both daylight-saving transitions; will run with Android compilation/lint in CI.
+- Signed v55 build and package verification: pending.
+- Actual phone readings remain a physical-device check; watch apps must share the corresponding records with Health Connect.

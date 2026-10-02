@@ -128,6 +128,12 @@ class MainActivity : ComponentActivity() {
                         respond(reply, id, JSONObject().put("steps", result[StepsRecord.COUNT_TOTAL] ?: 0L).put("date", LocalDate.now().toString()))
                     }
                     "readHealthData", "getTodayMetrics" -> respond(reply, id, readHealthData())
+                    "readHealthHistory" -> {
+                        val days = json.optInt("days", 7)
+                        if (days !in setOf(7, 14, 30)) {
+                            respond(reply, id, JSONObject().put("error", "unsupported-history-range"))
+                        } else respond(reply, id, HealthHistoryReader(health).read(days))
+                    }
                     else -> respond(reply, id, JSONObject().put("error", "unknown-method"))
                 }
             } catch (e: CancellationException) { throw e
@@ -204,4 +210,3 @@ class MainActivity : ComponentActivity() {
         return output.put("errors", errors)
     }
 }
-
