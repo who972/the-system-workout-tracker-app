@@ -433,3 +433,11 @@ body.system-os-ready #commandDeck .os-taskbar button {min-width:0;width:100%;pad
 body.system-os-ready #commandDeck>.hud-wing--left {
  height:100%;align-content:safe center;grid-auto-rows:max-content;overflow:auto;overscroll-behavior:contain;
 }
+
+/* Keep the two-row dock inside the visible viewport, including WebView resize. */
+body.system-os-ready #commandDeck>.os-dock {
+ position:fixed;
+ bottom:0;
+ padding-bottom:max(5px,env(safe-area-inset-bottom));
+ grid-template-rows:minmax(34px,auto) minmax(32px,auto);
+}

@@ -2,7 +2,10 @@ package com.thesystem.workouttracker
 
 import android.os.Bundle
 import android.webkit.WebView
+import android.widget.FrameLayout
 import androidx.activity.ComponentActivity
+import androidx.core.view.ViewCompat
+import androidx.core.view.WindowInsetsCompat
 import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
@@ -45,7 +48,17 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         webView = WebView(this)
-        setContentView(webView)
+        val viewport = FrameLayout(this)
+        viewport.addView(webView, FrameLayout.LayoutParams(FrameLayout.LayoutParams.MATCH_PARENT, FrameLayout.LayoutParams.MATCH_PARENT))
+        setContentView(viewport)
+        // Android 15+ enforces edge-to-edge. Keep the WebView viewport inside
+        // system bars and cutouts so viewport-sized controls remain visible.
+        ViewCompat.setOnApplyWindowInsetsListener(viewport) { view, insets ->
+            val safe = insets.getInsets(WindowInsetsCompat.Type.systemBars() or WindowInsetsCompat.Type.displayCutout())
+            view.setPadding(safe.left, safe.top, safe.right, safe.bottom)
+            insets
+        }
+        ViewCompat.requestApplyInsets(viewport)
         val loader = WebViewAssetLoader.Builder().addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this)).build()
         webView.clearCache(true)
         webView.settings.javaScriptEnabled = true

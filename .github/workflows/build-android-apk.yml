@@ -143,7 +143,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v56-command-layout-debug-apk
+          name: the-system-v57-command-layout-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -152,6 +152,6 @@ jobs:
       - name: Upload landscape preview
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v56-landscape-preview
+          name: the-system-v57-landscape-preview
           path: ${{ runner.temp }}/health-915x412.png
           if-no-files-found: error

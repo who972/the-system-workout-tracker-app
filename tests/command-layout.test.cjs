@@ -25,6 +25,7 @@ const server=http.createServer((req,res)=>{
    });
    assert(report.wing.top>=0&&report.wing.right<=width&&report.wing.bottom<=report.dock.top-6,'Right column stays above dock');
    assert(report.left.top>=0&&report.left.bottom<=report.dock.top-6,'Left column stays above dock');
+   assert(report.dock.bottom<=height+1,'Dock stays inside viewport');
    for(const button of report.buttons){assert(button.rect.top>=0&&button.rect.bottom<=height+1,button.label+' visible');assert(button.hit,button.label+' is not covered: '+button.coveredBy);}
    for(const card of report.cards)assert(card.scroll<=card.h+2,card.tag+' content is not clipped');
    if(height>=375)assert(report.scroll<=2,`${width}x${height}: normal landscape needs no panel scrolling`);
