@@ -2,9 +2,9 @@
 
 Prepared October 2, 2026, on `fix/v56-command-layout`, based on v55.
 
-Central Command measures the header and two-row dock before sizing the right-side Mission, Telemetry, and Analysis panels. Compact spacing and a two-column analysis keep standard landscape layouts above navigation. On unusually short screens only the right panel stack scrolls within its reserved space. The task switcher stays in its side gutter so it cannot cover Missions. Alerts remains the friend/duel/squad notification inbox; Briefing remains the daily plan.
+Central Command measures the header and two-row dock before sizing the right-side Mission, Telemetry, and Analysis panels. Compact spacing and a two-column analysis keep standard landscape layouts above navigation. On unusually short screens only the right panel stack scrolls within its reserved space. Left panels use the same reserved dock space. The task switcher stays in its side gutter so it cannot cover Missions. Alerts remains the friend/duel/squad notification inbox; Briefing remains the daily plan.
 
-Validation: all dock buttons are hit-tested and Alerts opens/closes at 11 sizes from 568×240 to 1536×681. Right panels stay above the dock, card contents are not clipped, and standard landscape sizes need no panel scrolling. Existing module-window and Health history browser checks pass. Android version 56 / 0.56; build verification pending.
+Validation: all dock buttons are hit-tested and Alerts opens/closes at 11 sizes from 568×240 to 1536×681. Right panels stay above the dock, card contents are not clipped, and standard landscape sizes need no panel scrolling. Existing module-window and Health history browser checks pass. Android version 56 / 0.56. Full regression, Android build, lint, native unit tests, signature, and packaged-asset verification passed in GitHub Actions run 37071399987 (commit 750f6b2328115b85c783804b45e85ba52d1d66ed). Artifact SHA-256: a31398ec74c03b68074d7c3275280b89011493e18fd0d060f68a9cea12edf252. Existing signing certificate retained. Delivered The-System-v56-Command-Layout.apk.
 
 # The System — v55 Health history
 
