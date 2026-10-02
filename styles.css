@@ -1669,7 +1669,7 @@ html,body{background:#02070c}
 body.system-os-ready{height:100dvh;overflow:hidden}
 body.system-os-ready>.ambient-bg,body.system-os-ready>.header,body.system-os-ready>.app-nav{display:none!important}
 body.system-os-ready>.command-deck{height:100dvh;min-height:100dvh;margin:0;padding:22px 28px 62px;box-sizing:border-box;border:0}
-body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(script){display:none!important}
+body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(.health-connect-dialog):not(script){display:none!important}
 .os-topbar{position:absolute;z-index:20;left:18px;right:18px;top:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font:700 9px var(--font-mono);letter-spacing:.16em;color:#72dced}
 .os-topbar b{color:#dffcff}.os-topbar__right{display:flex;gap:18px}
 .os-module-stage{position:fixed;z-index:1500;inset:5vh 5vw;display:none;grid-template-rows:auto 1fr;border:1px solid rgba(103,232,249,.55);background:linear-gradient(180deg,rgba(3,20,31,.97),rgba(1,8,14,.985));box-shadow:0 0 70px rgba(34,211,238,.18),inset 0 0 45px rgba(34,211,238,.04);clip-path:polygon(0 18px,18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px))}
@@ -1777,7 +1777,7 @@ html[data-theme="dark"] .system-log__entry--warning{color:var(--system-amber);bo
 
 
 /* V18 // TRUE FLOATING HOLOGRAPHIC WINDOW SHELL */
-body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(script){display:none!important}
+body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(.health-connect-dialog):not(script){display:none!important}
 body.system-os-ready .os-module-stage{
  position:absolute;z-index:80;
  left:50%;top:50%;right:auto;bottom:auto;
@@ -2533,8 +2533,17 @@ body.system-os-ready .os-module-body > #achievementGrid .achievement-card--locke
 #ttLive{position:relative;z-index:2;background:#102338;padding:8px;color:#aeeeff;text-align:center}
 #ttLive[hidden],#trainTogetherPanel[hidden]{display:none}
 
+/* Native modal must remain visible above the OS shell and release taps on close. */
+.health-connect-dialog[open]{display:block;position:fixed;inset:0;margin:auto;box-sizing:border-box;height:fit-content;max-width:calc(100vw - 24px);max-height:calc(100dvh - 24px);border-radius:10px;box-shadow:0 0 40px #000b;}
+.health-connect-dialog:not([open]){display:none;}
+.health-connect-dialog::backdrop{background:#000b;}
+.health-connect-dialog button{min-height:38px;padding:8px 12px;border:1px solid #36cddd;background:#102b3b;color:#d9f7ff;border-radius:4px;cursor:pointer;}
+.health-connect-dialog button:disabled{opacity:.5;}
+.health-connect-dialog button:focus-visible{outline:2px solid #fff;outline-offset:2px;}
+#hudHealthTelemetry #openHealthConnect{display:block;width:100%;margin-top:6px;padding:6px 8px;}
+@media (orientation:landscape) and (max-height:450px){.health-connect-dialog p{margin:8px 0;}.health-connect-dialog h3{font-size:16px;}.health-connect-dialog small{font-size:11px;}}
 
-/* V87 // CENTRAL COMMAND TOPBAR COLLISION FIX */
+/* Keep system status above the primary mission card. */
 body.system-os-ready .hud-module--mission{padding-top:30px!important}
 .os-topbar__right{position:absolute;right:8px;top:0;gap:14px;white-space:nowrap}
 @media(max-height:520px){body.system-os-ready .hud-module--mission{padding-top:27px!important}.os-topbar__right{font-size:8px;gap:10px}}
