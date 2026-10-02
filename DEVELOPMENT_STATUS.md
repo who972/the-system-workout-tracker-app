@@ -1,3 +1,11 @@
+# The System — v56 Command layout
+
+Prepared October 2, 2026, on `fix/v56-command-layout`, based on v55.
+
+Central Command measures the header and two-row dock before sizing the right-side Mission, Telemetry, and Analysis panels. Compact spacing and a two-column analysis keep standard landscape layouts above navigation. On unusually short screens only the right panel stack scrolls within its reserved space. The task switcher stays in its side gutter so it cannot cover Missions. Alerts remains the friend/duel/squad notification inbox; Briefing remains the daily plan.
+
+Validation: all dock buttons are hit-tested and Alerts opens/closes at 11 sizes from 568×240 to 1536×681. Right panels stay above the dock, card contents are not clipped, and standard landscape sizes need no panel scrolling. Existing module-window and Health history browser checks pass. Android version 56 / 0.56; build verification pending.
+
 # The System — v55 Health history
 
 Prepared October 2, 2026, on `feat/v55-health-history`. Based on the validated v54 Health/landscape branch; main has not been merged or released.

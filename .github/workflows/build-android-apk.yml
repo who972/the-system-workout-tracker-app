@@ -3,7 +3,7 @@ name: Build Android Debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, feat/health-connect-phase1, review/v53-briefing-health-metrics, fix/v54-health-landscape, feat/v55-health-history]
+    branches: [main, feat/health-connect-phase1, review/v53-briefing-health-metrics, fix/v54-health-landscape, feat/v55-health-history, fix/v56-command-layout]
     paths:
       - ".github/workflows/build-android-apk.yml"
       - "android-wrapper/**"
@@ -21,6 +21,8 @@ on:
       - "side-system.css"
       - "health-connect.js"
       - "health-history.js"
+      - "command-layout.js"
+      - "tests/command-layout.test.cjs"
       - "tests/health-history*.cjs"
       - "manifest.webmanifest"
       - "icon.svg"
@@ -57,6 +59,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/health-dialog-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" HEALTH_SCREENSHOT="$RUNNER_TEMP/health-915x412.png" node tests/window-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/health-history-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/command-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/onboarding-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/briefing-entry.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/workout-flow.test.cjs
@@ -72,12 +75,13 @@ jobs:
           node tests/account-data.test.cjs
           node tests/health-connect.test.cjs
           node --test tests/health-metric-states.test.cjs
+          node --check command-layout.js
           node --check health-history.js
           node --check side-system.js
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js train-together.js workout-flow.js account-data.js styles.css side-system.css window-layout.css side-system.js health-connect.js health-history.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp index.html app.js train-together.js workout-flow.js account-data.js styles.css side-system.css window-layout.css side-system.js health-connect.js health-history.js command-layout.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -124,6 +128,7 @@ jobs:
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
           cmp window-layout.css <(unzip -p "$APK" assets/www/window-layout.css)
           cmp side-system.css <(unzip -p "$APK" assets/www/side-system.css)
+          cmp command-layout.js <(unzip -p "$APK" assets/www/command-layout.js)
           cmp health-history.js <(unzip -p "$APK" assets/www/health-history.js)
           cmp health-connect.js <(unzip -p "$APK" assets/www/health-connect.js)
           cmp workout-flow.js <(unzip -p "$APK" assets/www/workout-flow.js)
@@ -138,7 +143,7 @@ jobs:
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v55-health-history-debug-apk
+          name: the-system-v56-command-layout-debug-apk
           path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
           if-no-files-found: error
           retention-days: 14
@@ -147,6 +152,6 @@ jobs:
       - name: Upload landscape preview
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v55-landscape-preview
+          name: the-system-v56-landscape-preview
           path: ${{ runner.temp }}/health-915x412.png
           if-no-files-found: error

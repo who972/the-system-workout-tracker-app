@@ -29,8 +29,8 @@ android {
         applicationId = "com.thesystem.workouttracker"
         minSdk = 26
         targetSdk = 36
-        versionCode = 55
-        versionName = "0.55"
+        versionCode = 56
+        versionName = "0.56"
     }
 
     buildTypes {

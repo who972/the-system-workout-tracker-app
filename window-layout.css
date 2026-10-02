@@ -383,3 +383,50 @@ body.system-os-ready .os-module-body .social-command.social-v25 {grid-template-c
  .system-health-telemetry .health-metric-card strong {font-size:10px;line-height:1;}
  .system-health-telemetry .health-connect-values>div {padding:2px 4px;}
 }
+
+/* Central Command cards stay in the workspace above the measured two-row dock. */
+body.system-os-ready>#commandDeck {
+ padding-top:var(--command-header-space,32px);
+ padding-bottom:var(--command-dock-space,102px);
+ grid-template-rows:minmax(0,1fr);
+ grid-template-columns:minmax(140px,1fr) minmax(0,1.35fr) minmax(185px,1fr);
+}
+body.system-os-ready #commandDeck>.hud-wing {min-width:0;min-height:0;max-height:100%;}
+body.system-os-ready #commandDeck>.hud-wing--right {
+ height:100%;align-content:safe center;grid-auto-rows:max-content;gap:clamp(4px,1.4dvh,9px);overflow:auto;overscroll-behavior:contain;
+}
+body.system-os-ready #commandDeck .hud-wing--right>.hud-module {
+ min-width:0;box-sizing:border-box;margin:0;padding:clamp(4px,1dvh,8px) clamp(6px,1.2vw,14px);
+}
+body.system-os-ready #commandDeck .hud-wing--right .hud-module__tag {margin-bottom:3px;font-size:clamp(8px,2.3dvh,11px);letter-spacing:.09em;}
+body.system-os-ready #commandDeck .hud-module--mission {
+ padding-top:clamp(4px,1dvh,8px)!important;display:grid;grid-template-columns:minmax(0,1fr) auto;gap:3px 6px;align-items:center;
+}
+body.system-os-ready #commandDeck .hud-module--mission>.hud-module__tag {grid-column:1/-1;}
+body.system-os-ready #commandDeck .hud-module--mission>strong {font-size:clamp(14px,4dvh,26px);line-height:1.05;margin:0;overflow-wrap:anywhere;}
+body.system-os-ready #commandDeck .hud-module--mission>small {font-size:clamp(8px,2.2dvh,11px);line-height:1.2;}
+body.system-os-ready #commandDeck .hud-module--mission>button {grid-column:2;grid-row:2/4;max-width:100px;}
+body.system-os-ready #commandDeck .hud-wing--right button {min-height:26px;padding:4px 6px;margin-top:4px;font-size:clamp(8px,2.2dvh,10px);letter-spacing:.05em;}
+body.system-os-ready #commandDeck .hud-wing--right .telemetry-row {padding:2px 0;font-size:clamp(8px,2.2dvh,12px);letter-spacing:.04em;gap:5px;}
+body.system-os-ready #commandDeck .hud-analysis {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:3px 8px;}
+body.system-os-ready #commandDeck .hud-analysis>:is(.hud-module__tag,small,strong,button) {grid-column:1/-1;}
+body.system-os-ready #commandDeck .analysis-stat {grid-template-columns:22px minmax(0,1fr) 25px;gap:4px;margin:0;font-size:clamp(8px,2.2dvh,11px);}
+body.system-os-ready #commandDeck .hud-analysis>small {margin-top:3px;font-size:clamp(7px,1.9dvh,10px);}
+body.system-os-ready #commandDeck .hud-analysis>strong {margin:0;font-size:clamp(8px,2.2dvh,12px);line-height:1.1;}
+body.system-os-ready #commandDeck .hud-analysis>button {margin-top:2px;}
+@media (orientation:landscape) and (max-height:400px) {
+ body.system-os-ready #commandDeck>.hud-wing--right {gap:4px;}
+ body.system-os-ready #commandDeck .hud-wing--right>.hud-module {padding:4px 6px;}
+ body.system-os-ready #commandDeck .hud-wing--right .hud-module__tag {margin-bottom:3px;font-size:8px;}
+ body.system-os-ready #commandDeck .hud-wing--right button {min-height:22px;padding:3px 4px;font-size:8px;margin-top:2px;}
+ body.system-os-ready #commandDeck .hud-wing--right .telemetry-row {padding:0;font-size:8px;}
+ body.system-os-ready #commandDeck .hud-analysis {gap:3px 5px;}
+ body.system-os-ready #commandDeck .hud-module--mission {padding-top:4px!important;}
+ body.system-os-ready #commandDeck .hud-module--mission>strong {font-size:14px;}
+ body.system-os-ready #commandDeck .hud-module--mission>button {max-width:72px;letter-spacing:0;}
+}
+/* The task switcher uses the side gutter and cannot cover dock destinations. */
+body.system-os-ready #commandDeck .os-taskbar {max-width:124px;box-sizing:border-box;padding:0 5px;gap:0;}
+body.system-os-ready #commandDeck .os-taskbar__label,
+body.system-os-ready #commandDeck .os-taskbar__hint {display:none;}
+body.system-os-ready #commandDeck .os-taskbar button {min-width:0;width:100%;padding:5px 4px;font-size:6px;}
