@@ -441,3 +441,11 @@ body.system-os-ready #commandDeck>.os-dock {
  padding-bottom:max(5px,env(safe-area-inset-bottom));
  grid-template-rows:minmax(34px,auto) minmax(32px,auto);
 }
+/* Match the inserted Health Connect control to the compact Command buttons. */
+@media (orientation:landscape) and (max-height:450px) {
+ body.system-os-ready #commandDeck #hudHealthTelemetry #openHealthConnect {min-height:22px;margin-top:2px;padding:3px 4px;font-size:8px;}
+}
+@media (orientation:landscape) and (max-height:450px) {
+ body.system-os-ready #commandDeck .hud-analysis {row-gap:1px;}
+ body.system-os-ready #commandDeck .hud-analysis>small {margin-top:1px;}
+}

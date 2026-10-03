@@ -190,3 +190,9 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
  #awakeningAssessment .ob-days { margin:2px 0; font-size:10px; }
  #awakeningAssessment .ob-days input,#awakeningAssessment .ob-days select { height:24px; font-size:10px; }
 }
+@media (orientation:landscape) and (max-height:280px) {
+ #awakeningAssessment:not(.ob-summary) .ob-card { padding-block:5px; }
+ #awakeningAssessment .ob-safety { font-size:10px; margin-bottom:3px; }
+ #awakeningAssessment .ob-countdown { margin-bottom:2px; }
+ #awakeningAssessment:not(.ob-summary) .ob-actions { margin-top:3px; }
+}

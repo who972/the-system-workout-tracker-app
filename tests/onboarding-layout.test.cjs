@@ -27,6 +27,8 @@ const server = http.createServer((req, res) => {
     await page.waitForTimeout(600);
     await page.evaluate(() => {
       getCloudSession = () => ({ access_token: 'layout-test-only' });
+      document.getElementById('systemEntryScreen').hidden=true;
+      document.body.classList.remove('system-entry-open');
       SystemOnboarding.reset();
       SystemOnboarding.show();
     });
