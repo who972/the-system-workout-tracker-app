@@ -81,7 +81,7 @@ const server = http.createServer((req, res) => {
         const id=step<4?'systemOnboarding':'awakeningAssessment';
         const report=await page.evaluate(id=>{
           const el=document.getElementById(id);
-          return {overflow:el.scrollHeight-el.clientHeight, nodes:[...el.querySelectorAll('h1,p,small,strong,.side-tag,button,input')].map(n=>{
+          return {overflow:el.scrollHeight-el.clientHeight, nodes:[...el.querySelectorAll('h1,p,small,strong,.side-tag,button,input,select')].map(n=>{
             const r=n.getBoundingClientRect();
             return {text:n.textContent||n.id,top:r.top,bottom:r.bottom,left:r.left,right:r.right};
           })};
@@ -93,8 +93,8 @@ const server = http.createServer((req, res) => {
         if(step>=4 && step<8) assert.equal(await page.locator('#awakeningAssessment .ob-safety').count(),1);
         if(step===2) await page.locator('[data-exp="intermediate"]').click();
         if(step===3) { await page.locator('[data-eq="Dumbbells"]').click(); await page.locator('#obDays').fill('3'); }
-        if(step===4) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5');}
-        if(step===5) await page.locator('#awWalk').fill('4');
+        if(step===4) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5'); await page.locator('#awPushType').selectOption('standard');}
+        if(step===5) {await page.locator('#awWalk').fill('4');await page.locator('#awWalkType').selectOption('march');}
         if(step===6) await page.locator('#awMarch').fill('3');
         if(step===7) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
         await page.locator(step<4?'#obNext':'#awNext').click();
@@ -105,8 +105,25 @@ const server = http.createServer((req, res) => {
       assert.ok(saved.ob.equipment.includes('Dumbbells'));
       assert.equal(saved.ob.days,3);
       assert.equal(saved.assessment.raw.sit,10);
+      assert.equal(saved.assessment.raw.pushType,'standard');
+      assert.equal(saved.assessment.raw.walkType,'march');
       console.log(`PASS ${width}x${height}: all 9 onboarding/assessment screens fit and completion saves input`);
     }
+    // Reassessment stores current capacity without replacing earned progression.
+    const beforeRetake=await page.evaluate(()=>({build:loadBuild(),side:loadSideSystem(),level:state.level,xp:state.xp}));
+    await page.evaluate(()=>showAwakeningAssessment(null,{retake:true}));
+    await page.locator('#awCancel').click();
+    assert.equal(await page.locator('#awakeningAssessment.active').count(),0);
+    await page.evaluate(()=>showAwakeningAssessment(null,{retake:true}));
+    await page.locator('#awSit').fill('1');
+    for(let i=0;i<5;i++) await page.locator('#awNext').click();
+    const afterRetake=await page.evaluate(()=>({build:loadBuild(),side:loadSideSystem(),level:state.level,xp:state.xp}));
+    assert.deepEqual(afterRetake.build.stats,beforeRetake.build.stats);
+    assert.deepEqual(afterRetake.side.boss,beforeRetake.side.boss);
+    assert.equal(afterRetake.level,beforeRetake.level);
+    assert.equal(afterRetake.xp,beforeRetake.xp);
+    assert.equal(afterRetake.build.assessment.raw.sit,1);
+    console.log('PASS retake completion and cancellation preserve earned progression');
     await page.clock.install();
     await page.clock.pauseAt(new Date());
     await page.setViewportSize({width:740,height:360});

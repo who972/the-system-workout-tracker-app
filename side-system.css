@@ -180,3 +180,13 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
 @media (orientation:landscape) and (max-height:280px) {
   #awakeningAssessment .ob-countdown button { height:24px; min-height:24px; line-height:1.2; }
 }
+/* Keep assessment variation and effort controls within the landscape fields. */
+#awakeningAssessment .ob-days select { width:100%; min-width:0; height:28px; padding:3px 6px; background:#101d2c; color:#eef8ff; border:1px solid #4cc9f0; border-radius:6px; font:inherit; }
+@media (orientation:landscape) and (max-height:500px) {
+ #awakeningAssessment .ob-days { display:grid; grid-template-columns:minmax(0,1fr) minmax(70px,1fr); align-items:center; }
+ #awakeningAssessment .ob-days input { height:28px; }
+}
+@media (orientation:landscape) and (max-height:280px) {
+ #awakeningAssessment .ob-days { margin:2px 0; font-size:10px; }
+ #awakeningAssessment .ob-days input,#awakeningAssessment .ob-days select { height:24px; font-size:10px; }
+}
