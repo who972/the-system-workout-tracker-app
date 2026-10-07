@@ -388,7 +388,7 @@ function assessmentTrial(rank){
  return v?{rank,title:b.title,focus:v.focus,tasks:v.tasks}:null;
 }
 function awakeningScore(v,max){return Math.max(0,Math.min(100,Math.round((Number(v)||0)/max*100)))}
-function awakeningClass(scores){const physical=['Strength','Endurance','Conditioning'],support=['Mobility','Recovery'],pavg=Math.round(physical.reduce((n,x)=>n+scores[x],0)/physical.length),savg=Math.round(support.reduce((n,x)=>n+scores[x],0)/support.length),low=Math.min(...physical.map(x=>scores[x]));return pavg>=52&&savg>=45&&low>=40?'C':pavg>=32&&savg>=25&&low>=25?'D':'E'}
+function awakeningClass(scores){const physical=['Strength','Endurance','Conditioning'],support=['Mobility','Recovery'],pavg=Math.round(physical.reduce((n,x)=>n+scores[x],0)/physical.length),savg=Math.round(support.reduce((n,x)=>n+scores[x],0)/support.length),low=Math.min(...physical.map(x=>scores[x]));return pavg>=60&&savg>=45&&low>=50?'C':pavg>=32&&savg>=25&&low>=25?'D':'E'}
 function awakeningPath(scores){const pairs=[['Strength','Strength'],['Endurance','Endurance'],['Conditioning','Fat Loss'],['Recovery','Muscle Building']].sort((a,z)=>scores[z[0]]-scores[a[0]]);return pairs[0]&&scores[pairs[0][0]]>=scores.Mobility+10?pairs[0][1]:'Balanced'}
 // Separate instructions from controls so short landscape screens can use both sides.
 function onboardingCard(content,actions){
