@@ -115,11 +115,24 @@ jobs:
           unzip -p "$APK" assets/www/index.html | grep -q 'src="enter_the_system_landscape.jpg?v=86"'
           echo "APK signature, package metadata, and current runtime verified"
 
+      - name: Name APK with version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION_NAME="$(sed -n 's/.*versionName = "\([^"]*\)".*/\1/p' android-wrapper/app/build.gradle.kts | head -1)"
+          VERSION_CODE="$(sed -n 's/.*versionCode = \([0-9][0-9]*\).*/\1/p' android-wrapper/app/build.gradle.kts | head -1)"
+          test -n "$VERSION_NAME"
+          test -n "$VERSION_CODE"
+          OUT="android-wrapper/app/build/outputs/apk/debug/The-System-v${VERSION_NAME}-build${VERSION_CODE}.apk"
+          cp android-wrapper/app/build/outputs/apk/debug/app-debug.apk "$OUT"
+          echo "APK_PATH=$OUT" >> "$GITHUB_ENV"
+          echo "APK_LABEL=The-System-v${VERSION_NAME}-build${VERSION_CODE}" >> "$GITHUB_ENV"
+
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: the-system-v92-launcher-icon-debug-apk
-          path: android-wrapper/app/build/outputs/apk/debug/app-debug.apk
+          name: ${{ env.APK_LABEL }}
+          path: ${{ env.APK_PATH }}
           if-no-files-found: error
           retention-days: 14
 
