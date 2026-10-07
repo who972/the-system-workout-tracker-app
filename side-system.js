@@ -8,7 +8,7 @@ const TRAINING_PATHS={
  Strength:{label:'Strength',desc:'Prioritize force production while maintaining a complete build.',boost:['Strength','Consistency']},
  Endurance:{label:'Endurance',desc:'Prioritize sustained work capacity and conditioning.',boost:['Endurance','Conditioning']}
 };
-const RANK_STANDARDS={D:{Strength:8,Endurance:8,Conditioning:8,Mobility:6,Consistency:6,Recovery:6},C:{Strength:16,Endurance:16,Conditioning:16,Mobility:12,Consistency:14,Recovery:12},B:{Strength:28,Endurance:28,Conditioning:28,Mobility:22,Consistency:26,Recovery:22},A:{Strength:42,Endurance:42,Conditioning:42,Mobility:34,Consistency:40,Recovery:34},S:{Strength:58,Endurance:58,Conditioning:58,Mobility:48,Consistency:56,Recovery:48},'S+':{Strength:74,Endurance:74,Conditioning:74,Mobility:64,Consistency:72,Recovery:64},Shadow:{Strength:88,Endurance:88,Conditioning:88,Mobility:80,Consistency:86,Recovery:80}};
+const RANK_STANDARDS={D:{Strength:30,Endurance:30,Conditioning:30,Mobility:25,Consistency:10,Recovery:25},C:{Strength:45,Endurance:45,Conditioning:45,Mobility:40,Consistency:30,Recovery:40},B:{Strength:60,Endurance:60,Conditioning:60,Mobility:50,Consistency:45,Recovery:50},A:{Strength:70,Endurance:70,Conditioning:70,Mobility:60,Consistency:60,Recovery:60},S:{Strength:80,Endurance:80,Conditioning:80,Mobility:70,Consistency:72,Recovery:70},'S+':{Strength:90,Endurance:90,Conditioning:90,Mobility:82,Consistency:84,Recovery:82},Shadow:{Strength:95,Endurance:95,Conditioning:95,Mobility:90,Consistency:92,Recovery:90}};
 function loadBuild(){let b={};try{b=JSON.parse(localStorage.getItem('systemPlayerBuildV1')||'{}')}catch(e){}b.path=b.path||'Balanced';b.stats=b.stats||{};BUILD_STATS.forEach(x=>b.stats[x]=Number(b.stats[x]||0));return b}
 function saveBuild(b){localStorage.setItem('systemPlayerBuildV1',JSON.stringify(b))}
 function setTrainingPath(path){if(!TRAINING_PATHS[path])return;const b=loadBuild();b.path=path;saveBuild(b);if(typeof addSystemMessage==='function')addSystemMessage('TRAINING PATH UPDATED: '+path+'. Your rank, XP and history are unchanged.','level');renderPlayerStatus();renderSideSystem()}
@@ -388,7 +388,7 @@ function assessmentTrial(rank){
  return v?{rank,title:b.title,focus:v.focus,tasks:v.tasks}:null;
 }
 function awakeningScore(v,max){return Math.max(0,Math.min(100,Math.round((Number(v)||0)/max*100)))}
-function awakeningClass(scores){const physical=['Strength','Endurance','Conditioning'],support=['Mobility','Recovery'],pavg=Math.round(physical.reduce((n,x)=>n+scores[x],0)/physical.length),savg=Math.round(support.reduce((n,x)=>n+scores[x],0)/support.length),low=Math.min(...physical.map(x=>scores[x]));return pavg>=68&&savg>=50&&low>=45?'C':pavg>=42&&savg>=35&&low>=25?'D':'E'}
+function awakeningClass(scores){const physical=['Strength','Endurance','Conditioning'],support=['Mobility','Recovery'],pavg=Math.round(physical.reduce((n,x)=>n+scores[x],0)/physical.length),savg=Math.round(support.reduce((n,x)=>n+scores[x],0)/support.length),low=Math.min(...physical.map(x=>scores[x]));return pavg>=52&&savg>=45&&low>=40?'C':pavg>=32&&savg>=25&&low>=25?'D':'E'}
 function awakeningPath(scores){const pairs=[['Strength','Strength'],['Endurance','Endurance'],['Conditioning','Fat Loss'],['Recovery','Muscle Building']].sort((a,z)=>scores[z[0]]-scores[a[0]]);return pairs[0]&&scores[pairs[0][0]]>=scores.Mobility+10?pairs[0][1]:'Balanced'}
 // Separate instructions from controls so short landscape screens can use both sides.
 function onboardingCard(content,actions){
