@@ -2554,3 +2554,5 @@ body.system-os-ready .hud-module--mission{padding-top:30px!important}
 .system-onboarding .ob-options{grid-template-columns:repeat(2,minmax(0,1fr))}
 .aw-push-block{display:grid;gap:8px}.aw-push-label{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:#8deeff}.aw-push-options{grid-template-columns:repeat(4,minmax(0,1fr))!important}.aw-push-options button{min-width:0;padding-left:8px;padding-right:8px}
 @media (max-height:520px) and (orientation:landscape){.system-onboarding .onboarding-card,.system-onboarding .ob-card{max-height:calc(100vh - 12px);overflow-y:auto}.system-onboarding h1{margin:.25rem 0}.system-onboarding p{margin:.35rem 0}.system-onboarding .ob-options{gap:6px}.system-onboarding .ob-options button{min-height:42px}}
+
+.build-info{margin-top:10px;padding:9px 11px;border:1px solid rgba(103,222,255,.16);display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:.68rem;letter-spacing:.09em}.build-info span{opacity:.58}.build-info strong{color:#9befff}
