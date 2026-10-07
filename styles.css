@@ -2556,3 +2556,14 @@ body.system-os-ready .hud-module--mission{padding-top:30px!important}
 @media (max-height:520px) and (orientation:landscape){.system-onboarding .onboarding-card,.system-onboarding .ob-card{max-height:calc(100vh - 12px);overflow-y:auto}.system-onboarding h1{margin:.25rem 0}.system-onboarding p{margin:.35rem 0}.system-onboarding .ob-options{gap:6px}.system-onboarding .ob-options button{min-height:42px}}
 
 .build-info{margin-top:10px;padding:9px 11px;border:1px solid rgba(103,222,255,.16);display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:.68rem;letter-spacing:.09em}.build-info span{opacity:.58}.build-info strong{color:#9befff}
+
+
+/* Assessment baseline // Progress analytics */
+.assessment-baseline-card{margin:0 0 14px;padding:18px;border:1px solid rgba(34,211,238,.28);border-radius:12px;background:linear-gradient(135deg,rgba(34,211,238,.055),rgba(255,255,255,.018))}
+.assessment-baseline-card .analytics-card__head{margin-bottom:12px}.assessment-baseline-card .analytics-card__head h3{margin:2px 0 0;font-size:16px;text-transform:uppercase;letter-spacing:.08em}
+.assessment-baseline-summary{display:flex;align-items:center;gap:16px;margin-bottom:14px;padding:10px 12px;border-left:2px solid currentColor;background:rgba(255,255,255,.025)}
+.assessment-baseline-summary strong{font-size:20px;white-space:nowrap}.assessment-baseline-summary span{font-size:12px;opacity:.62}
+.assessment-baseline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.assessment-baseline-grid>div{padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:rgba(255,255,255,.025)}
+.assessment-baseline-grid span{display:block;font:9px var(--font-mono);letter-spacing:.1em;opacity:.58}.assessment-baseline-grid strong{display:block;margin:5px 0 8px;font-size:18px}.assessment-baseline-grid i{display:block;height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}.assessment-baseline-grid i b{display:block;height:100%;width:0;background:currentColor;transition:width .35s}
+.assessment-baseline-empty .assessment-baseline-grid{opacity:.35}
+@media(max-width:700px){.assessment-baseline-grid{grid-template-columns:repeat(2,1fr)}}
