@@ -374,7 +374,14 @@ function applyAssessmentPlacement(rank,scores){
  const s=loadSideSystem(),target=rankIndex(rank);
  BOSS_STAGES.forEach(b=>{if(rankIndex(b.rank)<=target&&ASSESSMENT_RANKS.includes(b.rank))s.boss[b.rank]={...(s.boss[b.rank]||{}),passed:true,assessment:true,passedAt:new Date().toISOString(),attempts:0,history:[]}});
  saveSideSystem(s);seedAssessmentStats(rank,scores);
- if(typeof state!=='undefined'){state.level=Math.max(state.level||1,ASSESSMENT_LEVEL[rank]||1);if(typeof saveState==='function')saveState()}
+ if(typeof state!=='undefined'){
+  state.level=Math.max(state.level||1,ASSESSMENT_LEVEL[rank]||1);
+  state.performanceProfile=state.performanceProfile||{};
+  const map={str:'Strength',end:'Endurance',agi:'Conditioning',vit:'Recovery'};
+  Object.entries(map).forEach(([stat,key])=>{const measured=Math.max(0,Math.min(100,Number(scores?.[key])||0));const current=state.performanceProfile[stat]||{score:0,actions:0};state.performanceProfile[stat]={...current,score:Math.max(Number(current.score)||0,measured),actions:Math.max(Number(current.actions)||0,measured>0?1:0)}});
+  if(typeof saveState==='function')saveState();
+  if(typeof renderCommandHud==='function')renderCommandHud();
+ }
 }
 function assessmentTrial(rank){
  const b=BOSS_STAGES.find(x=>x.rank===rank),v=b?.variants?.[2]||b?.variants?.[0];
