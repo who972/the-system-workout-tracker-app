@@ -5,6 +5,7 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
 import androidx.health.connect.client.records.ExerciseSessionRecord
+import androidx.health.connect.client.records.HeartRateRecord
 import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
@@ -15,7 +16,8 @@ class HealthConnectStepReader(private val context: Context) {
     companion object {
         val permissions = setOf(
             HealthPermission.getReadPermission(StepsRecord::class),
-            HealthPermission.getReadPermission(ExerciseSessionRecord::class)
+            HealthPermission.getReadPermission(ExerciseSessionRecord::class),
+            HealthPermission.getReadPermission(HeartRateRecord::class)
         )
     }
 
@@ -51,6 +53,19 @@ class HealthConnectStepReader(private val context: Context) {
         return HealthDayMetrics(day.date.toString(), aggregate[StepsRecord.COUNT_TOTAL] ?: 0L, activeSeconds / 60L)
     }
 
+    suspend fun recentHeartRate(minutes: Long = 15): HeartRateMetrics {
+        val hc = client()
+        if (!hc.permissionController.getGrantedPermissions().contains(HealthPermission.getReadPermission(HeartRateRecord::class))) throw SecurityException("Heart rate permission required")
+        val end = Instant.now()
+        val start = end.minusSeconds(minutes.coerceIn(1, 120) * 60)
+        val records = hc.readRecords(ReadRecordsRequest(recordType = HeartRateRecord::class, timeRangeFilter = TimeRangeFilter.between(start, end))).records
+        val samples = records.flatMap { it.samples }.filter { !it.time.isBefore(start) && !it.time.isAfter(end) }
+        if (samples.isEmpty()) return HeartRateMetrics(0, 0, 0, 0, null)
+        val bpms = samples.map { it.beatsPerMinute.toInt() }
+        val latest = samples.maxByOrNull { it.time }
+        return HeartRateMetrics(latest?.beatsPerMinute?.toInt() ?: 0, bpms.average().toInt(), bpms.minOrNull() ?: 0, bpms.maxOrNull() ?: 0, latest?.time?.toString())
+    }
+
     suspend fun todaySteps(): StepTotal {
         val client = client()
         if (!client.permissionController.getGrantedPermissions().containsAll(permissions)) {
@@ -69,3 +84,6 @@ data class StepTotal(val date: String, val steps: Long)
 
 
 data class HealthDayMetrics(val date: String, val steps: Long, val activeMinutes: Long)
+
+
+data class HeartRateMetrics(val latest: Int, val average: Int, val minimum: Int, val maximum: Int, val sampledAt: String?)
