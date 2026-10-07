@@ -12,6 +12,8 @@ import androidx.health.connect.client.HealthConnectClient
 import androidx.health.connect.client.PermissionController
 import androidx.health.connect.client.permission.HealthPermission
 import androidx.health.connect.client.records.StepsRecord
+import androidx.health.connect.client.records.HeartRateRecord
+import androidx.health.connect.client.request.ReadRecordsRequest
 import androidx.health.connect.client.request.AggregateRequest
 import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.aggregate.AggregationResult
@@ -39,7 +41,8 @@ class MainActivity : ComponentActivity() {
     private val permissionLauncher = registerForActivityResult(
         PermissionController.createRequestPermissionResultContract()
     ) { granted ->
-        val ok = granted.contains(HealthPermission.getReadPermission(StepsRecord::class))
+        val required = setOf(HealthPermission.getReadPermission(StepsRecord::class), HealthPermission.getReadPermission(HeartRateRecord::class))
+        val ok = granted.containsAll(required)
         permissionReply?.postMessage(JSONObject().put("id", pendingPermissionId).put("result", JSONObject().put("granted", ok)).toString())
         permissionReply = null
         pendingPermissionId = ""
@@ -86,15 +89,25 @@ class MainActivity : ComponentActivity() {
         when (json.optString("method")) {
             "requestStepPermission" -> {
                 lifecycleScope.launch {
-                    val permission = HealthPermission.getReadPermission(StepsRecord::class)
-                    if (health.permissionController.getGrantedPermissions().contains(permission)) {
+                    val permissions = setOf(HealthPermission.getReadPermission(StepsRecord::class), HealthPermission.getReadPermission(HeartRateRecord::class))
+                    if (health.permissionController.getGrantedPermissions().containsAll(permissions)) {
                         reply.postMessage(JSONObject().put("id", id).put("result", JSONObject().put("granted", true)).toString())
                     } else {
                         pendingPermissionId = id
                         permissionReply = reply
-                        permissionLauncher.launch(setOf(permission))
+                        permissionLauncher.launch(permissions)
                     }
                 }
+            }
+            "getRecentHeartRate" -> lifecycleScope.launch {
+                val end = java.time.Instant.now()
+                val minutes = json.optLong("minutes", 15).coerceIn(1, 120)
+                val start = end.minusSeconds(minutes * 60)
+                val records = health.readRecords(ReadRecordsRequest(HeartRateRecord::class, TimeRangeFilter.between(start, end))).records
+                val samples = records.flatMap { it.samples }.filter { !it.time.isBefore(start) && !it.time.isAfter(end) }
+                val result = if (samples.isEmpty()) JSONObject().put("latest", 0).put("average", 0).put("minimum", 0).put("maximum", 0)
+                    else { val bpms=samples.map{it.beatsPerMinute.toInt()}; val latest=samples.maxByOrNull{it.time}; JSONObject().put("latest",latest?.beatsPerMinute?.toInt()?:0).put("average",bpms.average().toInt()).put("minimum",bpms.minOrNull()?:0).put("maximum",bpms.maxOrNull()?:0).put("sampledAt",latest?.time?.toString()) }
+                reply.postMessage(JSONObject().put("id", id).put("result", result).toString())
             }
             "getTodaySteps" -> lifecycleScope.launch {
                 val zone = ZoneId.systemDefault()
