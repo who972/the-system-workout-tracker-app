@@ -1170,13 +1170,27 @@ function dateLocal(s){const [y,m,d]=String(s).split('-').map(Number);return new 
 function daysAgo(n){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d;}
 function sessionSetHistory(){return workoutHistory().flatMap(s=>(s.sets||[]).map(x=>({...x,date:s.date,mission:s.mission})));}
 function allExerciseNames(){const names=new Set();state.exerciseRecords.forEach(r=>names.add(r.name));sessionSetHistory().forEach(r=>names.add(r.name));Object.keys(getMissionRecords()).forEach(n=>names.add(n));return [...names].sort();}
+function renderAssessmentBaseline(){
+ let a=null;try{a=JSON.parse(localStorage.getItem('systemAwakeningAssessmentV1')||'null')}catch(_){}
+ const card=document.getElementById('assessmentBaselineCard');if(!card)return;
+ const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
+ const bar=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'};
+ if(!a?.scores){card.classList.add('assessment-baseline-empty');return}
+ card.classList.remove('assessment-baseline-empty');
+ const score=k=>Math.max(0,Math.min(100,Math.round(Number(a.scores?.[k])||0)));
+ const rank=a.rank||a.class||a.result?.rank||a.result?.class||'BASELINE COMPLETE';
+ const when=a.completedAt||a.completed_at||a.date||a.createdAt;
+ set('assessmentBaselineRank',String(rank).toUpperCase());
+ set('assessmentBaselineMeta',when?'Completed '+new Date(when).toLocaleDateString():'Assessment complete');
+ [['Strength','assessmentBaselineStrength'],['Endurance','assessmentBaselineEndurance'],['Conditioning','assessmentBaselineConditioning'],['Recovery','assessmentBaselineRecovery']].forEach(([k,id])=>{const v=score(k);set(id,v+'/100');bar(id+'Bar',v)});
+}
 function renderAnalytics(){
  const hist=workoutHistory(), now=new Date(), weekStart=daysAgo((now.getDay()+6)%7), monthStart=new Date(now.getFullYear(),now.getMonth(),1);
  const week=hist.filter(x=>dateLocal(x.date)>=weekStart).length, month=hist.filter(x=>dateLocal(x.date)>=monthStart).length;
  const mins=Math.round(hist.reduce((a,x)=>a+(x.seconds||0),0)/60);
  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
  set('analyticsWeek',week);set('analyticsMonth',month);set('analyticsMinutes',mins+'m');set('analyticsXp',state.totalXp||0);set('analyticsStreak',state.currentStreak||0);set('analyticsBestStreak',state.bestStreak||0);
- renderWeightAnalytics();renderTrainingCalendar();renderStrengthAnalytics();renderPRAnalytics();renderSystemInsights();
+ renderAssessmentBaseline();renderWeightAnalytics();renderTrainingCalendar();renderStrengthAnalytics();renderPRAnalytics();renderSystemInsights();
 }
 function renderWeightAnalytics(){
  const w=state.weight||{}, h=(w.history||[]).slice(-30), chart=document.getElementById('weightChart'); if(!chart)return;
