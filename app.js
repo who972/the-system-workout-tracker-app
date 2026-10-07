@@ -1309,7 +1309,7 @@ const SystemAudio=(()=>{
 
 function renderSystemSettings(){const x=getSystemSettings();const n=document.getElementById('profileName');if(!n)return;n.value=x.name;document.getElementById('unitSystem').value=x.units;document.getElementById('workoutGoal').value=x.goal;document.getElementById('soundSetting').checked=!!x.sounds;['masterVolume','effectsVolume','musicVolume'].forEach(k=>{const e=document.getElementById(k);if(e)e.value=x[k]??({masterVolume:70,effectsVolume:80,musicVolume:35}[k])});}
 function systemBackup(){const data={app:'The System - Workout Tracker',version:11,exportedAt:new Date().toISOString(),localStorage:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);data.localStorage[k]=localStorage.getItem(k);}return data;}
-function exportSystemBackup(){const blob=new Blob([JSON.stringify(systemBackup(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='the-system-workout-tracker-backup-'+getTodayStr()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('backupStatus').textContent='Backup exported successfully.';}
+async function exportSystemBackup(){const data=systemBackup(),name='the-system-workout-tracker-backup-'+getTodayStr()+'.json',json=JSON.stringify(data,null,2);try{if(window.SystemAndroid?.exportBackup){window.SystemAndroid.exportBackup(name,json);document.getElementById('backupStatus').textContent='Backup export opened. Choose where to save it.';return}if(navigator.share&&navigator.canShare){const file=new File([json],name,{type:'application/json'});if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'THE SYSTEM backup'});document.getElementById('backupStatus').textContent='Backup shared successfully.';return}}const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('backupStatus').textContent='Backup exported successfully.'}catch(e){document.getElementById('backupStatus').textContent='Backup export failed: '+e.message}}
 async function importSystemBackup(file){const status=document.getElementById('backupStatus');try{const data=JSON.parse(await file.text());if(!data||data.app!=='The System - Workout Tracker'||!data.localStorage)throw new Error('Invalid backup');if(!confirm('Import this backup? Current app data will be replaced.'))return;localStorage.clear();Object.entries(data.localStorage).forEach(([k,v])=>localStorage.setItem(k,v));status.textContent='Backup restored. Reloading…';setTimeout(()=>location.reload(),500);}catch(e){status.textContent='Backup could not be imported.';}}
 // Account operations are separate; destructive cloud changes must succeed before local changes.
 let accountDataBusy=false;
@@ -1403,6 +1403,31 @@ async function cloudSignUp(){try{const emailEl=document.getElementById('cloudEma
 async function cloudSignIn(){try{const emailEl=document.getElementById('cloudEmail'),passwordEl=document.getElementById('cloudPassword');if(!emailEl||!passwordEl){showAuthGate();throw new Error('Use the account screen to sign in.');}const email=emailEl.value.trim(),password=passwordEl.value;if(!email||!password)throw new Error('Enter your email and password.');cloudStatus('Signing in…');const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(s));cloudStatus('Signed in as '+(s.user?.email||email)+'.',true);renderCloudAccount();}catch(e){cloudStatus(e.message)}}
 function cloudSignOut(){localStorage.removeItem(CLOUD_SESSION_KEY);sessionStorage.removeItem(CLOUD_SESSION_KEY);localStorage.setItem(AUTH_REMEMBER_KEY,'0');cloudStatus('Signed out.');renderCloudAccount();showAuthGate();}
 function cloudPayload(){const data=systemBackup();delete data.localStorage[CLOUD_CONFIG_KEY];delete data.localStorage[CLOUD_SESSION_KEY];return data;}
+let cloudAutoTimer=null,cloudSyncBusy=false,cloudSyncQueued=false;
+function cloudOwnedSnapshot(){return {app:'The System - Workout Tracker',version:13,exportedAt:new Date().toISOString(),localStorage:AccountData.cloudData(systemBackup().localStorage)}}
+function cloudSyncStatus(msg,ok=false){cloudStatus(msg,ok);const e=document.getElementById('lastCloudSync');if(e&&msg)e.textContent=msg}
+async function autoCloudSync(reason='change'){
+ const s=getCloudSession();if(!s?.user?.id||cloudSyncBusy||!navigator.onLine){if(cloudSyncBusy)cloudSyncQueued=true;return false}
+ cloudSyncBusy=true;cloudSyncQueued=false;
+ try{const now=new Date().toISOString();cloudSyncStatus('SYNCING…');await cloudRequest('/rest/v1/workout_backups?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:s.user.id,data:cloudOwnedSnapshot(),updated_at:now})});localStorage.setItem('theSystemLastSync',now);cloudSyncStatus('CLOUD SYNCED • '+new Date(now).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),true);return true}catch(e){cloudSyncStatus(navigator.onLine?'SYNC PENDING • '+e.message:'OFFLINE • CHANGES SAVED LOCALLY');return false}finally{cloudSyncBusy=false;if(cloudSyncQueued)scheduleCloudSync('queued')}}
+function scheduleCloudSync(reason='change'){if(!getCloudSession()?.user?.id)return;clearTimeout(cloudAutoTimer);cloudAutoTimer=setTimeout(()=>autoCloudSync(reason),1200)}
+async function restoreCloudOnSignIn(){
+ const s=getCloudSession();if(!s?.user?.id)return false;
+ try{cloudSyncStatus('CHECKING CLOUD…');const rows=await cloudRequest('/rest/v1/workout_backups?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=data,updated_at&limit=1');if(!rows.length){await autoCloudSync('first-device');return false}
+ const row=rows[0],cloudAt=Date.parse(row.updated_at||0),localAt=Date.parse(localStorage.getItem('theSystemLastSync')||0);
+ if(cloudAt>localAt){const keepSession=localStorage.getItem(CLOUD_SESSION_KEY),remember=localStorage.getItem(AUTH_REMEMBER_KEY);AccountData.applySnapshot(localStorage,row.data?.localStorage||{});if(keepSession)localStorage.setItem(CLOUD_SESSION_KEY,keepSession);if(remember)localStorage.setItem(AUTH_REMEMBER_KEY,remember);localStorage.setItem('theSystemLastSync',row.updated_at);cloudSyncStatus('CLOUD RESTORED • '+new Date(row.updated_at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),true);return true}
+ scheduleCloudSync('sign-in');return false
+ }catch(e){cloudSyncStatus('SYNC PENDING • '+e.message);return false}
+}
+function initAutomaticCloudSync(){
+ window.addEventListener('online',()=>scheduleCloudSync('online'));
+ document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')autoCloudSync('background');else scheduleCloudSync('foreground')});
+ window.addEventListener('beforeunload',()=>{if(getCloudSession()?.user?.id)autoCloudSync('exit')});
+ const originalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){originalSet.call(this,k,v);if(this===localStorage&&AccountData?.owned?.(k)&&![CLOUD_SESSION_KEY,'theSystemLastSync'].includes(k))scheduleCloudSync(k)};
+ if(getCloudSession()?.user?.id)restoreCloudOnSignIn();
+}
+document.addEventListener('DOMContentLoaded',initAutomaticCloudSync);
+
 async function pushCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id)throw new Error('Sign in first.');cloudStatus('Uploading…');syncLocalSocialIdentity();await cloudRequest('/rest/v1/workout_backups?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:s.user.id,data:cloudPayload(),updated_at:new Date().toISOString()})});localStorage.setItem('theSystemLastSync',new Date().toISOString());cloudStatus('Cloud backup uploaded.',true);pushSocialIdentity();renderCloudAccount();}catch(e){cloudStatus(e.message)}}
 async function pullCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id)throw new Error('Sign in first.');cloudStatus('Downloading…');const rows=await cloudRequest('/rest/v1/workout_backups?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=data,updated_at&limit=1');if(!rows.length)throw new Error('No cloud backup found.');if(!confirm('Restore the cloud backup on this device? Current local training data will be replaced.'))return;const keepSession=localStorage.getItem(CLOUD_SESSION_KEY);localStorage.clear();Object.entries(rows[0].data.localStorage||{}).forEach(([k,v])=>localStorage.setItem(k,v));if(keepSession)localStorage.setItem(CLOUD_SESSION_KEY,keepSession);localStorage.setItem('theSystemLastSync',rows[0].updated_at||new Date().toISOString());location.reload();}catch(e){cloudStatus(e.message)}}
 function renderCloudAccount(){const s=getCloudSession(),signed=document.getElementById('cloudSignedIn');if(signed)signed.textContent=s?.user?.email?'SIGNED IN: '+s.user.email.toUpperCase():'NOT SIGNED IN';const last=document.getElementById('lastCloudSync');if(last){const x=localStorage.getItem('theSystemLastSync');last.textContent=x?'Last sync: '+new Date(x).toLocaleString():'No cloud sync yet.';}}
@@ -1466,6 +1491,7 @@ async function completeAuthGate(session,remember=true){
   authProgress(2,'VERIFYING IDENTITY','Secure session established. Verifying Hunter profile…');
   storeCloudSession(session,remember);
   renderCloudAccount();
+  await restoreCloudOnSignIn();
   await authDelay(320);
   authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface…');
   await authDelay(520);
