@@ -62,6 +62,10 @@ class HealthConnectWebBridge(private val activity: ComponentActivity) {
                             catch (e: Exception) { permissionReply = null; throw e }
                         }
                     }
+                    "getRecentHeartRate" -> {
+                        val hr = reader.recentHeartRate(request.optLong("minutes", 15))
+                        respond(JSONObject().put("latest", hr.latest).put("average", hr.average).put("minimum", hr.minimum).put("maximum", hr.maximum).put("sampledAt", hr.sampledAt ?: JSONObject.NULL))
+                    }
                     "getTodayMetrics" -> {
                         val metrics = reader.todayMetrics()
                         respond(JSONObject().put("steps", metrics.steps).put("activeMinutes", metrics.activeMinutes).put("date", metrics.date))
