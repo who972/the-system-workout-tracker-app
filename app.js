@@ -17,9 +17,10 @@ const RANKS = [
 ];
 
 function getRank(level) {
+  // Level unlocks a promotion attempt; rank is only awarded after the gate is passed.
   let rank = RANKS[0];
   for (const r of RANKS) {
-    if (level >= r.minLevel) rank = r;
+    if (level >= r.minLevel && hasRankPromotion(r.name==='S-Rank+'?'S+':r.name==='Shadow'?'Shadow':r.letter)) rank = r;
   }
   return rank;
 }
@@ -62,9 +63,9 @@ function recommendPerformanceMission(){
 
 // --- XP Formula ---
 function xpNeededForLevel(level) {
-  // Fitness-RPG pacing: early levels move quickly, while higher ranks
-  // still require sustained consistency and successful promotion trials.
-  return Math.floor(80 + (level * 12) + (Math.pow(level, 1.35) * 4));
+  // Long-form progression: levels reward training, while rank still requires
+  // physical standards plus a successful promotion gate.
+  return Math.floor(260 + (level * 26) + (Math.pow(level, 1.42) * 7));
 }
 
 // --- Default Quests ---
