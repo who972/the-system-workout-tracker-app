@@ -1,6 +1,10 @@
 package com.thesystem.workouttracker
 
 import android.os.Bundle
+import android.content.Intent
+import android.net.Uri
+import android.util.Base64
+import android.webkit.JavascriptInterface
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -24,6 +28,10 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 class MainActivity : ComponentActivity() {
+    private var pendingBackupName = "the-system-backup.json"
+    private var pendingBackupJson = ""
+    private val backupLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let { contentResolver.openOutputStream(it)?.use { out -> out.write(pendingBackupJson.toByteArray(Charsets.UTF_8)) } } }
+    inner class SystemAndroidBridge { @JavascriptInterface fun exportBackup(name: String, json: String) { runOnUiThread { pendingBackupName=name; pendingBackupJson=json; backupLauncher.launch(name) } } }
     private lateinit var webView: WebView
     private lateinit var health: HealthConnectClient
     private var permissionReply: JavaScriptReplyProxy? = null
@@ -48,6 +56,7 @@ class MainActivity : ComponentActivity() {
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
         webView.settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
+        webView.addJavascriptInterface(SystemAndroidBridge(), "SystemAndroid")
         webView.webViewClient = object : android.webkit.WebViewClient() {
             override fun shouldInterceptRequest(
                 view: WebView,
