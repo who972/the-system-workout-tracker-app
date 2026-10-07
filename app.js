@@ -41,9 +41,14 @@ function registerPerformance(stat, effort=1) {
 }
 function getPerformanceAnalysis() {
   const p=ensurePerformanceProfile();
+  // Backfill older/current assessment installs whose assessment was saved before
+  // the performance HUD learned to use it.
+  let assessment=null;try{assessment=JSON.parse(localStorage.getItem('systemAwakeningAssessmentV1')||'null')}catch(_){}
+  const assessmentMap={str:'Strength',end:'Endurance',agi:'Conditioning',vit:'Recovery'};
+  if(assessment?.scores){Object.entries(assessmentMap).forEach(([stat,key])=>{const measured=Math.max(0,Math.min(100,Number(assessment.scores[key])||0));if(measured>(Number(p[stat]?.score)||0)){p[stat]={...(p[stat]||{}),score:measured,actions:Math.max(Number(p[stat]?.actions)||0,1)}})}
   const rows=PERFORMANCE_STATS.map(k=>({stat:k,score:Number(p[k].score)||0,actions:Number(p[k].actions)||0}));
-  const max=Math.max(1,...rows.map(x=>x.score));
-  rows.forEach(x=>x.percent=Math.round(x.score/max*100));
+  const max=100;
+  rows.forEach(x=>x.percent=Math.max(0,Math.min(100,Math.round(x.score))));
   const weakest=rows.slice().sort((a,b)=>a.score-b.score)[0];
   const strongest=rows.slice().sort((a,b)=>b.score-a.score)[0];
   return {rows,weakest,strongest};
