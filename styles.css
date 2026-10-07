@@ -2545,3 +2545,12 @@ body.system-os-ready .hud-module--mission{padding-top:30px!important}
 @media(max-width:760px){.progress-history-modal{padding:8px}.progress-history-card{padding:14px}.progress-history-layout{grid-template-columns:1fr}.progress-history-layout aside{max-height:180px;overflow:auto}.progress-detail-grid{grid-template-columns:repeat(2,1fr)}}
 
 .audio-settings{display:grid;grid-template-columns:1fr;gap:9px;margin:8px 0 4px;padding:12px;border:1px solid rgba(103,222,255,.18)}.audio-settings legend{padding:0 7px;color:#8deeff;font-size:.72rem;letter-spacing:.12em}.audio-settings>label:not(.settings-check){display:grid;grid-template-columns:70px 1fr;align-items:center;gap:10px;font-size:.78rem;opacity:.86}.audio-settings input[type=range]{width:100%;accent-color:#62ddff}.audio-settings button{min-height:34px;border:1px solid rgba(103,222,255,.28);background:rgba(12,45,67,.55);color:#c9f7ff;font-weight:800;letter-spacing:.08em}
+
+/* Assessment landscape containment: never allow onboarding/trial cards to exceed the viewport width. */
+.system-onboarding,.system-onboarding *{box-sizing:border-box}
+.system-onboarding{width:100vw;max-width:100vw;overflow-x:hidden}
+.system-onboarding .onboarding-card,.system-onboarding .ob-card,.system-onboarding>div{max-width:calc(100vw - 20px);min-width:0}
+.system-onboarding .ob-fields,.system-onboarding .ob-options,.system-onboarding input{min-width:0;max-width:100%}
+.system-onboarding .ob-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+.aw-push-block{display:grid;gap:8px}.aw-push-label{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:#8deeff}.aw-push-options{grid-template-columns:repeat(4,minmax(0,1fr))!important}.aw-push-options button{min-width:0;padding-left:8px;padding-right:8px}
+@media (max-height:520px) and (orientation:landscape){.system-onboarding .onboarding-card,.system-onboarding .ob-card{max-height:calc(100vh - 12px);overflow-y:auto}.system-onboarding h1{margin:.25rem 0}.system-onboarding p{margin:.35rem 0}.system-onboarding .ob-options{gap:6px}.system-onboarding .ob-options button{min-height:42px}}
