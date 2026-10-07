@@ -94,8 +94,8 @@ const server = http.createServer((req, res) => {
         if(step===2) await page.locator('[data-exp="intermediate"]').click();
         if(step===3) { await page.locator('[data-eq="Dumbbells"]').click(); await page.locator('#obDays').fill('3'); }
         if(step===4) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5');}
-        if(step===5) await page.locator('#awWalk').fill('4');
-        if(step===6) await page.locator('#awMarch').fill('3');
+        if(step===5) { await page.locator('#awWalk').fill('4'); await page.locator('[data-walk-effort="2"]').click(); }
+        if(step===6) { await page.locator('#awMarch').fill('3'); await page.locator('[data-march-effort="2"]').click(); }
         if(step===7) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
         await page.locator(step<4?'#obNext':'#awNext').click();
       }
@@ -148,6 +148,14 @@ const server = http.createServer((req, res) => {
     await page.locator('#awNext').click();
     assert.equal(await page.locator('#awClock').count(),0);
     console.log('PASS countdowns: 60s / 8min / 5min, pause/resume, reset, completion, input preservation and navigation cleanup');
+    await page.evaluate(()=>{ localStorage.removeItem(ASSESSMENT_KEY); SystemOnboarding.assessment(); });
+    await page.locator('#awSit').fill('20'); await page.locator('#awPush').fill('10'); await page.locator('#awNext').click();
+    await page.locator('#awWalk').fill('8'); await page.locator('[data-walk-effort="2"]').click(); await page.locator('#awNext').click();
+    await page.locator('#awMarch').fill('5'); await page.locator('[data-march-effort="2"]').click(); await page.locator('#awNext').click();
+    await page.locator('[data-mob="2"]').click(); await page.locator('[data-energy="2"]').click(); await page.locator('#awNext').click();
+    const calibrated=await page.locator('.assessment-list').innerText();
+    assert.match(calibrated,/Endurance:\s*78/); assert.match(calibrated,/Conditioning:\s*78/);
+    console.log('PASS calibrated scoring: full-duration moderate effort = 78, not an automatic 92');
     if (process.env.LAYOUT_SCREENSHOT) await page.screenshot({ path: process.env.LAYOUT_SCREENSHOT });
   } finally {
     if (browser) await browser.close();
