@@ -1276,9 +1276,38 @@ document.addEventListener('DOMContentLoaded',renderAdaptiveProgression);
 
 /* ===== v11 PROFILE, SETTINGS & DATA MANAGEMENT ===== */
 const SETTINGS_KEY='theSystemSettings';
-function getSystemSettings(){try{return Object.assign({name:'Player',units:'imperial',goal:'balanced',sounds:false},JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'))}catch(e){return {name:'Player',units:'imperial',goal:'balanced',sounds:false}}}
+function getSystemSettings(){try{return Object.assign({name:'Player',units:'imperial',goal:'balanced',sounds:false,masterVolume:70,effectsVolume:80,musicVolume:35},JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'))}catch(e){return {name:'Player',units:'imperial',goal:'balanced',sounds:false,masterVolume:70,effectsVolume:80,musicVolume:35}}}
 function saveSystemSettings(x){localStorage.setItem(SETTINGS_KEY,JSON.stringify(x));}
-function renderSystemSettings(){const x=getSystemSettings();const n=document.getElementById('profileName');if(!n)return;n.value=x.name;document.getElementById('unitSystem').value=x.units;document.getElementById('workoutGoal').value=x.goal;document.getElementById('soundSetting').checked=!!x.sounds;}
+
+/* ===== SYSTEM AUDIO ENGINE ===== */
+const SystemAudio=(()=>{
+ let ctx=null,lastTap=0;
+ const ac=()=>ctx||(ctx=new (window.AudioContext||window.webkitAudioContext)());
+ function enabled(){return !!getSystemSettings().sounds}
+ function vol(kind='effects'){const s=getSystemSettings(),m=(Number(s.masterVolume??70)/100),k=kind==='music'?(Number(s.musicVolume??35)/100):(Number(s.effectsVolume??80)/100);return Math.max(0,Math.min(.22,m*k*.22))}
+ function tone(freq=440,duration=.08,type='sine',gain=.08,delay=0){if(!enabled())return;try{const a=ac();if(a.state==='suspended')a.resume();const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(Math.min(gain,vol()),t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+duration+.02)}catch(e){}}
+ const events={
+  tap:()=>tone(620,.045,'sine',.035),
+  open:()=>{tone(330,.07,'sine',.05);tone(660,.1,'sine',.045,.045)},
+  close:()=>tone(280,.08,'sine',.045),
+  success:()=>{tone(520,.08,'sine',.06);tone(780,.12,'sine',.07,.07)},
+  warning:()=>{tone(180,.14,'sawtooth',.06);tone(150,.18,'sawtooth',.055,.12)},
+  xp:()=>{tone(740,.055,'sine',.05);tone(980,.08,'sine',.055,.05)},
+  mission_complete:()=>{tone(440,.08,'triangle',.07);tone(660,.09,'triangle',.07,.07);tone(880,.16,'triangle',.08,.14)},
+  level_up:()=>{[440,554,659,880].forEach((n,i)=>tone(n,.18,'triangle',.09,i*.08))},
+  boss_hit:()=>{tone(95,.12,'sawtooth',.09);tone(55,.18,'square',.06,.025)},
+  critical:()=>{tone(110,.1,'sawtooth',.1);tone(880,.08,'square',.07,.06);tone(1320,.12,'square',.06,.11)},
+  boss_defeated:()=>{[110,220,440,660].forEach((n,i)=>tone(n,.24,'sawtooth',.1,i*.11))},
+  rank_up:()=>{[330,440,554,660,880].forEach((n,i)=>tone(n,.28,'triangle',.1,i*.1))},
+  countdown:()=>tone(700,.08,'square',.06),
+  go:()=>tone(1050,.18,'square',.08)
+ };
+ function play(name){(events[name]||events.tap)?.()}
+ function bind(){document.addEventListener('pointerdown',e=>{if(!e.target.closest('button,[role="button"],.nav-item'))return;const now=Date.now();if(now-lastTap>45){lastTap=now;play('tap')}},{passive:true});window.addEventListener('system:reward',e=>{const d=e.detail||{};play(d.type==='boss'?'boss_defeated':d.type==='level'||d.intensity==='major'?'level_up':d.type==='achievement'?'success':'xp')})}
+ return{play,bind};
+})();window.SystemAudio=SystemAudio;document.addEventListener('DOMContentLoaded',SystemAudio.bind);
+
+function renderSystemSettings(){const x=getSystemSettings();const n=document.getElementById('profileName');if(!n)return;n.value=x.name;document.getElementById('unitSystem').value=x.units;document.getElementById('workoutGoal').value=x.goal;document.getElementById('soundSetting').checked=!!x.sounds;['masterVolume','effectsVolume','musicVolume'].forEach(k=>{const e=document.getElementById(k);if(e)e.value=x[k]??({masterVolume:70,effectsVolume:80,musicVolume:35}[k])});}
 function systemBackup(){const data={app:'The System - Workout Tracker',version:11,exportedAt:new Date().toISOString(),localStorage:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);data.localStorage[k]=localStorage.getItem(k);}return data;}
 function exportSystemBackup(){const blob=new Blob([JSON.stringify(systemBackup(),null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download='the-system-workout-tracker-backup-'+getTodayStr()+'.json';document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('backupStatus').textContent='Backup exported successfully.';}
 async function importSystemBackup(file){const status=document.getElementById('backupStatus');try{const data=JSON.parse(await file.text());if(!data||data.app!=='The System - Workout Tracker'||!data.localStorage)throw new Error('Invalid backup');if(!confirm('Import this backup? Current app data will be replaced.'))return;localStorage.clear();Object.entries(data.localStorage).forEach(([k,v])=>localStorage.setItem(k,v));status.textContent='Backup restored. Reloading…';setTimeout(()=>location.reload(),500);}catch(e){status.textContent='Backup could not be imported.';}}
@@ -1351,7 +1380,7 @@ async function submitDeleteAccount(e){
     location.reload();
   });
 }
-function initSystemSettings(){renderSystemSettings();const f=document.getElementById('profileForm');if(f)f.onsubmit=e=>{e.preventDefault();const x={name:document.getElementById('profileName').value.trim()||'Player',units:document.getElementById('unitSystem').value,goal:document.getElementById('workoutGoal').value,sounds:document.getElementById('soundSetting').checked};saveSystemSettings(x);document.getElementById('backupStatus').textContent='Settings saved.';addSystemMessage(`Profile updated — ${x.name} • ${x.goal}`,'quest');};document.getElementById('exportDataBtn')?.addEventListener('click',exportSystemBackup);document.getElementById('importDataInput')?.addEventListener('change',e=>{if(e.target.files[0])importSystemBackup(e.target.files[0]);});document.getElementById('resetTrainingBtn')?.addEventListener('click',resetTrainingData);document.getElementById('resetAllBtn')?.addEventListener('click',factoryResetSystem);document.getElementById('deleteAccountBtn')?.addEventListener('click',deleteSystemAccount);document.getElementById('deleteAccountForm')?.addEventListener('submit',submitDeleteAccount);document.getElementById('cancelDeleteAccount')?.addEventListener('click',()=>{document.getElementById('deleteAccountForm').reset();document.getElementById('deleteAccountDialog').close();});}
+function initSystemSettings(){renderSystemSettings();const f=document.getElementById('profileForm');if(f)f.onsubmit=e=>{e.preventDefault();const x={name:document.getElementById('profileName').value.trim()||'Player',units:document.getElementById('unitSystem').value,goal:document.getElementById('workoutGoal').value,sounds:document.getElementById('soundSetting').checked,masterVolume:Number(document.getElementById('masterVolume')?.value||70),effectsVolume:Number(document.getElementById('effectsVolume')?.value||80),musicVolume:Number(document.getElementById('musicVolume')?.value||35)};saveSystemSettings(x);document.getElementById('backupStatus').textContent='Settings saved.';addSystemMessage(`Profile updated — ${x.name} • ${x.goal}`,'quest');};document.getElementById('testSystemAudio')?.addEventListener('click',()=>{const x=getSystemSettings();x.sounds=document.getElementById('soundSetting').checked;x.masterVolume=Number(document.getElementById('masterVolume')?.value||70);x.effectsVolume=Number(document.getElementById('effectsVolume')?.value||80);saveSystemSettings(x);SystemAudio.play('mission_complete')});document.getElementById('exportDataBtn')?.addEventListener('click',exportSystemBackup);document.getElementById('importDataInput')?.addEventListener('change',e=>{if(e.target.files[0])importSystemBackup(e.target.files[0]);});document.getElementById('resetTrainingBtn')?.addEventListener('click',resetTrainingData);document.getElementById('resetAllBtn')?.addEventListener('click',factoryResetSystem);document.getElementById('deleteAccountBtn')?.addEventListener('click',deleteSystemAccount);document.getElementById('deleteAccountForm')?.addEventListener('submit',submitDeleteAccount);document.getElementById('cancelDeleteAccount')?.addEventListener('click',()=>{document.getElementById('deleteAccountForm').reset();document.getElementById('deleteAccountDialog').close();});}
 document.addEventListener('DOMContentLoaded',initSystemSettings);
 
 // --- Shared Supabase Cloud Sync ---
