@@ -14,7 +14,7 @@
     if (message.result?.error) request.reject(new Error(message.result.error));
     else request.resolve(message.result);
   };
-  function call(method) {
+  function call(method, payload = {}) {
     return new Promise((resolve, reject) => {
       const id = String(++sequence);
       const timer = setTimeout(() => {
@@ -22,13 +22,14 @@
         reject(new Error('health-connect-timeout'));
       }, method === 'requestStepPermission' ? 120000 : 30000);
       pending.set(id, { resolve, reject, timer });
-      try { transport.postMessage(JSON.stringify({ id, method })); }
+      try { transport.postMessage(JSON.stringify({ id, method, ...payload })); }
       catch (error) { clearTimeout(timer); pending.delete(id); reject(error); }
     });
   }
   window.AndroidHealthConnect = {
     requestStepPermission: async () => (await call('requestStepPermission'))?.granted === true,
     getTodaySteps: () => call('getTodaySteps'),
-    getTodayMetrics: () => call('getTodayMetrics')
+    getTodayMetrics: () => call('getTodayMetrics'),
+    getRecentHeartRate: (minutes = 15) => call('getRecentHeartRate', { minutes })
   };
 })();
