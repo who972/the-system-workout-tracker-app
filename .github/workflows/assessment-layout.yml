@@ -22,3 +22,12 @@ jobs:
           npx playwright install --with-deps chromium
       - name: Run landscape and assessment regression
         run: node tests/onboarding-layout.test.cjs
+        env:
+          LAYOUT_SCREENSHOT: assessment-layout.png
+      - name: Upload layout screenshots on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: assessment-layout-failure
+          path: assessment-layout*.png
+          if-no-files-found: ignore
