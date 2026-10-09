@@ -203,3 +203,15 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
   #awakeningAssessment .ob-actions { margin-top:2px; }
   #awakeningAssessment .ob-actions button { min-height:26px; padding:2px 7px; font-size:10px; }
 }
+
+/* Endurance: five choices + effort controls in one short landscape viewport. */
+@media (orientation:landscape) and (max-height:280px) {
+  #awakeningAssessment .ob-content { grid-template-columns:minmax(0,1fr) minmax(0,1.5fr); }
+  #awakeningAssessment .ob-fields { min-width:0; }
+  #awakeningAssessment .ob-fields .aw-push-block { padding:0; border:0; background:none; }
+  #awakeningAssessment .ob-fields .aw-push-options { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #awakeningAssessment .ob-fields .aw-effort { margin:1px 0; padding:0; }
+  #awakeningAssessment .ob-fields .aw-effort .ob-options { grid-template-columns:repeat(3,minmax(0,1fr)); }
+  #awakeningAssessment .ob-fields .aw-effort small { display:block; font-size:9px; line-height:1.05; }
+  #awakeningAssessment .ob-fields .aw-push-label { display:block; margin:1px 0; }
+}
