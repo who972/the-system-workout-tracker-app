@@ -278,3 +278,13 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
   #awakeningAssessment .ob-options button { min-height:25px; padding:3px; font-size:11px; }
   #awakeningAssessment .ob-actions button { min-height:29px; padding:3px 8px; font-size:11px; }
 }
+
+/* Endurance uses compact rows at medium-short landscape heights too. */
+@media (orientation:landscape) and (min-height:281px) and (max-height:360px) {
+  #awakeningAssessment .ob-fields .aw-push-block { padding:2px 4px; margin:2px 0; }
+  #awakeningAssessment .ob-fields .aw-push-options { grid-template-columns:repeat(3,minmax(0,1fr)); gap:2px; margin:2px 0; }
+  #awakeningAssessment .ob-fields .aw-effort { padding:0; margin:2px 0; }
+  #awakeningAssessment .ob-fields .aw-effort .ob-options { grid-template-columns:repeat(3,minmax(0,1fr)); gap:2px; margin:2px 0; }
+  #awakeningAssessment .ob-fields .aw-push-label { display:block; margin:1px 0; font-size:10px; line-height:1.1; }
+  #awakeningAssessment .ob-fields .aw-effort small { font-size:9px; line-height:1; }
+}
