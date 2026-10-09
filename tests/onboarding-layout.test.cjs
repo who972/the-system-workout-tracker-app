@@ -78,26 +78,27 @@ const server = http.createServer((req, res) => {
       });
       await page.locator('#obName').fill('Landscape Tester');
       for (let step=0;step<9;step++) {
-        const id=step<4?'systemOnboarding':'awakeningAssessment';
-        const report=await page.evaluate(id=>{
+        const id=step<5?'systemOnboarding':'awakeningAssessment';
+        const report=await page.evaluate(({id,step})=>{
           const el=document.getElementById(id);
+          if(!el) throw new Error(`Missing ${id} at step ${step}`);
           return {overflow:el.scrollHeight-el.clientHeight, nodes:[...el.querySelectorAll('h1,p,small,strong,.side-tag,button,input')].map(n=>{
             const r=n.getBoundingClientRect();
             return {text:n.textContent||n.id,top:r.top,bottom:r.bottom,left:r.left,right:r.right};
           })};
-        },id);
+        },{id,step});
         if (report.overflow>1 && process.env.LAYOUT_SCREENSHOT) await page.screenshot({path:process.env.LAYOUT_SCREENSHOT});
         assert.ok(report.overflow<=1,`${width}x${height} step ${step+1}: overflow ${report.overflow}`);
         for(const n of report.nodes) assert.ok(n.top>=0&&n.bottom<=height&&n.left>=0&&n.right<=width,`${width}x${height} step ${step+1}: clipped ${n.text}`);
         if(width===740 && process.env.LAYOUT_SCREENSHOT) await page.screenshot({path:process.env.LAYOUT_SCREENSHOT.replace('.png',`-${step+1}.png`)});
-        if(step>=4 && step<8) assert.equal(await page.locator('#awakeningAssessment .ob-safety').count(),1);
+        if(step>=5 && step<9) assert.equal(await page.locator('#awakeningAssessment .ob-safety').count(),1);
         if(step===2) await page.locator('[data-exp="intermediate"]').click();
         if(step===3) { await page.locator('[data-eq="Dumbbells"]').click(); await page.locator('#obDays').fill('3'); }
-        if(step===4) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5');}
-        if(step===5) { await page.locator('#awWalk').fill('4'); await page.locator('[data-endurance-mode="indoor"]').click(); await page.locator('[data-walk-effort="2"]').click(); }
-        if(step===6) { await page.locator('#awMarch').fill('3'); await page.locator('[data-march-effort="2"]').click(); }
-        if(step===7) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
-        await page.locator(step<4?'#obNext':'#awNext').click();
+        if(step===5) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5');}
+        if(step===6) { await page.locator('#awWalk').fill('4'); await page.locator('[data-endurance-mode="indoor"]').click(); await page.locator('[data-walk-effort="2"]').click(); }
+        if(step===7) { await page.locator('#awMarch').fill('3'); await page.locator('[data-march-effort="2"]').click(); }
+        if(step===8) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
+        await page.locator(step<5?'#obNext':'#awNext').click();
       }
       assert.equal(await page.locator('#awakeningAssessment.active').count(),0);
       const saved=await page.evaluate(()=>({ob:onboardingData(),assessment:JSON.parse(localStorage.getItem(ASSESSMENT_KEY))}));
@@ -105,7 +106,7 @@ const server = http.createServer((req, res) => {
       assert.ok(saved.ob.equipment.includes('Dumbbells'));
       assert.equal(saved.ob.days,3);
       assert.equal(saved.assessment.raw.sit,10);
-      console.log(`PASS ${width}x${height}: all 9 onboarding/assessment screens fit and completion saves input`);
+      console.log(`PASS ${width}x${height}: all 10 onboarding/assessment screens fit and completion saves input`);
     }
     await page.clock.install();
     await page.setViewportSize({width:740,height:360});
