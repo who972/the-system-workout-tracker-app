@@ -77,7 +77,7 @@ const server = http.createServer((req, res) => {
         SystemOnboarding.reset(); SystemOnboarding.show();
       });
       await page.locator('#obName').fill('Landscape Tester');
-      for (let step=0;step<9;step++) {
+      for (let step=0;step<10;step++) {
         const id=step<5?'systemOnboarding':'awakeningAssessment';
         const report=await page.evaluate(({id,step})=>{
           const el=document.getElementById(id);
