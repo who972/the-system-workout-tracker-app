@@ -242,3 +242,39 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
     margin-top:2px;
   }
 }
+
+/* Mid-height landscape: keep Strength controls and navigation in view. */
+@media (orientation:landscape) and (min-height:281px) and (max-height:360px) {
+  #awakeningAssessment.active { align-items:stretch; padding:6px 10px; }
+  #awakeningAssessment .ob-card {
+    width:min(1000px,100%);
+    height:calc(100dvh - 12px);
+    min-height:0;
+    max-height:calc(100dvh - 12px);
+    display:flex;
+    flex-direction:column;
+    overflow:hidden;
+    box-sizing:border-box;
+    padding:6px 10px;
+  }
+  #awakeningAssessment .ob-content {
+    flex:1 1 auto;
+    min-height:0;
+    overflow:auto;
+    align-items:start;
+    gap:8px;
+  }
+  #awakeningAssessment .ob-actions { flex:0 0 auto; margin-top:3px; }
+  #awakeningAssessment .ob-safety { font-size:10px; line-height:1.1; margin-bottom:3px; }
+  #awakeningAssessment h1 { font-size:21px; margin:2px 0; }
+  #awakeningAssessment .ob-intro p { font-size:11px; line-height:1.15; margin:3px 0; }
+  #awakeningAssessment .ob-countdown { padding:3px 5px; margin-bottom:3px; }
+  #awakeningAssessment .ob-countdown > strong { font-size:22px; }
+  #awakeningAssessment .ob-countdown button { min-height:24px; padding:2px 5px; font-size:11px; }
+  #awakeningAssessment .ob-days { margin:3px 0; font-size:11px; }
+  #awakeningAssessment .ob-days input { height:26px; padding:3px 6px; font-size:13px; }
+  #awakeningAssessment .aw-push-block { margin:3px 0; padding:3px 5px; }
+  #awakeningAssessment .ob-options { gap:3px; margin:3px 0; }
+  #awakeningAssessment .ob-options button { min-height:25px; padding:3px; font-size:11px; }
+  #awakeningAssessment .ob-actions button { min-height:29px; padding:3px 8px; font-size:11px; }
+}
