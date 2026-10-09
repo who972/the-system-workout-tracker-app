@@ -1,0 +1,24 @@
+name: Assessment landscape regression
+on:
+  pull_request:
+    paths:
+      - 'side-system.js'
+      - 'side-system.css'
+      - 'tests/onboarding-layout.test.cjs'
+      - '.github/workflows/assessment-layout.yml'
+  workflow_dispatch:
+jobs:
+  assessment-layout:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser test dependency
+        run: |
+          npm install --no-save --no-package-lock playwright
+          npx playwright install --with-deps chromium
+      - name: Run landscape and assessment regression
+        run: node tests/onboarding-layout.test.cjs
