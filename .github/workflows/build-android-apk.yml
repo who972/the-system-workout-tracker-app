@@ -65,7 +65,7 @@ jobs:
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
-          file "$WEB/enter_the_system_landscape.jpg" | grep -q '1672x941'
+          grep -q '1672x941' <(file "$WEB/enter_the_system_landscape.jpg")
           grep -q 'src="enter_the_system_landscape.jpg?v=86"' "$WEB/index.html"
           grep -q 'not(.workout-mode):not(.mission-launch-confirm)' "$WEB/styles.css"
           grep -q 'grid-template-columns:minmax(230px,32%)' "$WEB/styles.css"
@@ -81,7 +81,7 @@ jobs:
         env:
           SYSTEM_KEYSTORE_BASE64: ${{ secrets.SYSTEM_KEYSTORE_BASE64 }}
         run: |
-          test -n "$SYSTEM_KEYSTORE_BASE64"
+          if [ -z "$SYSTEM_KEYSTORE_BASE64" ]; then echo "::error::SYSTEM_KEYSTORE_BASE64 secret is missing; persistent signing key is required for update-compatible APKs."; exit 1; fi
           printf '%s' "$SYSTEM_KEYSTORE_BASE64" | base64 --decode > android-wrapper/system-debug.keystore
 
       - name: Build debug APK
@@ -102,17 +102,17 @@ jobs:
           test -x "$APKSIGNER"
           "$APKSIGNER" verify --verbose --print-certs "$APK"
           "$AAPT" dump badging "$APK" | head -1
-          unzip -p "$APK" assets/www/app.js | grep -q "ORBIT V42 // LIVE"
-          unzip -l "$APK" | grep -q "assets/www/enter_the_system_landscape.jpg"
+          grep -q "ORBIT V42 // LIVE" <(unzip -p "$APK" assets/www/app.js)
+          unzip -Z1 "$APK" | grep -Fx "assets/www/enter_the_system_landscape.jpg"
           cmp enter_the_system_landscape.jpg <(unzip -p "$APK" assets/www/enter_the_system_landscape.jpg)
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
           cmp side-system.css <(unzip -p "$APK" assets/www/side-system.css)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
           cmp account-data.js <(unzip -p "$APK" assets/www/account-data.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)
-          unzip -l "$APK" | grep -q "res/drawable-nodpi-v4/ic_system_launcher.jpg"
+          unzip -Z1 "$APK" | grep -Fx "res/drawable-nodpi-v4/ic_system_launcher.jpg"
           cmp side-system.js <(unzip -p "$APK" assets/www/side-system.js)
-          unzip -p "$APK" assets/www/index.html | grep -q 'src="enter_the_system_landscape.jpg?v=86"'
+          grep -q 'src="enter_the_system_landscape.jpg?v=86"' <(unzip -p "$APK" assets/www/index.html)
           echo "APK signature, package metadata, and current runtime verified"
 
       - name: Name APK with version
