@@ -108,7 +108,8 @@ class MainActivity : ComponentActivity() {
                 val minutes = json.optLong("minutes", 15).coerceIn(1, 120)
                 val start = end.minusSeconds(minutes * 60)
                 val records = health.readRecords(ReadRecordsRequest(HeartRateRecord::class, TimeRangeFilter.between(start, end))).records
-                val samples = records.flatMap { it.samples }.filter { !it.time.isBefore(start) && !it.time.isAfter(end) }
+                val provider = chooseHealthSource(records.map { SourceInterval(it.metadata.dataOrigin.packageName, it.startTime, it.endTime) }, start, end)
+                val samples = records.filter { it.metadata.dataOrigin.packageName == provider }.flatMap { it.samples }.filter { !it.time.isBefore(start) && !it.time.isAfter(end) }
                 val result = if (samples.isEmpty()) JSONObject().put("latest", 0).put("average", 0).put("minimum", 0).put("maximum", 0)
                     else { val bpms=samples.map{it.beatsPerMinute.toInt()}; val latest=samples.maxByOrNull{it.time}; JSONObject().put("latest",latest?.beatsPerMinute?.toInt()?:0).put("average",bpms.average().toInt()).put("minimum",bpms.minOrNull()?:0).put("maximum",bpms.maxOrNull()?:0).put("sampledAt",latest?.time?.toString()) }
                 reply.postMessage(JSONObject().put("id", id).put("result", result).toString())
@@ -144,8 +145,15 @@ class MainActivity : ComponentActivity() {
         HealthPermission.getReadPermission(SleepSessionRecord::class)
     )
 
+    private fun healthSourceName(packageName: String): String = when (packageName) {
+        "com.sec.android.app.shealth" -> "Samsung Health"
+        "com.fitbit.FitbitMobile" -> "Fitbit"
+        "com.google.android.apps.fitness" -> "Google Fit"
+        else -> runCatching { packageManager.getApplicationLabel(packageManager.getApplicationInfo(packageName, 0)).toString() }.getOrDefault(packageName)
+    }
+
     private suspend fun readHealthDashboard(days: Int, source: String): JSONObject {
-        val origins = if (source == "samsung") setOf(DataOrigin("com.sec.android.app.shealth")) else emptySet()
+        val origins = emptySet<DataOrigin>()
         val granted = health.permissionController.getGrantedPermissions()
         fun allowed(permission: String) = granted.contains(permission)
         val metrics = mutableSetOf<AggregateMetric<*>>()
@@ -153,7 +161,7 @@ class MainActivity : ComponentActivity() {
         fun add(key: String, permission: String, metric: AggregateMetric<*>) {
             val ok = allowed(permission)
             available.put(key, ok)
-            if (ok) metrics.add(metric)
+            if (ok && key != "calories" && key != "heartRate") metrics.add(metric)
         }
         add("steps", HealthPermission.getReadPermission(StepsRecord::class), StepsRecord.COUNT_TOTAL)
         add("activeMinutes", HealthPermission.getReadPermission(ExerciseSessionRecord::class), ExerciseSessionRecord.EXERCISE_DURATION_TOTAL)
@@ -161,7 +169,7 @@ class MainActivity : ComponentActivity() {
         add("distanceMeters", HealthPermission.getReadPermission(DistanceRecord::class), DistanceRecord.DISTANCE_TOTAL)
         add("sleepMinutes", HealthPermission.getReadPermission(SleepSessionRecord::class), SleepSessionRecord.SLEEP_DURATION_TOTAL)
         add("heartRate", HealthPermission.getReadPermission(HeartRateRecord::class), HeartRateRecord.BPM_AVG)
-        if (available.optBoolean("heartRate")) { metrics.add(HeartRateRecord.BPM_MIN); metrics.add(HeartRateRecord.BPM_MAX) }
+
         val zone = ZoneId.systemDefault()
         val today = LocalDate.now(zone)
         val now = Instant.now()
@@ -171,16 +179,42 @@ class MainActivity : ComponentActivity() {
             val start = date.atStartOfDay(zone).toInstant()
             val end = if (offset == 0) now else date.plusDays(1).atStartOfDay(zone).toInstant()
             val row = JSONObject().put("date", date.toString())
-            if (metrics.isNotEmpty()) {
-                val result = health.aggregate(AggregateRequest(metrics, TimeRangeFilter.between(start, end), dataOriginFilter = origins))
-                row.put("steps", result[StepsRecord.COUNT_TOTAL] ?: JSONObject.NULL)
-                row.put("activeMinutes", result[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]?.toMillis()?.div(60000.0) ?: JSONObject.NULL)
-                row.put("calories", result[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: JSONObject.NULL)
-                row.put("distanceMeters", result[DistanceRecord.DISTANCE_TOTAL]?.inMeters ?: JSONObject.NULL)
-                row.put("sleepMinutes", result[SleepSessionRecord.SLEEP_DURATION_TOTAL]?.toMillis()?.div(60000.0) ?: JSONObject.NULL)
-                row.put("heartRate", result[HeartRateRecord.BPM_AVG] ?: JSONObject.NULL)
-                row.put("heartRateMin", result[HeartRateRecord.BPM_MIN] ?: JSONObject.NULL)
-                row.put("heartRateMax", result[HeartRateRecord.BPM_MAX] ?: JSONObject.NULL)
+            if (available.keys().asSequence().any { available.optBoolean(it) }) {
+                val result = if (metrics.isEmpty()) null else health.aggregate(AggregateRequest(metrics, TimeRangeFilter.between(start, end), dataOriginFilter = origins))
+                row.put("steps", result?.get(StepsRecord.COUNT_TOTAL) ?: JSONObject.NULL)
+                row.put("activeMinutes", result?.get(ExerciseSessionRecord.EXERCISE_DURATION_TOTAL)?.toMillis()?.div(60000.0) ?: JSONObject.NULL)
+                if (available.optBoolean("calories")) {
+                    val records = mutableListOf<TotalCaloriesBurnedRecord>()
+                    var page: String? = null
+                    do {
+                        val response = health.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, TimeRangeFilter.between(start, end), pageToken = page))
+                        records.addAll(response.records); page = response.pageToken
+                    } while (page != null)
+                    val provider = chooseHealthSource(records.map { SourceInterval(it.metadata.dataOrigin.packageName, it.startTime, it.endTime) }, start, end)
+                    if (provider != null) {
+                        val calories = health.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), TimeRangeFilter.between(start, end), dataOriginFilter = setOf(DataOrigin(provider))))
+                        row.put("calories", calories[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: JSONObject.NULL)
+                        row.put("caloriesSource", healthSourceName(provider))
+                    }
+                }
+                row.put("distanceMeters", result?.get(DistanceRecord.DISTANCE_TOTAL)?.inMeters ?: JSONObject.NULL)
+                row.put("sleepMinutes", result?.get(SleepSessionRecord.SLEEP_DURATION_TOTAL)?.toMillis()?.div(60000.0) ?: JSONObject.NULL)
+                if (available.optBoolean("heartRate")) {
+                    val records = mutableListOf<HeartRateRecord>()
+                    var page: String? = null
+                    do {
+                        val response = health.readRecords(ReadRecordsRequest(HeartRateRecord::class, TimeRangeFilter.between(start, end), pageToken = page))
+                        records.addAll(response.records); page = response.pageToken
+                    } while (page != null)
+                    val provider = chooseHealthSource(records.filter { it.samples.any { sample -> !sample.time.isBefore(start) && sample.time.isBefore(end) } }.map { SourceInterval(it.metadata.dataOrigin.packageName, it.startTime, it.endTime) }, start, end)
+                    if (provider != null) {
+                        val hr = health.aggregate(AggregateRequest(setOf(HeartRateRecord.BPM_AVG, HeartRateRecord.BPM_MIN, HeartRateRecord.BPM_MAX), TimeRangeFilter.between(start, end), dataOriginFilter = setOf(DataOrigin(provider))))
+                        row.put("heartRate", hr[HeartRateRecord.BPM_AVG] ?: JSONObject.NULL)
+                        row.put("heartRateMin", hr[HeartRateRecord.BPM_MIN] ?: JSONObject.NULL)
+                        row.put("heartRateMax", hr[HeartRateRecord.BPM_MAX] ?: JSONObject.NULL)
+                        row.put("heartRateSource", healthSourceName(provider))
+                    }
+                }
             }
             daily.put(row)
         }
@@ -196,6 +230,6 @@ class MainActivity : ComponentActivity() {
                 token = response.pageToken
             } while (token != null)
         }
-        return JSONObject().put("source", source).put("today", daily.getJSONObject(daily.length() - 1)).put("days", daily).put("workouts", workouts).put("permissions", available).put("timeZone", zone.id).put("steps", daily.getJSONObject(daily.length() - 1).opt("steps") ?: JSONObject.NULL)
+        return JSONObject().put("source", "automatic").put("today", daily.getJSONObject(daily.length() - 1)).put("days", daily).put("workouts", workouts).put("permissions", available).put("timeZone", zone.id).put("steps", daily.getJSONObject(daily.length() - 1).opt("steps") ?: JSONObject.NULL)
     }
 }

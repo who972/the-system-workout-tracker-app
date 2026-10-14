@@ -91,7 +91,7 @@ jobs:
           SYSTEM_KEYSTORE_PASSWORD: ${{ secrets.SYSTEM_KEYSTORE_PASSWORD }}
           SYSTEM_KEY_ALIAS: ${{ secrets.SYSTEM_KEY_ALIAS }}
           SYSTEM_KEY_PASSWORD: ${{ secrets.SYSTEM_KEY_PASSWORD }}
-        run: gradle :app:assembleDebug --stacktrace
+        run: gradle :app:testDebugUnitTest :app:assembleDebug --stacktrace
 
       - name: Verify APK signature and package
         shell: bash

@@ -20,7 +20,7 @@
       const timer = setTimeout(() => {
         pending.delete(id);
         reject(new Error('health-connect-timeout'));
-      }, method === 'requestStepPermission' ? 120000 : 30000);
+      }, method === 'requestStepPermission' ? 120000 : method === 'getHealthDashboard' ? 60000 : 30000);
       pending.set(id, { resolve, reject, timer });
       try { transport.postMessage(JSON.stringify({ id, method, ...payload })); }
       catch (error) { clearTimeout(timer); pending.delete(id); reject(error); }
