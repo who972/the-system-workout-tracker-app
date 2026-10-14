@@ -1304,6 +1304,7 @@ const SystemAudio=(()=>{
  let ctx=null,lastTap=0;
  const ac=()=>ctx||(ctx=new (window.AudioContext||window.webkitAudioContext)());
  function enabled(){return !!getSystemSettings().sounds}
+ function unlock(){if(!enabled())return;try{const a=ac();if(a.state==='suspended')a.resume().catch(()=>{});}catch(e){console.warn('System audio unavailable',e)}}
  function vol(kind='effects'){const s=getSystemSettings(),m=(Number(s.masterVolume??70)/100),k=kind==='music'?(Number(s.musicVolume??35)/100):(Number(s.effectsVolume??80)/100);return Math.max(0,Math.min(.22,m*k*.22))}
  function tone(freq=440,duration=.08,type='sine',gain=.08,delay=0){if(!enabled())return;try{const a=ac();if(a.state==='suspended')a.resume();const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(Math.min(gain,vol()),t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+duration+.02)}catch(e){}}
  const events={
@@ -1323,7 +1324,7 @@ const SystemAudio=(()=>{
   go:()=>tone(1050,.18,'square',.08)
  };
  function play(name){(events[name]||events.tap)?.()}
- function bind(){document.addEventListener('pointerdown',e=>{if(!e.target.closest('button,[role="button"],.nav-item'))return;const now=Date.now();if(now-lastTap>45){lastTap=now;play('tap')}},{passive:true});window.addEventListener('system:reward',e=>{const d=e.detail||{};play(d.type==='boss'?'boss_defeated':d.type==='level'||d.intensity==='major'?'level_up':d.type==='achievement'?'success':'xp')})}
+ function bind(){document.addEventListener('pointerdown',e=>{unlock();if(!e.target.closest('button,[role="button"],.nav-item'))return;const now=Date.now();if(now-lastTap>45){lastTap=now;play('tap')}},{passive:true});window.addEventListener('system:reward',e=>{const d=e.detail||{};play(d.type==='boss'?'boss_defeated':d.type==='level'||d.intensity==='major'?'level_up':d.type==='achievement'?'success':'xp')})}
  return{play,bind};
 })();window.SystemAudio=SystemAudio;document.addEventListener('DOMContentLoaded',SystemAudio.bind);
 
