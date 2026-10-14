@@ -30,6 +30,7 @@
     requestStepPermission: async () => (await call('requestStepPermission'))?.granted === true,
     getTodaySteps: () => call('getTodaySteps'),
     getTodayMetrics: () => call('getTodayMetrics'),
+    getHealthDashboard: () => call('getHealthDashboard'),
     getRecentHeartRate: (minutes = 15) => call('getRecentHeartRate', { minutes })
   };
 })();
