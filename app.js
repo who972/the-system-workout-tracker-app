@@ -1296,7 +1296,7 @@ document.addEventListener('DOMContentLoaded',renderAdaptiveProgression);
 
 /* ===== v11 PROFILE, SETTINGS & DATA MANAGEMENT ===== */
 const SETTINGS_KEY='theSystemSettings';
-function getSystemSettings(){try{return Object.assign({name:'Player',units:'imperial',goal:'balanced',sounds:false,masterVolume:70,effectsVolume:80,musicVolume:35},JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'))}catch(e){return {name:'Player',units:'imperial',goal:'balanced',sounds:false,masterVolume:70,effectsVolume:80,musicVolume:35}}}
+function getSystemSettings(){try{return Object.assign({name:'Player',units:'imperial',goal:'balanced',sounds:true,masterVolume:70,effectsVolume:80,musicVolume:35},JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'))}catch(e){return {name:'Player',units:'imperial',goal:'balanced',sounds:true,masterVolume:70,effectsVolume:80,musicVolume:35}}}
 function saveSystemSettings(x){localStorage.setItem(SETTINGS_KEY,JSON.stringify(x));}
 
 /* ===== SYSTEM AUDIO ENGINE ===== */
