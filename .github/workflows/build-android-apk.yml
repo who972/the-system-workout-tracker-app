@@ -57,6 +57,7 @@ jobs:
           node --check account-data.js
           node tests/account-data.test.cjs
           node tests/health-connect.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/health-dashboard.test.cjs
           node --check side-system.js
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"

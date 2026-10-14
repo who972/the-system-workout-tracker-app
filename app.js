@@ -774,2096 +774,346 @@ function logExercise(name,sets,reps,weight){
   recordHistory('exercise_'+Date.now(), baseXp+growthXp); saveState(); renderAll(); if(typeof renderAnalytics==='function')renderAnalytics();
 }
 function renderExercises(){
-  const el=document.getElementById('exerciseRecords'); if(!el) return;
-  const recent=state.exerciseRecords.slice(-8).reverse();
-  if(!recent.length){el.innerHTML='<div class="empty-state">No exercise records yet. Your first set starts the log.</div>';return;}
-  el.innerHTML=recent.map(r=>`<div class="exercise-record"><div><div class="exercise-record__main">${r.name}</div><div class="exercise-record__detail">${r.sets} sets × ${r.reps} reps${r.weight?' @ '+r.weight+' lb':''} · ${r.date}</div></div>${r.isPR?'<span class="pr-badge">PR</span>':''}</div>`).join('');
-}
-function renderHistory(){
-  const el=document.getElementById('historyList'); if(!el) return;
-  const recent=state.history.slice(-7).reverse();
-  document.getElementById('historyMeta').textContent=`${state.history.length} tracked days`;
-  el.innerHTML=recent.length?recent.map(h=>`<div class="history-item"><strong>${h.xpEarned} XP</strong><span>${h.date} · ${h.completedQuestIds.length} entries</span></div>`).join(''):'<div class="empty-state">Complete a quest or log a workout to build your history.</div>';
-}
+  const el=document.getElementById('exerciseRecords…109607 tokens truncated…form:uppercase}.hud-combat-title[hidden],.player-card__title[hidden]{display:none!important}
 
-// --- Rendering ---
-function renderAll() {
-  renderPlayerCard();
-  renderDailyQuests();
-  renderWeeklyGoals();
-  renderAchievements();
-  renderSystemLog();
-  renderTodayPlan();
-  renderBodyProgress();
-  renderHistory();
-  renderExercises();
-}
-
-function renderPlayerCard() {
-  const rank = getRank(state.level);
-  const xpNeeded = xpNeededForLevel(state.level);
-  const xpPercent = Math.min(100, (state.xp / xpNeeded) * 100);
-
-  document.getElementById('rankLetter').textContent = rank.letter;
-  document.getElementById('rankLabel').textContent = rank.name;
-  document.getElementById('playerName').textContent = rank.title;
-  const equippedTitle=typeof getEquippedCombatTitle==='function'?getEquippedCombatTitle():null,titleEl=document.getElementById('playerCombatTitle');
-  if(titleEl){titleEl.textContent=equippedTitle?.name||'';titleEl.hidden=!equippedTitle}
-  document.getElementById('playerLevel').textContent = `Level ${state.level}`;
-  document.getElementById('playerStreak').textContent = `🔥 ${state.currentStreak} day streak`;
-  const legacyEl=document.getElementById('centralLegacyIdentity');
-  if(legacyEl){
-    const profile=typeof buildSocialIdentity==='function'?buildSocialIdentity():{level:state.level,missions:state.totalQuestsCompleted,streak:state.currentStreak,gates:0};
-    const legacy=typeof hunterLegacyState==='function'?hunterLegacyState(profile,null,null):null,card=typeof getIdentityCard==='function'?getIdentityCard():{frame:'SYSTEM',emblem:'RANK'};
-    if(legacy){legacyEl.className='central-legacy '+(legacy.active?'active':'dormant')+' frame-'+String(card.frame||'SYSTEM').toLowerCase();legacyEl.innerHTML='<span>'+escapeHtml(legacy.title)+'</span><b>LEGACY LV '+legacy.level+'</b><small>'+legacy.score.toLocaleString()+' LP'+(typeof legacyArtifact==='function'&&legacyArtifact().unlocked?' // NEXUS ONLINE':'')+(typeof ascensionRecord==='function'&&ascensionRecord().completed?' // A'+ascensionRecord().completed:'')+'</small>';document.getElementById('playerCard')?.setAttribute('data-legacy-tier',legacy.level>=10?'sovereign':legacy.level>=7?'mythic':legacy.level>=5?'veteran':legacy.level>=3?'ascendant':'awakened')}
-  }
-  document.getElementById('totalWorkouts').querySelector('.player-card__total-num').textContent = state.totalQuestsCompleted;
-  document.getElementById('xpValues').textContent = `${state.xp} / ${xpNeeded}`;
-  document.getElementById('xpBarFill').style.width = `${xpPercent}%`;
-
-  const canonical=window.SystemBuild?.getBuild?.()?.stats;
-  document.getElementById('statStr').textContent = canonical?.Strength ?? 0;
-  document.getElementById('statEnd').textContent = canonical?.Endurance ?? 0;
-  document.getElementById('statAgi').textContent = canonical?.Conditioning ?? 0;
-  document.getElementById('statVit').textContent = canonical?.Recovery ?? 0;
-}
-
-function renderDailyQuests() {
-  const list = document.getElementById('dailyQuestList');
-  list.innerHTML = '';
-
-  let completed = 0;
-  for (const quest of state.dailyQuests) {
-    if (quest.completed) completed++;
-
-    const item = document.createElement('div');
-    item.className = `quest-item${quest.completed ? ' quest-item--completed' : ''}`;
-
-    const percent = Math.min(100, (quest.progress / quest.target) * 100);
-
-    item.innerHTML = `
-      <div class="quest-item__checkbox">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <div class="quest-item__body">
-        <div class="quest-item__title">${quest.title}</div>
-        <div class="quest-item__progress-row">
-          <div class="quest-item__progress-track">
-            <div class="quest-item__progress-fill" style="width: ${percent}%"></div>
-          </div>
-          <span class="quest-item__progress-text">${quest.progress}/${quest.target} ${quest.unit}</span>
-        </div>
-      </div>
-      <div class="quest-item__controls">
-        <button class="quest-item__btn" data-action="dec" data-id="${quest.id}" ${quest.completed ? 'disabled' : ''}>−</button>
-        <button class="quest-item__btn" data-action="inc" data-id="${quest.id}" ${quest.completed ? 'disabled' : ''}>+</button>
-      </div>
-      <div class="quest-item__xp">+${quest.xp} XP</div>
-    `;
-
-    // Click on checkbox or item to complete
-    item.querySelector('.quest-item__checkbox').addEventListener('click', () => {
-      if (!quest.completed) completeQuest(quest.id);
-    });
-
-    list.appendChild(item);
-  }
-
-  // Wire up +/- buttons
-  list.querySelectorAll('.quest-item__btn').forEach(btn => {
-    btn.addEventListener('click', (e) => {
-      e.stopPropagation();
-      const id = btn.dataset.id;
-      const action = btn.dataset.action;
-      const step = id === 'plank' ? 15 : id === 'running' || id === 'stretch' ? 5 : 5;
-      updateQuestProgress(id, action === 'inc' ? step : -step);
-    });
-  });
-
-  document.getElementById('dailyMeta').textContent = `${completed}/${state.dailyQuests.length} Complete`;
-
-  // Daily bonus bar
-  const bonusPercent = (completed / state.dailyQuests.length) * 100;
-  document.getElementById('dailyBonusFill').style.width = `${bonusPercent}%`;
-  const bonusText = document.getElementById('dailyBonusText');
-  if (completed === state.dailyQuests.length) {
-    bonusText.textContent = '✓ All Quests Complete — +250 XP Claimed!';
-    bonusText.classList.add('daily-bonus__text--complete');
-  } else {
-    bonusText.textContent = `All Quests Complete Bonus: +250 XP (${completed}/${state.dailyQuests.length})`;
-    bonusText.classList.remove('daily-bonus__text--complete');
-  }
-}
-
-function renderWeeklyGoals() {
-  const list = document.getElementById('weeklyQuestList');
-  list.innerHTML = '';
-
-  let completed = 0;
-  for (const goal of state.weeklyGoals) {
-    if (goal.completed) completed++;
-
-    const item = document.createElement('div');
-    item.className = `quest-item${goal.completed ? ' quest-item--completed' : ''}`;
-    const percent = Math.min(100, (goal.progress / goal.target) * 100);
-
-    item.innerHTML = `
-      <div class="quest-item__checkbox">
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-      </div>
-      <div class="quest-item__body">
-        <div class="quest-item__title">${goal.title}</div>
-        <div class="quest-item__progress-row">
-          <div class="quest-item__progress-track">
-            <div class="quest-item__progress-fill" style="width: ${percent}%"></div>
-          </div>
-          <span class="quest-item__progress-text">${goal.progress}/${goal.target} ${goal.unit}</span>
-        </div>
-      </div>
-      <div class="quest-item__xp">+${goal.xpReward} XP</div>
-    `;
-
-    list.appendChild(item);
-  }
-
-  const meta = document.getElementById('weeklyMeta');
-  meta.textContent = `${completed}/${state.weeklyGoals.length} Complete`;
-}
-
-function renderAchievements() {
-  const grid = document.getElementById('achievementGrid');
-  grid.innerHTML = '';
-
-  let unlocked = 0;
-  for (const ach of ACHIEVEMENTS) {
-    const state2 = state.achievements.find(a => a.id === ach.id);
-    const isUnlocked = state2?.unlocked || false;
-    if (isUnlocked) unlocked++;
-
-    const tierInfo = TIER_COLORS[ach.tier];
-    const tierName = ach.tier === 'srank' ? 'S-Rank' : ach.tier === 'shadow' ? 'Shadow' : ach.tier;
-
-    const card = document.createElement('div');
-    card.className = `achievement-card${isUnlocked ? ' achievement-card--unlocked' : ' achievement-card--locked'}`;
-    card.style.setProperty('--tier-color', tierInfo.color);
-    card.style.setProperty('--tier-glow', tierInfo.glow);
-
-    card.innerHTML = `
-      <div class="achievement-card__icon">${ach.icon}</div>
-      <div class="achievement-card__title">${ach.title}</div>
-      <div class="achievement-card__desc">${ach.desc}</div>
-      <div class="achievement-card__tier">${tierName}</div>
-    `;
-
-    grid.appendChild(card);
-  }
-
-  document.getElementById('achievementMeta').textContent = `${unlocked} Unlocked`;
-}
-
-function renderSystemLog() {
-  // Keep existing log entries; new ones are added via addSystemMessage
-}
-
-// --- Level-Up Modal ---
-function showLevelUpModal(newLevel, rank) {
-  const modal = document.getElementById('levelupModal');
-  document.getElementById('levelupNewLevel').textContent = `Level ${newLevel}`;
-  document.getElementById('levelupRank').textContent = `You are now ${rank.title}`;
-  modal.setAttribute('aria-hidden', 'false');
-}
-
-document.getElementById('levelupClose').addEventListener('click', () => {
-  document.getElementById('levelupModal').setAttribute('aria-hidden', 'true');
-});
-
-// --- Custom Workout Form ---
-document.getElementById('customWorkoutForm').addEventListener('submit', (e) => {
-  e.preventDefault();
-  const name = document.getElementById('workoutName').value.trim();
-  const duration = parseInt(document.getElementById('workoutDuration').value);
-  const intensity = parseFloat(document.getElementById('workoutIntensity').value);
-
-  if (!name || !duration || duration < 1) return;
-
-  logCustomWorkout(name, duration, intensity);
-
-  document.getElementById('workoutName').value = '';
-  document.getElementById('workoutDuration').value = '';
-  document.getElementById('workoutIntensity').value = '1.5';
-});
-
-// --- Dashboard Forms ---
-document.getElementById('weightForm').addEventListener('submit',(e)=>{
-  e.preventDefault();
-  updateWeight(document.getElementById('weightInput').value,document.getElementById('goalWeightInput').value);
-  e.target.reset();
-});
-document.getElementById('exerciseForm').addEventListener('submit',(e)=>{
-  e.preventDefault();
-  logExercise(document.getElementById('exerciseSelect').value,Number(document.getElementById('exerciseSets').value),Number(document.getElementById('exerciseReps').value),Number(document.getElementById('exerciseWeight').value)||0);
-  e.target.reset();
-});
-
-// --- Theme Toggle ---
-(function() {
-  const toggle = document.querySelector('[data-theme-toggle]');
-  const root = document.documentElement;
-  let d = 'dark';
-  root.setAttribute('data-theme', d);
-
-  toggle.addEventListener('click', () => {
-    d = d === 'dark' ? 'light' : 'dark';
-    root.setAttribute('data-theme', d);
-    toggle.setAttribute('aria-label', 'Switch to ' + (d === 'dark' ? 'light' : 'dark') + ' mode');
-    toggle.innerHTML = d === 'dark'
-      ? '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
-      : '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="5"/><path d="M12 1v2M12 21v2M4.22 4.22l1.42 1.42M18.36 18.36l1.42 1.42M1 12h2M21 12h2M4.22 19.78l1.42-1.42M18.36 5.64l1.42-1.42"/></svg>';
-  });
-})();
-
-// --- Init ---
-renderAll();
-
-// Check achievements on load (for state restored from storage)
-checkAchievements();
-saveState();
-
-// Welcome message
-setTimeout(() => {
-  if (state.totalQuestsCompleted === 0) {
-    addSystemMessage('System initialized. Your awakening begins now.', 'level');
-  } else {
-    const rank = getRank(state.level);
-    addSystemMessage(`Welcome back, ${rank.title}. Level ${state.level}.`, 'level');
-  }
-}, 500);
-
-
-/* ===== THE SYSTEM: LIVE 30-MINUTE WORKOUT ENGINE ===== */
-const SYSTEM_MISSIONS = [
- {day:0,name:"Recovery Protocol",focus:"Active recovery + mobility",stat:"Recovery",xp:250,exercises:[["Brisk Walk",1,"10 min",0],["Stretching",1,"10 min",0],["Glute Bridge",2,"15 reps",30],["Plank",2,"30 sec",30]]},
- {day:1,name:"Strength Awakening",focus:"Upper-body strength + core",stat:"Strength",xp:300,exercises:[["Push-Ups",3,"8-12 reps",45],["Bodyweight Squats",3,"12-15 reps",45],["Plank",3,"30 sec",30],["Incline Push-Ups",2,"10-15 reps",30],["March in Place",1,"5 min",0]]},
- {day:2,name:"Endurance Protocol",focus:"Cardio conditioning + endurance",stat:"Endurance",xp:300,exercises:[["Brisk Walk",1,"10 min",0],["High Knees",4,"30 sec",30],["Bodyweight Squats",3,"12 reps",30],["March in Place",1,"5 min",0],["Stretching",1,"5 min",0]]},
- {day:3,name:"Agility Protocol",focus:"Movement, coordination + speed",stat:"Conditioning",xp:300,exercises:[["High Knees",5,"30 sec",30],["Mountain Climbers",4,"30 sec",30],["Reverse Lunges",3,"10/leg",30],["March in Place",1,"5 min",0],["Stretching",1,"5 min",0]]},
- {day:4,name:"Vitality Recovery",focus:"Mobility, core + recovery",stat:"Recovery",xp:300,exercises:[["Plank",3,"30-45 sec",30],["Glute Bridge",3,"12-15 reps",30],["Bodyweight Squats",3,"12 reps",30],["Stretching",1,"10 min",0],["Brisk Walk",1,"5 min",0]]},
- {day:5,name:"Full Body Assault",focus:"Full-body conditioning",stat:"Strength",xp:350,exercises:[["Push-Ups",3,"8-12 reps",45],["Bodyweight Squats",3,"15 reps",45],["Reverse Lunges",3,"10/leg",30],["Mountain Climbers",3,"30 sec",30],["Plank",3,"30 sec",30]]},
- {day:6,name:"Cardio Challenge",focus:"Conditioning + calorie burn",stat:"Endurance",xp:350,exercises:[["Brisk Walk",1,"15 min",0],["High Knees",5,"30 sec",30],["Mountain Climbers",5,"30 sec",30],["March in Place",1,"5 min",0]]}
-];
-function systemMissionKey(){return getTodayStr();}
-function systemPlayerProfile(){try{return JSON.parse(localStorage.getItem('systemPlayerBuildV1')||'{}')}catch(e){return {}}}
-function systemTrainingSchedule(){
- const b=systemPlayerProfile(),days=Math.max(2,Math.min(7,Number(b.profile?.days)||4));
- const patterns={2:[1,4],3:[1,3,5],4:[1,2,4,6],5:[1,2,3,5,6],6:[1,2,3,4,5,6],7:[0,1,2,3,4,5,6]};
- return {days,trainingDays:patterns[days]||patterns[4],isTrainingDay:(patterns[days]||patterns[4]).includes(new Date().getDay())};
-}
-function adaptiveWeekStatus(){
- const schedule=systemTrainingSchedule(),today=new Date(),dow=today.getDay(),hist=workoutHistory(),weekStart=new Date(today);weekStart.setHours(0,0,0,0);weekStart.setDate(today.getDate()-((dow+6)%7));
- const completed=new Set(hist.filter(x=>dateLocal(x.date)>=weekStart).map(x=>dateLocal(x.date).getDay()));
- const missed=schedule.trainingDays.filter(d=>d<dow&&!completed.has(d));
- const future=schedule.trainingDays.filter(d=>d>dow&&!completed.has(d));
- const todayDone=completed.has(dow);
- let directive='';
- if(missed.length&&!schedule.isTrainingDay&&!todayDone)directive='RESCHEDULE RECOMMENDED • A scheduled mission was missed. Today can be used as a make-up session.';
- else if(missed.length&&schedule.isTrainingDay)directive='MISSION MISSED EARLIER • Complete today’s mission. Do not stack two full sessions.';
- else if(!schedule.isTrainingDay)directive='RECOVERY PROTECTED • Rest is part of progression. Optional training remains available.';
- else directive='SCHEDULE ON TRACK • Complete today’s training mission.';
- return {missed,future,todayDone,directive};
-}
-function adaptiveSystemMission(){
- const week=adaptiveWeekStatus(),dow=new Date().getDay(),sourceDay=(week.missed.length&&!systemTrainingSchedule().isTrainingDay&&!week.todayDone)?week.missed[0]:dow,base=SYSTEM_MISSIONS[sourceDay],b=systemPlayerProfile(),profile=b.profile||{},path=b.path||'Balanced',exp=profile.experience||'Beginner',gear=(profile.equipment&&profile.equipment.length?profile.equipment:['No Equipment']);
- const noGear=gear.includes('No Equipment')||(!gear.some(x=>['Dumbbells','Barbell','Resistance Bands','Cardio Machine','Full Gym'].includes(x))),has=x=>!noGear&&(gear.includes(x)||gear.includes('Full Gym')), levelScale=exp==='Advanced'?1.3:exp==='Intermediate'?1.12:.9;
- const swap={
-  'Push-Ups':has('Barbell')?['Barbell Bench Press',3,'8-10 reps',75]:has('Dumbbells')?['Dumbbell Press',3,'8-12 reps',60]:has('Resistance Bands')?['Band Chest Press',3,'12-15 reps',45]:null,
-  'Incline Push-Ups':has('Dumbbells')?['Dumbbell Press',2,'10-12 reps',60]:has('Resistance Bands')?['Band Chest Press',2,'12-15 reps',45]:null,
-  'Bodyweight Squats':has('Barbell')?['Barbell Squat',3,'8-10 reps',90]:has('Dumbbells')?['Goblet Squat',3,'10-12 reps',60]:has('Resistance Bands')?['Band Squat',3,'12-15 reps',45]:null,
-  'Glute Bridge':has('Barbell')?['Barbell Hip Thrust',3,'10-12 reps',75]:has('Dumbbells')?['Dumbbell Glute Bridge',3,'12-15 reps',60]:has('Resistance Bands')?['Band Glute Bridge',3,'15 reps',45]:null,
-  'Brisk Walk':has('Cardio Machine')?['Cardio Machine',1,'10 min',0]:null,
-  'March in Place':has('Cardio Machine')?['Cardio Machine',1,'5 min',0]:null
- };
- let exercises=base.exercises.map(e=>swap[e[0]]?[...swap[e[0]]]:[...e]);
- if(noGear){
-  const bodyweight={'Push-Ups':['Push-Ups',3,'8-12 reps',45],'Incline Push-Ups':['Incline Push-Ups',2,'10-15 reps',30],'Bodyweight Squats':['Bodyweight Squats',3,'12-15 reps',45],'Glute Bridge':['Glute Bridge',3,'12-15 reps',30],'Brisk Walk':['Brisk Walk',1,'10 min',0],'March in Place':['March in Place',1,'5 min',0]};
-  exercises=exercises.map(e=>bodyweight[e[0]]?[...bodyweight[e[0]]]:e);
- }
- exercises=exercises.map(e=>{
-   let sets=e[1],rest=e[3];
-   if(!/min/i.test(e[2]))sets=Math.max(1,Math.round(sets*levelScale));
-   if(exp==='Beginner')rest=Math.round(rest*1.15);
-   if(exp==='Advanced'&&rest)rest=Math.max(20,Math.round(rest*.9));
-   if(path==='Strength'||path==='Muscle Building')rest=Math.max(rest,45);
-   if(path==='Endurance'||path==='Fat Loss')rest=Math.max(0,Math.round(rest*.8));
-   return [e[0],sets,e[2],rest];
- });
- if((path==='Endurance'||path==='Fat Loss')&&has('Cardio Machine')&&!exercises.some(e=>e[0]==='Cardio Machine'))exercises.push(['Cardio Machine',1,exp==='Advanced'?'15 min':exp==='Intermediate'?'12 min':'10 min',0]);
- const names={'Fat Loss':'Fat Loss Protocol','Muscle Building':'Hypertrophy Protocol',Strength:'Strength Protocol',Endurance:'Endurance Protocol',Balanced:base.name};
- const focus=path==='Balanced'?base.focus:path+' • '+base.focus;
- const volume=exercises.reduce((n,e)=>n+e[1],0),xp=Math.round((base.xp*(exp==='Advanced'?1.15:exp==='Intermediate'?1.07:1)+Math.max(0,volume-12)*3)/5)*5;
- const isMakeup=sourceDay!==dow,dayNames=['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];return {...base,name:(isMakeup?'Make-Up: ':'')+(names[path]||base.name),focus,xp,exercises,sourceDay,isMakeup,makeupFor:isMakeup?dayNames[sourceDay]:null,profile:{path,experience:exp,equipment:gear,days:Number(profile.days)||4}};
-}
-const WORKOUT_MODES={full:{label:'FULL',credit:1,setScale:1,restScale:1},light:{label:'QUICK LIGHT',credit:.4,setScale:.5,restScale:1},intense:{label:'QUICK INTENSE',credit:.7,setScale:.65,restScale:.55}};
-function workoutModeKey(){return 'systemWorkoutMode:'+systemMissionKey()}
-function getWorkoutMode(){return localStorage.getItem(workoutModeKey())||'full'}
-function setWorkoutMode(mode){if(!WORKOUT_MODES[mode])return;const old=getWorkoutMode();if(old===mode)return;const oldKey="systemMissionProgress:"+systemMissionKey()+':'+old,progress=(()=>{try{return JSON.parse(localStorage.getItem(oldKey))||{}}catch(e){return {}}})();if(Object.values(progress).some(x=>x?.done)&&!confirm('CHANGE WORKOUT MODE?\n\nYour completed sets in '+WORKOUT_MODES[old].label+' will stay saved, but progress does not transfer between workout modes.'))return;localStorage.setItem(workoutModeKey(),mode);renderSystemMission()}
-function missionForMode(m,mode=getWorkoutMode()){const cfg=WORKOUT_MODES[mode]||WORKOUT_MODES.full;if(mode==='full')return {...m,mode,credit:1};const exercises=m.exercises.map(e=>[e[0],Math.max(1,Math.ceil(e[1]*cfg.setScale)),e[2],Math.round((e[3]||0)*cfg.restScale)]);return {...m,name:m.name+' • '+cfg.label,exercises,xp:Math.max(1,Math.round(m.xp*cfg.credit)),mode,credit:cfg.credit}}
-function missionProgressKey(){return "systemMissionProgress:"+systemMissionKey()+':'+getWorkoutMode();}
-function missionRecordsKey(){return "systemMissionRecords";}
-function getMissionProgress(){try{return JSON.parse(localStorage.getItem(missionProgressKey()))||{};}catch(e){return {};}}
-function saveMissionProgress(x){localStorage.setItem(missionProgressKey(),JSON.stringify(x));}
-function getMissionRecords(){try{return JSON.parse(localStorage.getItem(missionRecordsKey()))||{};}catch(e){return {};}}
-function workoutHistory(){try{return JSON.parse(localStorage.getItem('systemWorkoutSessions'))||[];}catch(e){return [];}}
-function parseTargetReps(t){const m=String(t).match(/(\d+)(?:-(\d+))?\s*(?:reps|\/leg)/i);return m?Number(m[2]||m[1]):0;}
-function flatSets(m){let a=[];m.exercises.forEach((e,i)=>{for(let s=0;s<e[1];s++)a.push({ei:i,si:s,name:e[0],target:e[2],rest:e[3]});});return a;}
-let liveTimer=null,restTimer=null,workoutStartedAt=0,liveIndex=0;
-function fmt(sec){sec=Math.max(0,Math.floor(sec));return String(Math.floor(sec/60)).padStart(2,'0')+':'+String(sec%60).padStart(2,'0');}
-let timedSetTimer=null,timedSetDuration=0,timedSetRemaining=0,timedSetEndAt=0;
-function timedTargetSeconds(target){
- const match=String(target||'').match(/(\d+)(?:\s*[-–]\s*(\d+))?\s*(seconds?|secs?|s|minutes?|mins?|m)\b/i);
- if(!match)return 0;
- return Number(match[2]||match[1])*(match[3].toLowerCase().startsWith('m')?60:1);
-}
-function stopTimedSet(){clearInterval(timedSetTimer);timedSetTimer=null;timedSetEndAt=0;}
-function updateTimedSetClock(){
- const clock=document.getElementById('timedSetClock'),toggle=document.getElementById('timedSetToggle'),status=document.getElementById('timedSetStatus');
- if(timedSetEndAt)timedSetRemaining=Math.max(0,Math.ceil((timedSetEndAt-Date.now())/1000));
- clock.textContent=fmt(timedSetRemaining);
- if(timedSetEndAt)document.getElementById('liveReps').value=timedSetDuration-timedSetRemaining;
- if(timedSetDuration&&timedSetRemaining===0){stopTimedSet();document.getElementById('liveReps').value=timedSetDuration;status.textContent='Time complete — tap Complete Set.';toggle.textContent='COUNTDOWN COMPLETE';toggle.disabled=true;return;}
- toggle.textContent=timedSetEndAt?'PAUSE':timedSetRemaining<timedSetDuration?'RESUME COUNTDOWN':'START COUNTDOWN';toggle.disabled=false;
-}
-function renderTimedSetControls(){
- stopTimedSet();
- const m=missionForMode(adaptiveSystemMission()),x=flatSets(m)[liveIndex],panel=document.getElementById('timedSet');
- const target=x&&(getProgressionOverrides()[x.name]?.target||x.target);
- timedSetDuration=timedTargetSeconds(target);timedSetRemaining=timedSetDuration;
- panel.hidden=!timedSetDuration;
- document.getElementById('liveRepsLabel').textContent=timedSetDuration?'SECONDS COMPLETED':'REPS / SEC';
- if(!timedSetDuration)return;
- document.getElementById('liveReps').value='';
- document.getElementById('timedSetStatus').textContent='Start when you are ready.';
- updateTimedSetClock();
-}
-function toggleTimedSet(){
- if(timedSetEndAt){timedSetRemaining=Math.max(0,Math.ceil((timedSetEndAt-Date.now())/1000));document.getElementById('liveReps').value=timedSetDuration-timedSetRemaining;stopTimedSet();document.getElementById('timedSetStatus').textContent=timedSetRemaining?'Paused — resume when ready.':'Time complete — tap Complete Set.';updateTimedSetClock();return;}
- if(!timedSetRemaining)return;
- timedSetEndAt=Date.now()+timedSetRemaining*1000;
- document.getElementById('timedSetStatus').textContent='Countdown running';
- updateTimedSetClock();timedSetTimer=setInterval(updateTimedSetClock,250);
-}
-function resetTimedSet(){stopTimedSet();timedSetRemaining=timedSetDuration;document.getElementById('liveReps').value='';document.getElementById('timedSetStatus').textContent='Start when you are ready.';updateTimedSetClock();}
-function renderDashboardStrip(){const hist=workoutHistory(),mins=Math.round(hist.reduce((a,x)=>a+(x.seconds||0),0)/60);document.getElementById('dashWorkouts').textContent=hist.length;document.getElementById('dashMinutes').textContent=mins+'m';document.getElementById('dashWeight').textContent=state.weight?.current?state.weight.current+' lb':'--';document.getElementById('dashGoal').textContent=state.weight?.goal?state.weight.goal+' lb':'--';}
-function renderSystemMission(){const base=adaptiveSystemMission(),m=missionForMode(base),schedule=systemTrainingSchedule(),week=adaptiveWeekStatus(),completion=(()=>{try{return JSON.parse(localStorage.getItem('systemMissionResult:'+systemMissionKey())||'null')}catch(e){return null}})(),done=completion?.mode==='full',quickDone=completion&&completion.mode!=='full',p=getMissionProgress(),sets=flatSets(m),finished=sets.filter(x=>p[x.ei+'-'+x.si]?.done).length;document.getElementById('mission-title').textContent=m.name;document.getElementById('mission-focus').textContent=(schedule.isTrainingDay?'TRAINING DAY':week.missed.length?'MAKE-UP AVAILABLE':'OPTIONAL / RECOVERY DAY')+' • '+m.focus+' • '+finished+'/'+sets.length+' sets • '+week.directive;document.getElementById('mission-xp').textContent='+'+m.xp+' XP';document.getElementById('mission-exercises').innerHTML=m.exercises.map((e,i)=>`<div class="mission-exercise"><div class="mission-exercise__head"><strong>${e[0]}</strong><small>${e[1]} sets • ${e[2]}${e[3]?' • '+e[3]+'s rest':''}</small></div><div class="mission-summary">${Array.from({length:e[1]},(_,s)=>`<span class="mission-dot ${p[i+'-'+s]?.done?'done':''}">${s+1}</span>`).join('')}</div></div>`).join('');const b=document.getElementById('start-mission-btn');b.disabled=done;b.textContent=done?'FULL MISSION COMPLETE':finished?'RESUME WORKOUT':quickDone&&m.mode==='full'?'UPGRADE TO FULL WORKOUT':schedule.isTrainingDay?'START WORKOUT':week.missed.length?'MAKE UP WORKOUT':'OPTIONAL WORKOUT';b.onclick=startWorkoutMode;
- let modes=document.getElementById('missionModeChoices');if(!modes){modes=document.createElement('div');modes.id='missionModeChoices';modes.className='mission-mode-choices';b.parentNode.insertBefore(modes,b)}
- const active=getWorkoutMode();modes.innerHTML='<button data-mode="full">FULL<br><small>100% XP</small></button><button data-mode="light">QUICK LIGHT<br><small>40% XP</small></button><button data-mode="intense">QUICK INTENSE<br><small>70% XP</small></button>';modes.querySelectorAll('[data-mode]').forEach(x=>{x.classList.toggle('active',x.dataset.mode===active);x.disabled=done||(quickDone&&x.dataset.mode!=='full');x.onclick=()=>setWorkoutMode(x.dataset.mode)});
- renderDashboardStrip();renderLegacyMissions();}
-function startWorkoutMode(){const m=missionForMode(adaptiveSystemMission()),completion=(()=>{try{return JSON.parse(localStorage.getItem('systemMissionResult:'+systemMissionKey())||'null')}catch(e){return null}})();if(completion?.mode==='full')return;const p=getMissionProgress(),sets=flatSets(m);liveIndex=Math.max(0,sets.findIndex(x=>!p[x.ei+'-'+x.si]?.done));if(liveIndex<0)liveIndex=sets.length-1;workoutStartedAt=Number(localStorage.getItem('workoutStartedAt:'+systemMissionKey()))||Date.now();localStorage.setItem('workoutStartedAt:'+systemMissionKey(),workoutStartedAt);document.getElementById('workoutMode').classList.add('active');document.getElementById('workoutMode').setAttribute('aria-hidden','false');document.body.classList.add('workout-open');document.getElementById('liveMissionName').textContent=m.name;clearInterval(liveTimer);liveTimer=setInterval(()=>document.getElementById('workoutClock').textContent=fmt((Date.now()-workoutStartedAt)/1000),1000);renderLiveSet();}
-function renderLiveSet(){const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m),x=sets[liveIndex],p=getMissionProgress(),rec=getMissionRecords()[x.name]||{};document.getElementById('liveExerciseCount').textContent=`SET ${liveIndex+1} OF ${sets.length}`;document.getElementById('liveExerciseName').textContent=x.name;document.getElementById('liveTarget').textContent=`Target: ${x.target}${rec.bestReps?' • Best: '+rec.bestReps+' reps':''}`;document.getElementById('liveReps').value=parseTargetReps(x.target)||'';document.getElementById('liveWeight').value='';document.getElementById('liveSetCount').textContent=Object.values(p).filter(v=>v.done).length+' sets complete';document.getElementById('liveXpPreview').textContent='+'+m.xp+' XP on completion';document.getElementById('workoutProgressFill').style.width=(Object.values(p).filter(v=>v.done).length/sets.length*100)+'%';renderTimedSetControls();}
-function completeLiveSet(){stopTimedSet();const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m),x=sets[liveIndex],p=getMissionProgress(),id=x.ei+'-'+x.si;p[id]={done:true,reps:Number(document.getElementById('liveReps').value)||0,weight:Number(document.getElementById('liveWeight').value)||0};saveMissionProgress(p);if(liveIndex>=sets.length-1){finishWorkout();return;}liveIndex++;if(x.rest>0)startRest(x.rest);else renderLiveSet();}
-function startRest(sec){const panel=document.getElementById('restPanel');panel.hidden=false;let left=sec;document.getElementById('restClock').textContent=fmt(left);clearInterval(restTimer);restTimer=setInterval(()=>{left--;document.getElementById('restClock').textContent=fmt(left);if(left<=0)endRest();},1000);}
-function endRest(){clearInterval(restTimer);document.getElementById('restPanel').hidden=true;renderLiveSet();}
-function finishWorkout(){const m=missionForMode(adaptiveSystemMission()),p=getMissionProgress(),records=getMissionRecords();let prs=[];m.exercises.forEach((e,i)=>{let br=0,bw=0;for(let s=0;s<e[1];s++){const x=p[i+'-'+s]||{};br=Math.max(br,x.reps||0);bw=Math.max(bw,x.weight||0);}const old=records[e[0]]||{bestReps:0,bestWeight:0};if(br>old.bestReps||bw>old.bestWeight)prs.push(e[0]);records[e[0]]={bestReps:Math.max(br,old.bestReps),bestWeight:Math.max(bw,old.bestWeight)};});localStorage.setItem(missionRecordsKey(),JSON.stringify(records));const existing=(()=>{try{return JSON.parse(localStorage.getItem('systemMissionResult:'+systemMissionKey())||'null')}catch(e){return null}})(),isUpgrade=m.mode==='full'&&existing&&existing.mode!=='full',xpAward=isUpgrade?Math.max(0,m.xp-(Number(existing.xp)||0)):m.xp;localStorage.setItem('systemMissionResult:'+systemMissionKey(),JSON.stringify({mode:m.mode||'full',credit:m.credit||1,xp:m.xp,completedAt:new Date().toISOString()}));if(m.mode==='full')localStorage.setItem('systemMission:'+systemMissionKey(),'true');const seconds=Math.round((Date.now()-workoutStartedAt)/1000),hist=workoutHistory();hist.push({date:systemMissionKey(),mission:m.name,seconds,xp:m.xp,workoutMode:m.mode||'full',trainingCredit:m.credit||1,prs:[...prs],makeupFor:m.makeupFor||null,sourceDay:m.sourceDay,sets:flatSets(m).map(x=>{const r=p[x.ei+'-'+x.si]||{};return {name:x.name,reps:r.reps||0,weight:r.weight||0};})});localStorage.setItem('systemWorkoutSessions',JSON.stringify(hist.slice(-365)));localStorage.removeItem('workoutStartedAt:'+systemMissionKey());localStorage.removeItem(workoutModeKey());addXp(xpAward,'daily mission');if(window.SystemBuild?.awardTraining)window.SystemBuild.awardTraining(m.name,Math.max(5,Math.round(seconds/60)),m.credit||1);updateWorkoutStreak(m.credit||1);recordHistory('system_mission_'+systemMissionKey()+(isUpgrade?'_upgrade':''),xpAward);addSystemMessage(`${m.name} complete — ${fmt(seconds)} • +${xpAward} XP${prs.length?' • New PR: '+prs.join(', '):''}`,'quest');saveState();closeWorkout();renderAll();renderSystemMission();renderAnalytics();setTimeout(()=>showMissionDebrief(seconds,xpAward,prs),120);}
-function closeWorkout(){stopTimedSet();clearInterval(liveTimer);clearInterval(restTimer);document.getElementById('workoutMode').classList.remove('active');document.getElementById('workoutMode').setAttribute('aria-hidden','true');document.body.classList.remove('workout-open');}
-document.addEventListener('DOMContentLoaded',()=>{renderSystemMission();renderAnalytics();document.getElementById('completeLiveSet').onclick=completeLiveSet;document.getElementById('exitWorkoutBtn').onclick=closeWorkout;document.getElementById('skipRestBtn').onclick=endRest;document.getElementById('timedSetToggle').onclick=toggleTimedSet;document.getElementById('timedSetReset').onclick=resetTimedSet;});
-
-
-/* ===== v7 PROGRESS & ANALYTICS ===== */
-function dateLocal(s){const [y,m,d]=String(s).split('-').map(Number);return new Date(y,m-1,d);}
-function daysAgo(n){const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-n);return d;}
-function sessionSetHistory(){return workoutHistory().flatMap(s=>(s.sets||[]).map(x=>({...x,date:s.date,mission:s.mission})));}
-function allExerciseNames(){const names=new Set();state.exerciseRecords.forEach(r=>names.add(r.name));sessionSetHistory().forEach(r=>names.add(r.name));Object.keys(getMissionRecords()).forEach(n=>names.add(n));return [...names].sort();}
-function renderAssessmentBaseline(){
- let a=null;try{a=JSON.parse(localStorage.getItem('systemAwakeningAssessmentV1')||'null')}catch(_){}
- const card=document.getElementById('assessmentBaselineCard');if(!card)return;
- const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
- const bar=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'};
- if(!a?.scores){card.classList.add('assessment-baseline-empty');return}
- card.classList.remove('assessment-baseline-empty');
- const score=k=>Math.max(0,Math.min(100,Math.round(Number(a.scores?.[k])||0)));
- const rank=a.rank||a.class||a.result?.rank||a.result?.class||'BASELINE COMPLETE';
- const when=a.completedAt||a.completed_at||a.date||a.createdAt;
- set('assessmentBaselineRank',String(rank).toUpperCase());
- set('assessmentBaselineMeta',when?'Completed '+new Date(when).toLocaleDateString():'Assessment complete');
- [['Strength','assessmentBaselineStrength'],['Endurance','assessmentBaselineEndurance'],['Conditioning','assessmentBaselineConditioning'],['Recovery','assessmentBaselineRecovery']].forEach(([k,id])=>{const v=score(k);set(id,v+'/100');bar(id+'Bar',v)});
-}
-function renderAnalytics(){
- const hist=workoutHistory(), now=new Date(), weekStart=daysAgo((now.getDay()+6)%7), monthStart=new Date(now.getFullYear(),now.getMonth(),1);
- const week=hist.filter(x=>dateLocal(x.date)>=weekStart).length, month=hist.filter(x=>dateLocal(x.date)>=monthStart).length;
- const mins=Math.round(hist.reduce((a,x)=>a+(x.seconds||0),0)/60);
- const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
- set('analyticsWeek',week);set('analyticsMonth',month);set('analyticsMinutes',mins+'m');set('analyticsXp',state.totalXp||0);set('analyticsStreak',state.currentStreak||0);set('analyticsBestStreak',state.bestStreak||0);
- renderAssessmentBaseline();renderWeightAnalytics();renderTrainingCalendar();renderStrengthAnalytics();renderPRAnalytics();renderSystemInsights();
-}
-function renderWeightAnalytics(){
- const w=state.weight||{}, h=(w.history||[]).slice(-30), chart=document.getElementById('weightChart'); if(!chart)return;
- if(w.starting&&w.current&&w.goal){const denom=w.starting-w.goal, pct=denom===0?100:Math.max(0,Math.min(100,(w.starting-w.current)/denom*100));document.getElementById('weightGoalFill').style.width=pct+'%';document.getElementById('weightProgressText').textContent=`${w.current} lb • ${pct.toFixed(0)}% to ${w.goal} lb`;}else{document.getElementById('weightGoalFill').style.width='0%';document.getElementById('weightProgressText').textContent='Add weight data';}
- if(!h.length){chart.innerHTML='<div class="analytics-empty">Log your weight to build the trend.</div>';return;}
- const vals=h.map(x=>Number(x.weight)), lo=Math.min(...vals), hi=Math.max(...vals), span=Math.max(1,hi-lo);chart.innerHTML=h.map(x=>`<div class="weight-bar" data-tip="${x.date}: ${x.weight} lb" style="height:${25+(Number(x.weight)-lo)/span*75}%"></div>`).join('');
-}
-function renderTrainingCalendar(){
- const el=document.getElementById('trainingCalendar');if(!el)return;const now=new Date(),y=now.getFullYear(),m=now.getMonth(),first=new Date(y,m,1),last=new Date(y,m+1,0);document.getElementById('calendarMonth').textContent=now.toLocaleDateString(undefined,{month:'long',year:'numeric'});
- const sessions=workoutHistory(), workoutDates=new Set(sessions.map(x=>x.date)), prDates=new Set(sessions.filter(x=>(x.prs||[]).length).map(x=>x.date));let out='';for(let i=0;i<(first.getDay()+6)%7;i++)out+='<div class="calendar-day muted"></div>';for(let d=1;d<=last.getDate();d++){const key=`${y}-${String(m+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;out+=`<div class="calendar-day ${workoutDates.has(key)?'workout':''} ${prDates.has(key)?'pr':''}">${d}</div>`;}el.innerHTML=out;
-}
-function renderStrengthAnalytics(){
- const sel=document.getElementById('strengthExercise');if(!sel)return;const names=allExerciseNames(), prior=sel.value;sel.innerHTML=names.length?names.map(n=>`<option>${n}</option>`).join(''):'<option>No exercise data</option>';if(names.includes(prior))sel.value=prior;const render=()=>{const name=sel.value, manual=state.exerciseRecords.filter(r=>r.name===name), sets=sessionSetHistory().filter(r=>r.name===name);let bestReps=0,bestWeight=0,bestVolume=0;manual.forEach(r=>{bestReps=Math.max(bestReps,Number(r.reps)||0);bestWeight=Math.max(bestWeight,Number(r.weight)||0);bestVolume=Math.max(bestVolume,Number(r.volume)||0)});sets.forEach(r=>{bestReps=Math.max(bestReps,Number(r.reps)||0);bestWeight=Math.max(bestWeight,Number(r.weight)||0);bestVolume=Math.max(bestVolume,(Number(r.reps)||0)*(Number(r.weight)||0))});const rec=getMissionRecords()[name]||{};bestReps=Math.max(bestReps,rec.bestReps||0);bestWeight=Math.max(bestWeight,rec.bestWeight||0);document.getElementById('strengthReps').textContent=bestReps||'--';document.getElementById('strengthWeight').textContent=bestWeight?bestWeight+' lb':'--';document.getElementById('strengthVolume').textContent=bestVolume?Math.round(bestVolume)+' lb':'--';const dates=new Set([...manual.map(r=>r.date),...sets.map(r=>r.date)]);document.getElementById('strengthSessions').textContent=dates.size;const vals=[...manual.map(r=>Number(r.volume)||Number(r.reps)||0),...sets.map(r=>(Number(r.weight)||1)*(Number(r.reps)||0))].slice(-16), max=Math.max(1,...vals);document.getElementById('strengthHistory').innerHTML=vals.length?vals.map(v=>`<div class="strength-history-bar" style="height:${Math.max(5,v/max*100)}%"></div>`).join(''):'<div class="analytics-empty">No history yet.</div>';};sel.onchange=render;render();
-}
-function renderPRAnalytics(){
- const el=document.getElementById('personalRecords');if(!el)return;const rec=getMissionRecords(), manual={};state.exerciseRecords.forEach(r=>{const x=manual[r.name]||(manual[r.name]={bestReps:0,bestWeight:0});x.bestReps=Math.max(x.bestReps,Number(r.reps)||0);x.bestWeight=Math.max(x.bestWeight,Number(r.weight)||0)});Object.entries(manual).forEach(([n,x])=>{const r=rec[n]||(rec[n]={bestReps:0,bestWeight:0});r.bestReps=Math.max(r.bestReps,x.bestReps);r.bestWeight=Math.max(r.bestWeight,x.bestWeight)});const entries=Object.entries(rec).filter(([,r])=>r.bestReps||r.bestWeight);document.getElementById('prCount').textContent=entries.length+' records';el.innerHTML=entries.length?entries.map(([n,r])=>`<div class="pr-card"><strong>${n}</strong><span>${r.bestReps?r.bestReps+' reps':''}${r.bestReps&&r.bestWeight?' • ':''}${r.bestWeight?r.bestWeight+' lb':''}</span></div>`).join(''):'<div class="analytics-empty">Complete workouts to establish personal records.</div>';
-}
-function renderSystemInsights(){
- const el=document.getElementById('systemInsights');if(!el)return;const hist=workoutHistory(), week=hist.filter(x=>dateLocal(x.date)>=daysAgo(6)).length, prior=hist.filter(x=>dateLocal(x.date)>=daysAgo(13)&&dateLocal(x.date)<daysAgo(6)).length, insights=[];insights.push(`${week} workout${week===1?'':'s'} completed in the last 7 days.`);if(prior>0){const change=Math.round((week-prior)/prior*100);insights.push(`Training frequency is ${change>=0?'up':'down'} ${Math.abs(change)}% versus the previous 7 days.`);}if(state.currentStreak)insights.push(`Current training streak: ${state.currentStreak} day${state.currentStreak===1?'':'s'}.`);const w=state.weight||{};if(w.starting&&w.current&&w.goal){const lost=w.starting-w.current, remain=w.current-w.goal;insights.push(`${Math.max(0,lost).toFixed(1)} lb down from your starting weight, with ${Math.max(0,remain).toFixed(1)} lb remaining to goal.`);}const recentPr=hist.slice(-5).flatMap(x=>x.prs||[]);if(recentPr.length)insights.push(`Recent PR activity: ${[...new Set(recentPr)].slice(0,3).join(', ')}.`);el.innerHTML=insights.map(x=>`<div class="insight">${x}</div>`).join('');
-}
-
-/* ===== v8 CUSTOM WORKOUT BUILDER ===== */
-const CUSTOM_WORKOUTS_KEY='theSystemCustomWorkouts';
-function getCustomWorkouts(){try{return JSON.parse(localStorage.getItem(CUSTOM_WORKOUTS_KEY))||[];}catch(e){return[];}}
-function saveCustomWorkouts(x){localStorage.setItem(CUSTOM_WORKOUTS_KEY,JSON.stringify(x));}
-function builderRow(data={}){const d=document.createElement('div');d.className='builder-exercise';d.innerHTML=`<input class="form-input exercise-name" placeholder="Exercise" value="${data.name||''}" required><input class="form-input exercise-sets" type="number" min="1" max="20" value="${data.sets||3}" aria-label="Sets"><input class="form-input exercise-target" placeholder="8-12 reps" value="${data.target||'8-12 reps'}"><input class="form-input exercise-rest" type="number" min="0" max="600" value="${data.rest??45}" aria-label="Rest seconds"><button type="button" title="Remove">✕</button>`;d.querySelector('button').onclick=()=>d.remove();return d;}
-function addBuilderExercise(data){const row=builderRow(data);document.getElementById('builderExercises')?.appendChild(row);const input=row.querySelector('.exercise-name');input?.addEventListener('change',()=>{const x=typeof exerciseLibrary==='function'?exerciseLibrary().find(e=>e.name.toLowerCase()===input.value.trim().toLowerCase()):null;if(!x)return;row.querySelector('.exercise-sets').value=x.sets;row.querySelector('.exercise-target').value=x.target;row.querySelector('.exercise-rest').value=x.rest;});}
-function calculateCustomReward(exercises,minutes){const sets=exercises.reduce((a,e)=>a+e.sets,0);return Math.max(100,Math.min(800,Math.round((minutes*5+sets*8)/25)*25));}
-function renderSavedWorkouts(){const el=document.getElementById('savedWorkouts');if(!el)return;const w=getCustomWorkouts();el.innerHTML=w.length?w.map(x=>`<div class="saved-workout"><div class="saved-workout__head"><strong>${x.name}</strong><span>+${x.xp} XP</span></div><div class="saved-workout__meta">${x.exercises.length} exercises • ${x.minutes} min • ${({str:'Strength',end:'Endurance',agi:'Conditioning',vit:'Recovery'}[x.stat]||x.stat)}${x.day==='any'?'':' • '+['Sun','Mon','Tue','Wed','Thu','Fri','Sat'][Number(x.day)]}</div><div class="saved-workout__actions"><button type="button" onclick="loadCustomWorkout('${x.id}')">Edit</button><button type="button" onclick="logCustomMission('${x.id}')">Complete</button><button type="button" onclick="deleteCustomWorkout('${x.id}')">Delete</button></div></div>`).join(''):'<div class="builder-empty">No custom missions yet. Build one and THE SYSTEM will stop pretending everyone trains exactly the same way.</div>';}
-function loadCustomWorkout(id){const x=getCustomWorkouts().find(v=>v.id===id);if(!x)return;document.getElementById('builderName').value=x.name;document.getElementById('builderStat').value=x.stat;document.getElementById('builderDay').value=x.day;document.getElementById('builderMinutes').value=x.minutes;document.getElementById('builderForm').dataset.edit=id;const box=document.getElementById('builderExercises');box.innerHTML='';x.exercises.forEach(addBuilderExercise);document.getElementById('workoutBuilder').scrollIntoView({behavior:'smooth'});}
-function deleteCustomWorkout(id){saveCustomWorkouts(getCustomWorkouts().filter(x=>x.id!==id));renderSavedWorkouts();}
-function logCustomMission(id){const x=getCustomWorkouts().find(v=>v.id===id);if(!x)return;const today=getTodayStr(), key='customMissionDone:'+id+':'+today;if(localStorage.getItem(key)==='true'){alert('SYSTEM: This custom mission is already complete today.');return;}localStorage.setItem(key,'true');addXp(x.xp,'custom mission');if(window.SystemBuild?.awardTraining)window.SystemBuild.awardTraining(x.name,x.minutes,1);updateStreak();recordHistory('custom_mission_'+id+'_'+today,x.xp);const hist=workoutHistory();hist.push({date:today,mission:x.name,seconds:x.minutes*60,xp:x.xp,prs:[],sets:[]});localStorage.setItem('systemWorkoutSessions',JSON.stringify(hist.slice(-365)));addSystemMessage(`${x.name} complete — ${x.minutes} min • +${x.xp} XP`,'quest');saveState();renderAll();if(typeof renderAnalytics==='function')renderAnalytics();alert(`MISSION COMPLETE\n${x.name}\n+${x.xp} XP`);}
-function initWorkoutBuilder(){const form=document.getElementById('builderForm');if(!form)return;const box=document.getElementById('builderExercises');if(!box.children.length){addBuilderExercise({name:'Push-Ups',sets:3,target:'8-12 reps',rest:45});addBuilderExercise({name:'Squats',sets:3,target:'12-15 reps',rest:45});}document.getElementById('addBuilderExercise').onclick=()=>addBuilderExercise();form.onsubmit=e=>{e.preventDefault();const exercises=[...box.querySelectorAll('.builder-exercise')].map(r=>({name:r.querySelector('.exercise-name').value.trim(),sets:Number(r.querySelector('.exercise-sets').value)||1,target:r.querySelector('.exercise-target').value.trim()||'reps',rest:Number(r.querySelector('.exercise-rest').value)||0})).filter(x=>x.name);if(!exercises.length)return;const minutes=Number(document.getElementById('builderMinutes').value)||30,id=form.dataset.edit||('cw_'+Date.now()),workouts=getCustomWorkouts(),obj={id,name:document.getElementById('builderName').value.trim(),stat:document.getElementById('builderStat').value,day:document.getElementById('builderDay').value,minutes,exercises,xp:calculateCustomReward(exercises,minutes)};const i=workouts.findIndex(x=>x.id===id);if(i>=0)workouts[i]=obj;else workouts.push(obj);saveCustomWorkouts(workouts);delete form.dataset.edit;form.reset();document.getElementById('builderMinutes').value=30;box.innerHTML='';addBuilderExercise();renderSavedWorkouts();addSystemMessage(`${obj.name} saved — ${obj.exercises.length} exercises • ${obj.xp} XP reward`,'quest');};renderSavedWorkouts();}
-document.addEventListener('DOMContentLoaded',initWorkoutBuilder);
-
-
-// --- Exercise Library v10 ---
-const BUILTIN_EXERCISES=[
-{name:'Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:45},
-{name:'Incline Push-Ups',muscle:'Chest',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
-{name:'Bodyweight Squats',muscle:'Legs',equipment:'Bodyweight',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:45},
-{name:'Reverse Lunges',muscle:'Legs',equipment:'Bodyweight',difficulty:'Beginner',stat:'Conditioning',sets:3,target:'10/leg',rest:30},
-{name:'Glute Bridge',muscle:'Glutes',equipment:'Bodyweight',difficulty:'Beginner',stat:'Recovery',sets:3,target:'12-15 reps',rest:30},
-{name:'Plank',muscle:'Core',equipment:'Bodyweight',difficulty:'Beginner',stat:'Endurance',sets:3,target:'30-45 sec',rest:30},
-{name:'Mountain Climbers',muscle:'Full Body',equipment:'Bodyweight',difficulty:'Intermediate',stat:'Conditioning',sets:4,target:'30 sec',rest:30},
-{name:'High Knees',muscle:'Cardio',equipment:'Bodyweight',difficulty:'Beginner',stat:'Conditioning',sets:4,target:'30 sec',rest:30},
-{name:'Brisk Walk',muscle:'Cardio',equipment:'None',difficulty:'Beginner',stat:'Endurance',sets:1,target:'10 min',rest:0},
-{name:'Stretching',muscle:'Mobility',equipment:'None',difficulty:'Beginner',stat:'Recovery',sets:1,target:'10 min',rest:0},
-{name:'Dumbbell Press',muscle:'Chest',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
-{name:'Dumbbell Rows',muscle:'Back',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
-{name:'Shoulder Press',muscle:'Shoulders',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'8-12 reps',rest:60},
-{name:'Biceps Curls',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
-{name:'Triceps Extensions',muscle:'Arms',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-15 reps',rest:45},
-{name:'Dumbbell Glute Bridge',muscle:'Glutes',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:60},
-{name:'Goblet Squat',muscle:'Legs',equipment:'Dumbbells',difficulty:'Beginner',stat:'Strength',sets:3,target:'10-12 reps',rest:60},
-{name:'Barbell Bench Press',muscle:'Chest',equipment:'Barbell',difficulty:'Intermediate',stat:'Strength',sets:3,target:'8-10 reps',rest:75},
-{name:'Barbell Squat',muscle:'Legs',equipment:'Barbell',difficulty:'Intermediate',stat:'Strength',sets:3,target:'8-10 reps',rest:90},
-{name:'Barbell Hip Thrust',muscle:'Glutes',equipment:'Barbell',difficulty:'Intermediate',stat:'Strength',sets:3,target:'10-12 reps',rest:75},
-{name:'Band Chest Press',muscle:'Chest',equipment:'Resistance Bands',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:45},
-{name:'Band Squat',muscle:'Legs',equipment:'Resistance Bands',difficulty:'Beginner',stat:'Strength',sets:3,target:'12-15 reps',rest:45},
-{name:'Band Glute Bridge',muscle:'Glutes',equipment:'Resistance Bands',difficulty:'Beginner',stat:'Strength',sets:3,target:'15 reps',rest:45},
-{name:'Cardio Machine',muscle:'Cardio',equipment:'Cardio Machine',difficulty:'Beginner',stat:'Endurance',sets:1,target:'10 min',rest:0}
-];
-function getCustomExercises(){try{return JSON.parse(localStorage.getItem('systemCustomExercises')||'[]')}catch(e){return []}}
-function saveCustomExercises(x){localStorage.setItem('systemCustomExercises',JSON.stringify(x));}
-function exerciseLibrary(){const m=new Map();[...BUILTIN_EXERCISES,...getCustomExercises()].forEach(x=>m.set(x.name.toLowerCase(),x));return [...m.values()];}
-function addLibraryExerciseToBuilder(name){const x=exerciseLibrary().find(e=>e.name===name);if(!x)return;addBuilderExercise({name:x.name,sets:x.sets,target:x.target,rest:x.rest});document.getElementById('workoutBuilder')?.scrollIntoView({behavior:'smooth'});}
-function deleteLibraryExercise(name){const x=getCustomExercises().filter(e=>e.name!==name);saveCustomExercises(x);renderExerciseLibrary();}
-function renderExerciseLibrary(){const grid=document.getElementById('exerciseLibraryGrid');if(!grid)return;const all=exerciseLibrary(),q=(document.getElementById('librarySearch')?.value||'').toLowerCase(),mus=document.getElementById('libraryMuscle')?.value||'all',eq=document.getElementById('libraryEquipment')?.value||'all';const muscles=[...new Set(all.map(x=>x.muscle))].sort(),equip=[...new Set(all.map(x=>x.equipment))].sort();const ms=document.getElementById('libraryMuscle'),es=document.getElementById('libraryEquipment');if(ms&&ms.options.length<=1)ms.innerHTML='<option value="all">All muscle groups</option>'+muscles.map(x=>`<option>${x}</option>`).join('');if(es&&es.options.length<=1)es.innerHTML='<option value="all">All equipment</option>'+equip.map(x=>`<option>${x}</option>`).join('');const filtered=all.filter(x=>(!q||[x.name,x.muscle,x.equipment,x.stat].join(' ').toLowerCase().includes(q))&&(mus==='all'||x.muscle===mus)&&(eq==='all'||x.equipment===eq));grid.innerHTML=filtered.map(x=>`<article class="library-card"><div class="library-card__head"><h3>${x.name}</h3><span class="stat-chip">${x.stat}</span></div><div class="library-card__meta">${x.muscle} • ${x.equipment} • ${x.difficulty}</div><div class="library-card__defaults">${x.sets} sets • ${x.target} • ${x.rest}s rest</div><div class="library-card__actions"><button type="button" onclick="addLibraryExerciseToBuilder('${x.name.replace(/'/g,"\\'")}')">Add to Mission</button>${BUILTIN_EXERCISES.some(b=>b.name===x.name)?'':`<button type="button" onclick="deleteLibraryExercise('${x.name.replace(/'/g,"\\'")}')">Delete</button>`}</div></article>`).join('')||'<div class="builder-empty">No exercises match those filters.</div>';const dl=document.getElementById('exerciseLibraryNames');if(dl)dl.innerHTML=all.map(x=>`<option value="${x.name}"></option>`).join('');}
-function initExerciseLibrary(){['librarySearch','libraryMuscle','libraryEquipment'].forEach(id=>document.getElementById(id)?.addEventListener(id==='librarySearch'?'input':'change',renderExerciseLibrary));const f=document.getElementById('libraryExerciseForm');if(f)f.onsubmit=e=>{e.preventDefault();const obj={name:document.getElementById('libName').value.trim(),muscle:document.getElementById('libMuscle').value.trim(),equipment:document.getElementById('libEquipment').value.trim(),difficulty:document.getElementById('libDifficulty').value,stat:document.getElementById('libStat').value,sets:Number(document.getElementById('libSets').value)||3,target:document.getElementById('libTarget').value.trim()||'8-12 reps',rest:Number(document.getElementById('libRest').value)||0};if(!obj.name)return;const a=getCustomExercises(),i=a.findIndex(x=>x.name.toLowerCase()===obj.name.toLowerCase());if(i>=0)a[i]=obj;else a.push(obj);saveCustomExercises(a);f.reset();document.getElementById('libSets').value=3;document.getElementById('libTarget').value='8-12 reps';document.getElementById('libRest').value=45;renderExerciseLibrary();addSystemMessage(`${obj.name} added to Exercise Library`,'quest');};renderExerciseLibrary();}
-document.addEventListener('DOMContentLoaded',initExerciseLibrary);
-
-/* ===== v10 ADAPTIVE PROGRESSION ===== */
-function getProgressionOverrides(){try{return JSON.parse(localStorage.getItem('systemProgressionOverrides')||'{}')}catch(e){return {}}}
-function saveProgressionOverrides(x){localStorage.setItem('systemProgressionOverrides',JSON.stringify(x));}
-function getProgressionDecisions(){try{return JSON.parse(localStorage.getItem('systemProgressionDecisions')||'{}')}catch(e){return {}}}
-function saveProgressionDecisions(x){localStorage.setItem('systemProgressionDecisions',JSON.stringify(x));}
-function targetRange(t){const m=String(t).match(/(\d+)(?:-(\d+))?\s*(reps|\/leg|sec|min)/i);return m?{low:Number(m[1]),high:Number(m[2]||m[1]),unit:m[3].toLowerCase()}:null;}
-function recentExerciseSessions(name,limit=3){return workoutHistory().slice().reverse().map(s=>({date:s.date,sets:(s.sets||[]).filter(x=>x.name===name)})).filter(x=>x.sets.length).slice(0,limit);}
-function progressionRecommendation(ex){
- const range=targetRange(ex.target); if(!range)return null; const sessions=recentExerciseSessions(ex.name,3); if(!sessions.length)return null;
- const all=sessions.flatMap(s=>s.sets), reps=all.map(x=>Number(x.reps)||0), weights=all.map(x=>Number(x.weight)||0), avg=reps.reduce((a,b)=>a+b,0)/Math.max(1,reps.length), weighted=weights.some(w=>w>0), maxW=Math.max(0,...weights);
- const successful=sessions.length>=2&&sessions.every(s=>s.sets.every(x=>(Number(x.reps)||0)>=range.high));
- const struggling=sessions.length>=2&&sessions.slice(0,2).every(s=>s.sets.some(x=>(Number(x.reps)||0)<Math.max(1,range.low-1)));
- if(successful){if(weighted)return {name:ex.name,type:'progress',status:'PROGRESSION AVAILABLE',reason:`You reached the top of the target range in ${sessions.length} recent sessions.`,current:ex.target,suggestedTarget:ex.target,suggestedWeight:Math.round((maxW+5)*2)/2};const inc=range.unit==='sec'?5:range.unit==='min'?1:2;return {name:ex.name,type:'progress',status:'PROGRESSION AVAILABLE',reason:`You consistently reached the current target in ${sessions.length} recent sessions.`,current:ex.target,suggestedTarget:`${range.low+inc}-${range.high+inc} ${range.unit==='\/leg'?'/leg':range.unit}`,suggestedWeight:0};}
- if(struggling)return {name:ex.name,type:'recovery',status:'HOLD / RECOVER',reason:'Recent sets fell below the target range. Keep the current target and prioritize clean completion.',current:ex.target,suggestedTarget:ex.target,suggestedWeight:maxW};
- return {name:ex.name,type:'maintain',status:'MAINTAIN',reason:`Recent average: ${avg.toFixed(1)}. Build consistency before increasing difficulty.`,current:ex.target,suggestedTarget:ex.target,suggestedWeight:maxW};
-}
-function allProgressionRecommendations(){const seen=new Map();exerciseLibrary().forEach(ex=>{const r=progressionRecommendation(ex);if(r)seen.set(ex.name,r)});return [...seen.values()];}
-function acceptProgression(name){const rec=allProgressionRecommendations().find(x=>x.name===name);if(!rec)return;const o=getProgressionOverrides();o[name]={target:rec.suggestedTarget,weight:rec.suggestedWeight||0,acceptedAt:getTodayStr()};saveProgressionOverrides(o);const d=getProgressionDecisions();d[name]={status:'accepted',date:getTodayStr()};saveProgressionDecisions(d);addSystemMessage(`${name} progression accepted — target ${rec.suggestedTarget}${rec.suggestedWeight?' @ '+rec.suggestedWeight+' lb':''}`,'quest');renderAdaptiveProgression();renderSystemMission();}
-function rejectProgression(name){const d=getProgressionDecisions();d[name]={status:'rejected',date:getTodayStr()};saveProgressionDecisions(d);renderAdaptiveProgression();}
-function renderAdaptiveProgression(){const el=document.getElementById('adaptiveRecommendations');if(!el)return;const decisions=getProgressionDecisions(),recs=allProgressionRecommendations();document.getElementById('adaptiveMeta').textContent=recs.length?`${recs.filter(x=>x.type==='progress').length} upgrades found`:'Waiting for training data';if(!recs.length){el.innerHTML='<div class="adaptive-empty">Complete at least two workouts for the same exercise and THE SYSTEM will begin comparing performance.</div>';return;}el.innerHTML=recs.map(r=>{const dec=decisions[r.name],accepted=dec?.status==='accepted';return `<article class="adaptive-card"><div class="adaptive-card__head"><h3>${r.name}</h3><span class="adaptive-status">${r.status}</span></div><p>${r.reason}</p><div class="adaptive-target">${r.suggestedTarget}${r.suggestedWeight?' • '+r.suggestedWeight+' lb':''}</div><div class="adaptive-actions">${r.type==='progress'&&!accepted?`<button class="accept" onclick="acceptProgression('${r.name.replace(/'/g,"\\'")}')">Accept</button><button onclick="rejectProgression('${r.name.replace(/'/g,"\\'")}')">Not now</button>`:accepted?'<span class="quest-section__meta">ACCEPTED</span>':'<span class="quest-section__meta">NO INCREASE</span>'}</div></article>`}).join('');}
-function adaptiveTargetFor(name,fallback){const o=getProgressionOverrides()[name];return o?.target||fallback;}
-function adaptiveWeightFor(name){return Number(getProgressionOverrides()[name]?.weight)||0;}
-// Wrap mission rendering so accepted targets automatically feed future daily workouts.
-const _v10RenderSystemMission=renderSystemMission;
-renderSystemMission=function(){_v10RenderSystemMission();const m=adaptiveSystemMission();const cards=document.querySelectorAll('#mission-exercises .mission-exercise');m.exercises.forEach((e,i)=>{const o=getProgressionOverrides()[e[0]];if(o&&cards[i]){const sm=cards[i].querySelector('small');if(sm)sm.textContent=`${e[1]} sets • ${o.target||e[2]}${o.weight?' • '+o.weight+' lb':''}${e[3]?' • '+e[3]+'s rest':''}`;}});}
-const _v10RenderLiveSet=renderLiveSet;
-renderLiveSet=function(){_v10RenderLiveSet();const m=adaptiveSystemMission(),x=flatSets(m)[liveIndex],o=getProgressionOverrides()[x.name];if(o){document.getElementById('liveTarget').textContent=`Target: ${o.target}${o.weight?' @ '+o.weight+' lb':''}`;document.getElementById('liveReps').value=parseTargetReps(o.target)||document.getElementById('liveReps').value;if(o.weight)document.getElementById('liveWeight').value=o.weight;}}
-document.addEventListener('DOMContentLoaded',renderAdaptiveProgression);
-
-
-/* ===== v11 PROFILE, SETTINGS & DATA MANAGEMENT ===== */
-const SETTINGS_KEY='theSystemSettings';
-function getSystemSettings(){try{return Object.assign({name:'Player',units:'imperial',goal:'balanced',sounds:true,masterVolume:70,effectsVolume:80,musicVolume:35},JSON.parse(localStorage.getItem(SETTINGS_KEY)||'{}'))}catch(e){return {name:'Player',units:'imperial',goal:'balanced',sounds:true,masterVolume:70,effectsVolume:80,musicVolume:35}}}
-function saveSystemSettings(x){localStorage.setItem(SETTINGS_KEY,JSON.stringify(x));}
-
-/* ===== SYSTEM AUDIO ENGINE ===== */
-const SystemAudio=(()=>{
- let ctx=null,lastTap=0;
- const ac=()=>ctx||(ctx=new (window.AudioContext||window.webkitAudioContext)());
- function enabled(){return !!getSystemSettings().sounds}
- function unlock(){if(!enabled())return;try{const a=ac();if(a.state==='suspended')a.resume().catch(()=>{});}catch(e){console.warn('System audio unavailable',e)}}
- function vol(kind='effects'){const s=getSystemSettings(),m=(Number(s.masterVolume??70)/100),k=kind==='music'?(Number(s.musicVolume??35)/100):(Number(s.effectsVolume??80)/100);return Math.max(0,Math.min(.22,m*k*.22))}
- function tone(freq=440,duration=.08,type='sine',gain=.08,delay=0){if(!enabled())return;try{const a=ac();if(a.state==='suspended')a.resume();const o=a.createOscillator(),g=a.createGain(),t=a.currentTime+delay;o.type=type;o.frequency.setValueAtTime(freq,t);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(Math.min(gain,vol()),t+.008);g.gain.exponentialRampToValueAtTime(.0001,t+duration);o.connect(g);g.connect(a.destination);o.start(t);o.stop(t+duration+.02)}catch(e){}}
- const events={
-  tap:()=>tone(620,.045,'sine',.035),
-  open:()=>{tone(330,.07,'sine',.05);tone(660,.1,'sine',.045,.045)},
-  close:()=>tone(280,.08,'sine',.045),
-  success:()=>{tone(520,.08,'sine',.06);tone(780,.12,'sine',.07,.07)},
-  warning:()=>{tone(180,.14,'sawtooth',.06);tone(150,.18,'sawtooth',.055,.12)},
-  xp:()=>{tone(740,.055,'sine',.05);tone(980,.08,'sine',.055,.05)},
-  mission_complete:()=>{tone(440,.08,'triangle',.07);tone(660,.09,'triangle',.07,.07);tone(880,.16,'triangle',.08,.14)},
-  level_up:()=>{[440,554,659,880].forEach((n,i)=>tone(n,.18,'triangle',.09,i*.08))},
-  boss_hit:()=>{tone(95,.12,'sawtooth',.09);tone(55,.18,'square',.06,.025)},
-  critical:()=>{tone(110,.1,'sawtooth',.1);tone(880,.08,'square',.07,.06);tone(1320,.12,'square',.06,.11)},
-  boss_defeated:()=>{[110,220,440,660].forEach((n,i)=>tone(n,.24,'sawtooth',.1,i*.11))},
-  rank_up:()=>{[330,440,554,660,880].forEach((n,i)=>tone(n,.28,'triangle',.1,i*.1))},
-  countdown:()=>tone(700,.08,'square',.06),
-  go:()=>tone(1050,.18,'square',.08)
- };
- function play(name){(events[name]||events.tap)?.()}
- function bind(){document.addEventListener('pointerdown',e=>{unlock();if(!e.target.closest('button,[role="button"],.nav-item'))return;const now=Date.now();if(now-lastTap>45){lastTap=now;play('tap')}},{passive:true});window.addEventListener('system:reward',e=>{const d=e.detail||{};play(d.type==='boss'?'boss_defeated':d.type==='level'||d.intensity==='major'?'level_up':d.type==='achievement'?'success':'xp')})}
- return{play,bind};
-})();window.SystemAudio=SystemAudio;document.addEventListener('DOMContentLoaded',SystemAudio.bind);
-
-function renderSystemSettings(){const x=getSystemSettings();const bi=document.getElementById('installedBuild');if(bi){try{bi.textContent=window.SystemAndroid?.getAppVersion?.()||'WEB BUILD'}catch(_){bi.textContent='WEB BUILD'}}const n=document.getElementById('profileName');if(!n)return;n.value=x.name;document.getElementById('unitSystem').value=x.units;document.getElementById('workoutGoal').value=x.goal;document.getElementById('soundSetting').checked=!!x.sounds;['masterVolume','effectsVolume','musicVolume'].forEach(k=>{const e=document.getElementById(k);if(e)e.value=x[k]??({masterVolume:70,effectsVolume:80,musicVolume:35}[k])});}
-function systemBackup(){const data={app:'The System - Workout Tracker',version:11,exportedAt:new Date().toISOString(),localStorage:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);data.localStorage[k]=localStorage.getItem(k);}return data;}
-async function exportSystemBackup(){const data=systemBackup(),name='the-system-workout-tracker-backup-'+getTodayStr()+'.json',json=JSON.stringify(data,null,2);try{if(window.SystemAndroid?.exportBackup){window.SystemAndroid.exportBackup(name,json);document.getElementById('backupStatus').textContent='Backup export opened. Choose where to save it.';return}if(navigator.share&&navigator.canShare){const file=new File([json],name,{type:'application/json'});if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'THE SYSTEM backup'});document.getElementById('backupStatus').textContent='Backup shared successfully.';return}}const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('backupStatus').textContent='Backup exported successfully.'}catch(e){document.getElementById('backupStatus').textContent='Backup export failed: '+e.message}}
-async function importSystemBackup(file){const status=document.getElementById('backupStatus');try{const data=JSON.parse(await file.text());if(!data||data.app!=='The System - Workout Tracker'||!data.localStorage)throw new Error('Invalid backup');if(!confirm('Import this backup? Current app data will be replaced.'))return;localStorage.clear();Object.entries(data.localStorage).forEach(([k,v])=>localStorage.setItem(k,v));status.textContent='Backup restored. Reloading…';setTimeout(()=>location.reload(),500);}catch(e){status.textContent='Backup could not be imported.';}}
-// Account operations are separate; destructive cloud changes must succeed before local changes.
-let accountDataBusy=false;
-function accountDataStatus(message){document.getElementById('backupStatus').textContent=message;const status=document.getElementById('deleteAccountStatus');if(status)status.textContent=message;}
-function accountConfirmation(message,word=''){
-  const dialog=document.getElementById('accountConfirmDialog');
-  if(dialog.open||accountDataBusy)return Promise.resolve(false);
-  const form=document.getElementById('accountConfirmForm'),input=form.elements.confirmation;
-  document.getElementById('accountConfirmMessage').textContent=message;
-  document.getElementById('accountConfirmLabel').hidden=!word;
-  input.required=!!word;input.value='';input.pattern=word;dialog.showModal();
-  return new Promise(resolve=>{
-    const finish=value=>{form.onsubmit=null;dialog.oncancel=null;document.getElementById('cancelAccountConfirm').onclick=null;dialog.close();resolve(value);};
-    form.onsubmit=e=>{e.preventDefault();finish(!word||input.value===word)};
-    dialog.oncancel=e=>{e.preventDefault();finish(false)};
-    document.getElementById('cancelAccountConfirm').onclick=()=>finish(false);
-  });
-}
-async function runAccountOperation(operation){
-  if(accountDataBusy)return;
-  accountDataBusy=true;
-  document.querySelectorAll('[data-account-operation]').forEach(b=>b.disabled=true);
-  try{await operation()}catch(e){accountDataStatus(e.message||'Operation failed. Your local data was kept.');}
-  finally{accountDataBusy=false;document.querySelectorAll('[data-account-operation]').forEach(b=>b.disabled=false);}
-}
-async function factoryResetSystem(){
-  if(!await accountConfirmation('Factory Reset signs you out and clears this device’s app data, settings, cache and onboarding. Your account and saved cloud progress stay intact. Unsynced progress will be lost. Continue?'))return;
-  return runAccountOperation(async()=>{
-    // No network request: never upload, reset, or delete cloud data here.
-    await AccountData.clearDevice(localStorage,sessionStorage,window.caches);
-    location.reload();
-  });
-}
-async function resetTrainingData(){
-  if(!await accountConfirmation('Reset Progress restarts XP, rank, missions, streaks, achievements, boss progress and your assessment. Your account, profile and settings stay. Type RESET to continue.','RESET'))return;
-  return runAccountOperation(async()=>{
-    const fresh=defaultState();fresh.weight=state.weight;
-    const next=AccountData.resetSnapshot(systemBackup().localStorage,fresh);
-    if(getCloudSession()?.user?.id){
-      accountDataStatus('Resetting saved cloud progress…');
-      await cloudRequest('/rest/v1/rpc/reset_my_progress',{method:'POST',body:JSON.stringify({replacement:{app:'The System - Workout Tracker',version:12,localStorage:AccountData.cloudData(next)}})});
-    }
-    AccountData.applySnapshot(localStorage,next);
-    state=fresh;
-    location.reload(); // onboarding.assessmentPending resumes the Initial Assessment.
-  });
-}
-async function deleteSystemAccount(){
-  const session=getCloudSession();
-  if(!session?.user?.id){accountDataStatus('Sign in before deleting your account.');return;}
-  const dialog=document.getElementById('deleteAccountDialog');
-  if(accountDataBusy||dialog.open)return;
-  document.getElementById('deleteAccountForm').reset();
-  document.getElementById('deleteAccountStatus').textContent='';
-  dialog.oncancel=()=>document.getElementById('deleteAccountForm').reset();
-  dialog.showModal();
-  document.getElementById('deleteAccountPassword').focus();
-}
-async function submitDeleteAccount(e){
-  e.preventDefault();
-  const form=e.currentTarget,password=form.elements.password.value,confirmation=form.elements.confirmation.value;
-  if(confirmation!=='DELETE'||!password){accountDataStatus('Enter your password and type DELETE exactly.');return;}
-  return runAccountOperation(async()=>{
-    accountDataStatus('Verifying password and deleting account…');
-    await cloudRequest('/functions/v1/delete-account',{method:'POST',body:JSON.stringify({password,confirmation})});
-    form.reset();document.getElementById('deleteAccountDialog').close();
-    await AccountData.clearDevice(localStorage,sessionStorage,window.caches);
-    location.reload();
-  });
-}
-function initSystemSettings(){renderSystemSettings();const f=document.getElementById('profileForm');if(f)f.onsubmit=e=>{e.preventDefault();const x={name:document.getElementById('profileName').value.trim()||'Player',units:document.getElementById('unitSystem').value,goal:document.getElementById('workoutGoal').value,sounds:document.getElementById('soundSetting').checked,masterVolume:Number(document.getElementById('masterVolume')?.value||70),effectsVolume:Number(document.getElementById('effectsVolume')?.value||80),musicVolume:Number(document.getElementById('musicVolume')?.value||35)};saveSystemSettings(x);document.getElementById('backupStatus').textContent='Settings saved.';addSystemMessage(`Profile updated — ${x.name} • ${x.goal}`,'quest');};document.getElementById('testSystemAudio')?.addEventListener('click',()=>{const x=getSystemSettings();x.sounds=document.getElementById('soundSetting').checked;x.masterVolume=Number(document.getElementById('masterVolume')?.value||70);x.effectsVolume=Number(document.getElementById('effectsVolume')?.value||80);saveSystemSettings(x);SystemAudio.play('mission_complete')});document.getElementById('exportDataBtn')?.addEventListener('click',exportSystemBackup);document.getElementById('importDataInput')?.addEventListener('change',e=>{if(e.target.files[0])importSystemBackup(e.target.files[0]);});document.getElementById('resetTrainingBtn')?.addEventListener('click',resetTrainingData);document.getElementById('resetAllBtn')?.addEventListener('click',factoryResetSystem);document.getElementById('deleteAccountBtn')?.addEventListener('click',deleteSystemAccount);document.getElementById('deleteAccountForm')?.addEventListener('submit',submitDeleteAccount);document.getElementById('cancelDeleteAccount')?.addEventListener('click',()=>{document.getElementById('deleteAccountForm').reset();document.getElementById('deleteAccountDialog').close();});}
-document.addEventListener('DOMContentLoaded',initSystemSettings);
-
-// --- Shared Supabase Cloud Sync ---
-const CLOUD_CONFIG_KEY='theSystemCloudConfig';
-const CLOUD_SESSION_KEY='theSystemCloudSession';
-const AUTH_REMEMBER_KEY='theSystemRememberMe';
-const SYSTEM_CLOUD={url:'https://wczmxbvdfctffhpohnne.supabase.co',key:'sb_publishable_Pl0Ls17XrDeEHtt4n2UOPQ_PKyye8o1'};
-function getCloudConfig(){return SYSTEM_CLOUD}
-function getCloudSession(){try{return JSON.parse(sessionStorage.getItem(CLOUD_SESSION_KEY)||localStorage.getItem(CLOUD_SESSION_KEY)||'null')}catch(e){return null}}
-function storeCloudSession(session,remember=true){
-  const raw=JSON.stringify(session);
-  sessionStorage.setItem(CLOUD_SESSION_KEY,raw);
-  localStorage.setItem(AUTH_REMEMBER_KEY,remember?'1':'0');
-  if(remember)localStorage.setItem(CLOUD_SESSION_KEY,raw);
-  else localStorage.removeItem(CLOUD_SESSION_KEY);
-}
-function cloudStatus(msg,ok=false){const e=document.getElementById('cloudStatus');if(e){e.textContent=msg;e.dataset.ok=ok?'1':'0';}}
-async function cloudRequest(path,opts={}){const c=SYSTEM_CLOUD,s=getCloudSession();const h={'apikey':c.key,'Content-Type':'application/json',...(opts.headers||{})};if(s?.access_token)h.Authorization='Bearer '+s.access_token;const r=await fetch(c.url+path,{...opts,headers:h});const body=await r.text();let data={};try{data=body?JSON.parse(body):{}}catch(e){}if(!r.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'Cloud request failed.');return data;}
-async function cloudSignUp(){try{const emailEl=document.getElementById('cloudEmail'),passwordEl=document.getElementById('cloudPassword');if(!emailEl||!passwordEl){showAuthGate();throw new Error('Use the account screen to create your account.');}const email=emailEl.value.trim(),password=passwordEl.value;if(!email||password.length<6)throw new Error('Enter a valid email and a password of at least 6 characters.');cloudStatus('Creating account…');const s=await cloudRequest('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});if(s.access_token){localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(s));cloudStatus('Account created and signed in.',true);renderCloudAccount();}else cloudStatus('Account created. Check your email to confirm it, then sign in.',true);}catch(e){cloudStatus(e.message)}}
-async function cloudSignIn(){try{const emailEl=document.getElementById('cloudEmail'),passwordEl=document.getElementById('cloudPassword');if(!emailEl||!passwordEl){showAuthGate();throw new Error('Use the account screen to sign in.');}const email=emailEl.value.trim(),password=passwordEl.value;if(!email||!password)throw new Error('Enter your email and password.');cloudStatus('Signing in…');const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(s));cloudStatus('Signed in as '+(s.user?.email||email)+'.',true);renderCloudAccount();}catch(e){cloudStatus(e.message)}}
-function cloudSignOut(){localStorage.removeItem(CLOUD_SESSION_KEY);sessionStorage.removeItem(CLOUD_SESSION_KEY);localStorage.setItem(AUTH_REMEMBER_KEY,'0');cloudStatus('Signed out.');renderCloudAccount();showAuthGate();}
-function cloudPayload(){const data=systemBackup();delete data.localStorage[CLOUD_CONFIG_KEY];delete data.localStorage[CLOUD_SESSION_KEY];return data;}
-let cloudAutoTimer=null,cloudSyncBusy=false,cloudSyncQueued=false;
-function cloudOwnedSnapshot(){return {app:'The System - Workout Tracker',version:13,exportedAt:new Date().toISOString(),localStorage:AccountData.cloudData(systemBackup().localStorage)}}
-function cloudSyncStatus(msg,ok=false){cloudStatus(msg,ok);const e=document.getElementById('lastCloudSync');if(e&&msg)e.textContent=msg}
-async function autoCloudSync(reason='change'){
- const s=getCloudSession();if(!s?.user?.id||cloudSyncBusy||!navigator.onLine){if(cloudSyncBusy)cloudSyncQueued=true;return false}
- cloudSyncBusy=true;cloudSyncQueued=false;
- try{const now=new Date().toISOString();cloudSyncStatus('SYNCING…');await cloudRequest('/rest/v1/workout_backups?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:s.user.id,data:cloudOwnedSnapshot(),updated_at:now})});localStorage.setItem('theSystemLastSync',now);cloudSyncStatus('CLOUD SYNCED • '+new Date(now).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),true);return true}catch(e){cloudSyncStatus(navigator.onLine?'SYNC PENDING • '+e.message:'OFFLINE • CHANGES SAVED LOCALLY');return false}finally{cloudSyncBusy=false;if(cloudSyncQueued)scheduleCloudSync('queued')}}
-function scheduleCloudSync(reason='change'){if(!getCloudSession()?.user?.id)return;clearTimeout(cloudAutoTimer);cloudAutoTimer=setTimeout(()=>autoCloudSync(reason),1200)}
-async function restoreCloudOnSignIn(){
- const s=getCloudSession();if(!s?.user?.id)return false;
- try{cloudSyncStatus('CHECKING CLOUD…');const rows=await cloudRequest('/rest/v1/workout_backups?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=data,updated_at&limit=1');if(!rows.length){await autoCloudSync('first-device');return false}
- const row=rows[0],cloudAt=Date.parse(row.updated_at||0),localAt=Date.parse(localStorage.getItem('theSystemLastSync')||0);
- if(cloudAt>localAt){const keepSession=localStorage.getItem(CLOUD_SESSION_KEY),remember=localStorage.getItem(AUTH_REMEMBER_KEY);AccountData.applySnapshot(localStorage,row.data?.localStorage||{});if(keepSession)localStorage.setItem(CLOUD_SESSION_KEY,keepSession);if(remember)localStorage.setItem(AUTH_REMEMBER_KEY,remember);localStorage.setItem('theSystemLastSync',row.updated_at);cloudSyncStatus('CLOUD RESTORED • '+new Date(row.updated_at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),true);return true}
- scheduleCloudSync('sign-in');return false
- }catch(e){cloudSyncStatus('SYNC PENDING • '+e.message);return false}
-}
-function initAutomaticCloudSync(){
- window.addEventListener('online',()=>scheduleCloudSync('online'));
- document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')autoCloudSync('background');else scheduleCloudSync('foreground')});
- window.addEventListener('beforeunload',()=>{if(getCloudSession()?.user?.id)autoCloudSync('exit')});
- const originalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){originalSet.call(this,k,v);if(this===localStorage&&AccountData?.owned?.(k)&&![CLOUD_SESSION_KEY,'theSystemLastSync'].includes(k))scheduleCloudSync(k)};
- if(getCloudSession()?.user?.id)restoreCloudOnSignIn();
-}
-document.addEventListener('DOMContentLoaded',initAutomaticCloudSync);
-
-async function pushCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id)throw new Error('Sign in first.');cloudStatus('Uploading…');syncLocalSocialIdentity();await cloudRequest('/rest/v1/workout_backups?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:s.user.id,data:cloudPayload(),updated_at:new Date().toISOString()})});localStorage.setItem('theSystemLastSync',new Date().toISOString());cloudStatus('Cloud backup uploaded.',true);pushSocialIdentity();renderCloudAccount();}catch(e){cloudStatus(e.message)}}
-async function pullCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id)throw new Error('Sign in first.');cloudStatus('Downloading…');const rows=await cloudRequest('/rest/v1/workout_backups?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=data,updated_at&limit=1');if(!rows.length)throw new Error('No cloud backup found.');if(!confirm('Restore the cloud backup on this device? Current local training data will be replaced.'))return;const keepSession=localStorage.getItem(CLOUD_SESSION_KEY);localStorage.clear();Object.entries(rows[0].data.localStorage||{}).forEach(([k,v])=>localStorage.setItem(k,v));if(keepSession)localStorage.setItem(CLOUD_SESSION_KEY,keepSession);localStorage.setItem('theSystemLastSync',rows[0].updated_at||new Date().toISOString());location.reload();}catch(e){cloudStatus(e.message)}}
-function renderCloudAccount(){const s=getCloudSession(),signed=document.getElementById('cloudSignedIn');if(signed)signed.textContent=s?.user?.email?'SIGNED IN: '+s.user.email.toUpperCase():'NOT SIGNED IN';const last=document.getElementById('lastCloudSync');if(last){const x=localStorage.getItem('theSystemLastSync');last.textContent=x?'Last sync: '+new Date(x).toLocaleString():'No cloud sync yet.';}}
-function initCloudSync(){renderCloudAccount();document.getElementById('cloudSignUp')?.addEventListener('click',cloudSignUp);document.getElementById('cloudSignIn')?.addEventListener('click',cloudSignIn);document.getElementById('cloudSignOut')?.addEventListener('click',cloudSignOut);document.getElementById('cloudPush')?.addEventListener('click',pushCloudBackup);document.getElementById('cloudPull')?.addEventListener('click',pullCloudBackup);}
-document.addEventListener('DOMContentLoaded',initCloudSync);
-let authMode='signin';
-function authGateStatus(msg,ok=false){const e=document.getElementById('authGateStatus');if(e){e.textContent=msg;e.dataset.ok=ok?'1':'0'}}
-function showAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=false}
-function hideAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=true}
-function showSystemEntry(){
-  const e=document.getElementById('systemEntryScreen');
-  if(e)e.hidden=false;
-  document.body.classList.add('system-entry-open');
-}
-function hideSystemEntry(){
-  const e=document.getElementById('systemEntryScreen');
-  if(e)e.hidden=true;
-  document.body.classList.remove('system-entry-open');
-}
-function enterMainInterface(){
-  hideAuthGate();
-  hideSystemEntry();
-  resetAuthProgress();
-  const boot=document.getElementById('systemBoot');
-  if(boot)boot.hidden=true;
-  document.body.classList.remove('system-boot-open','system-entering');
-  try{
-    const d=new Date();
-    const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    localStorage.setItem('theSystemDailyBriefing',day);
-  }catch(_){}
-  window.scrollTo({top:0,left:0,behavior:'auto'});
-}
-function authDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
-function authProgress(stage,title,message){
-  const card=document.querySelector('.auth-card');
-  const box=document.getElementById('authProgress');
-  const t=document.getElementById('authProgressTitle');
-  const m=document.getElementById('authProgressMessage');
-  const bar=document.getElementById('authProgressBar');
-  if(!card||!box)return;
-  card.classList.add('auth-processing');
-  box.hidden=false;
-  if(t)t.textContent=title;
-  if(m)m.textContent=message;
-  if(bar)bar.style.width=({1:'34%',2:'68%',3:'100%'})[stage]||'0%';
-  box.querySelectorAll('[data-auth-step]').forEach(el=>{
-    const n=Number(el.dataset.authStep);
-    el.classList.toggle('done',n<stage);
-    el.classList.toggle('active',n===stage);
-  });
-}
-function resetAuthProgress(){
-  const card=document.querySelector('.auth-card');
-  const box=document.getElementById('authProgress');
-  card?.classList.remove('auth-processing');
-  if(box)box.hidden=true;
-}
-async function completeAuthGate(session,remember=true){
-  if(!session?.access_token)throw new Error('Sign-in response did not include a valid session.');
-  authProgress(2,'VERIFYING IDENTITY','Secure session established. Verifying Hunter profile…');
-  storeCloudSession(session,remember);
-  renderCloudAccount();
-  await restoreCloudOnSignIn();
-  await authDelay(320);
-  authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface…');
-  await authDelay(520);
-  enterMainInterface();
-}
-function setAuthMode(mode){
-  authMode=mode;
-  resetAuthProgress();
-  document.getElementById('authShowSignIn')?.classList.toggle('active',mode==='signin');
-  document.getElementById('authShowSignUp')?.classList.toggle('active',mode==='signup');
-  const b=document.getElementById('authSubmit');
-  const remember=document.querySelector('.auth-remember');
-  if(b)b.textContent=mode==='signin'?'Sign In':'Create Account';
-  if(remember)remember.hidden=mode!=='signin';
-  authGateStatus('');
-}
-async function authGateSubmit(e){
-  e.preventDefault();
-  const email=document.getElementById('authEmail').value.trim();
-  const password=document.getElementById('authPassword').value;
-  const remember=document.getElementById('authRememberMe')?.checked!==false;
-  if(!email||password.length<6){authGateStatus('Enter a valid email and a password of at least 6 characters.');return}
-  try{
-    authGateStatus('');
-    authProgress(1,authMode==='signin'?'SIGNING IN':'CREATING ACCOUNT',authMode==='signin'?'Connecting to THE SYSTEM…':'Creating your Hunter profile…');
-    await authDelay(180);
-    if(authMode==='signup'){
-      const s=await cloudRequest('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});
-      if(s.access_token){
-        await completeAuthGate(s,true);
-      }else{
-        resetAuthProgress();
-        authGateStatus('Account created. Check your email to confirm it, then return here and sign in.',true);
-      }
-    }else{
-      const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
-      await completeAuthGate(s,remember);
-    }
-  }catch(err){
-    resetAuthProgress();
-    authGateStatus(err.message);
-  }
-}
-async function authForgot(){const email=document.getElementById('authEmail').value.trim();if(!email){authGateStatus('Enter your email first.');return}try{authGateStatus('Sending reset email…');const redirectTo=location.origin+location.pathname;await cloudRequest('/auth/v1/recover?redirect_to='+encodeURIComponent(redirectTo),{method:'POST',body:JSON.stringify({email})});authGateStatus('Password reset email sent.',true)}catch(err){authGateStatus(err.message)}}
-function recoveryParams(){const q=new URLSearchParams(location.search),h=new URLSearchParams(location.hash.replace(/^#/,''));return {type:q.get('type')||h.get('type'),access_token:q.get('access_token')||h.get('access_token'),refresh_token:q.get('refresh_token')||h.get('refresh_token')}}
-function showRecovery(){resetAuthProgress();showAuthGate();document.querySelector('.auth-tabs').hidden=true;document.getElementById('authGateForm').hidden=true;document.getElementById('authForgot').hidden=true;document.getElementById('recoveryForm').hidden=false;const title=document.querySelector('.auth-card h1');if(title)title.innerHTML='Set a new<br>password.';const copy=document.querySelector('.auth-copy');if(copy)copy.textContent='Choose a new password for your THE SYSTEM account.';authGateStatus('Recovery link verified.',true)}
-async function submitRecovery(e){e.preventDefault();const p=document.getElementById('recoveryPassword').value,c=document.getElementById('recoveryPasswordConfirm').value;if(p.length<6){authGateStatus('Password must be at least 6 characters.');return}if(p!==c){authGateStatus('Passwords do not match.');return}const r=recoveryParams();if(!r.access_token){authGateStatus('This recovery link is invalid or expired.');return}try{authGateStatus('Updating password…');const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{method:'PUT',headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+r.access_token,'Content-Type':'application/json'},body:JSON.stringify({password:p})});const data=await res.json().catch(()=>({}));if(!res.ok)throw new Error(data.message||data.msg||'Could not update password.');localStorage.removeItem(CLOUD_SESSION_KEY);sessionStorage.removeItem(CLOUD_SESSION_KEY);history.replaceState({},'',location.pathname);authGateStatus('Password updated. You can now sign in.',true);setTimeout(()=>location.reload(),900)}catch(err){authGateStatus(err.message)}}
-async function validateStoredCloudSession(){
-  const session=getCloudSession();
-  if(!session?.access_token)return null;
-  const remember=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
-  const check=async token=>{
-    const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+token}});
-    if(res.ok)return await res.json();
-    if(res.status===401||res.status===403)return null;
-    throw new Error('Unable to verify account session.');
-  };
-  try{
-    const user=await check(session.access_token);
-    if(user){
-      const valid={...session,user};
-      storeCloudSession(valid,remember);
-      return valid;
-    }
-    if(session.refresh_token){
-      const refreshed=await fetch(SYSTEM_CLOUD.url+'/auth/v1/token?grant_type=refresh_token',{
-        method:'POST',
-        headers:{apikey:SYSTEM_CLOUD.key,'Content-Type':'application/json'},
-        body:JSON.stringify({refresh_token:session.refresh_token})
-      });
-      const data=await refreshed.json().catch(()=>({}));
-      if(refreshed.ok&&data?.access_token){
-        const refreshedUser=data.user||await check(data.access_token);
-        if(refreshedUser){
-          const next={...session,...data,user:refreshedUser};
-          storeCloudSession(next,remember);
-          return next;
-        }
-      }
-    }
-  }catch(err){
-    console.warn('Stored session validation failed:',err);
-  }
-  localStorage.removeItem(CLOUD_SESSION_KEY);
-  sessionStorage.removeItem(CLOUD_SESSION_KEY);
-  return null;
-}
-async function startEntryAuthentication(){
-  showAuthGate();
-  setAuthMode('signin');
-  const remembered=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
-  const saved=getCloudSession();
-
-  if(!remembered||!saved?.access_token){
-    if(!remembered){
-      localStorage.removeItem(CLOUD_SESSION_KEY);
-      sessionStorage.removeItem(CLOUD_SESSION_KEY);
-    }
-    resetAuthProgress();
-    authGateStatus('');
-    setTimeout(()=>document.getElementById('authEmail')?.focus({preventScroll:true}),120);
-    return;
-  }
-
-  authGateStatus('');
-  authProgress(1,'SIGNING IN','Remembered account found. Restoring secure session…');
-  await authDelay(260);
-  authProgress(2,'VERIFYING IDENTITY','Confirming saved session with THE SYSTEM…');
-  const valid=await validateStoredCloudSession();
-  if(valid?.access_token){
-    await authDelay(300);
-    authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface…');
-    await authDelay(520);
-    renderCloudAccount();
-    enterMainInterface();
-  }else{
-    resetAuthProgress();
-    authGateStatus('Session expired. Sign in again.');
-  }
-}
-async function initAuthGate(){
-  const r=recoveryParams();
-
-  document.getElementById('authShowSignIn')?.addEventListener('click',()=>setAuthMode('signin'));
-  document.getElementById('authShowSignUp')?.addEventListener('click',()=>setAuthMode('signup'));
-  document.getElementById('authGateForm')?.addEventListener('submit',authGateSubmit);
-  document.getElementById('authForgot')?.addEventListener('click',authForgot);
-  document.getElementById('recoveryForm')?.addEventListener('submit',submitRecovery);
-  document.getElementById('enterTheSystem')?.addEventListener('click',startEntryAuthentication);
-
-  const rememberEl=document.getElementById('authRememberMe');
-  if(rememberEl)rememberEl.checked=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
-
-  resetAuthProgress();
-  hideAuthGate();
-
-  if(r.type==='recovery'&&r.access_token){
-    hideSystemEntry();
-    showRecovery();
-    return;
-  }
-
-  showSystemEntry();
-}
-document.addEventListener('DOMContentLoaded',initAuthGate);
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('[data-password-toggle]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const input=document.getElementById(btn.dataset.passwordToggle);
-      if(!input)return;
-      const reveal=input.type==='password';
-      input.type=reveal?'text':'password';
-      btn.textContent=reveal?'Hide':'Show';
-      btn.setAttribute('aria-label',(reveal?'Hide':'Show')+' password');
-      input.focus({preventScroll:true});
-      try{input.setSelectionRange(input.value.length,input.value.length)}catch(_){}
-    });
-  });
-});
-
-// RC1 navigation and lightweight production error handling
-document.addEventListener('DOMContentLoaded',()=>{
-  const buttons=[...document.querySelectorAll('.app-nav [data-target]')];
-  buttons.forEach(btn=>btn.addEventListener('click',()=>{
-    const el=document.getElementById(btn.dataset.target);
-    if(el){el.scrollIntoView({behavior:'smooth',block:'start'});buttons.forEach(x=>x.classList.remove('active'));btn.classList.add('active');}
-  }));
-  if(buttons[0])buttons[0].classList.add('active');
-});
-window.addEventListener('error',e=>{console.error('THE SYSTEM runtime error:',e.error||e.message);});
-
-// --- V3 Nutrition System ---
-const NUTRITION_KEY='theSystemNutritionV1';
-const DEFAULT_MEALS=[
- {name:'Greek Yogurt Power Bowl',type:'Breakfast',calories:410,protein:35,carbs:48,fat:9,ingredients:['Greek yogurt','oats','berries','honey']},
- {name:'Egg & Oat Breakfast',type:'Breakfast',calories:460,protein:32,carbs:45,fat:17,ingredients:['eggs','oats','banana']},
- {name:'Chicken Rice Bowl',type:'Lunch',calories:560,protein:52,carbs:61,fat:12,ingredients:['chicken breast','rice','mixed vegetables','salsa']},
- {name:'Turkey Wrap & Fruit',type:'Lunch',calories:490,protein:39,carbs:57,fat:12,ingredients:['turkey breast','whole wheat wraps','lettuce','tomato','fruit']},
- {name:'Lean Beef & Potato Plate',type:'Dinner',calories:620,protein:51,carbs:63,fat:18,ingredients:['lean ground beef','potatoes','green beans']},
- {name:'Chicken Pasta',type:'Dinner',calories:590,protein:49,carbs:70,fat:13,ingredients:['chicken breast','pasta','marinara sauce','spinach']},
- {name:'Protein Shake & Banana',type:'Snack',calories:280,protein:31,carbs:34,fat:3,ingredients:['protein powder','milk','banana']},
- {name:'Cottage Cheese & Berries',type:'Snack',calories:240,protein:27,carbs:25,fat:4,ingredients:['cottage cheese','berries']}
-];
-function nutritionState(){try{return JSON.parse(localStorage.getItem(NUTRITION_KEY))||{}}catch(e){return {}}}
-function saveNutrition(s){localStorage.setItem(NUTRITION_KEY,JSON.stringify(s))}
-function nutritionToday(){return new Date().toISOString().slice(0,10)}
-function ensureNutrition(){const s=nutritionState();s.targets=s.targets||{calories:2000,protein:160,carbs:200,fat:65};s.days=s.days||{};s.groceryChecked=s.groceryChecked||{};s.days[nutritionToday()]=s.days[nutritionToday()]||[];return s}
-function nutritionDate(offset=0){const d=new Date();d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10)}
-function generateNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++){const date=nutritionDate(d);s.days[date]=['Breakfast','Lunch','Dinner','Snack'].map((type,i)=>{const pool=DEFAULT_MEALS.filter(m=>m.type===type);return {...pool[(d+i)%pool.length],id:Date.now()+d*10+i}})}saveNutrition(s);renderNutrition()}
-function clearNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++)delete s.days[nutritionDate(d)];s.days[nutritionToday()]=[];saveNutrition(s);renderNutrition()}
-function toggleGrocery(name,checked){const s=ensureNutrition();s.groceryChecked[name]=checked;saveNutrition(s)}
-function mealMacros(m){return m.calories+' cal • '+m.protein+'g protein • '+(m.carbs||0)+'g carbs • '+(m.fat||0)+'g fat'}
-function addNutritionMeal(m){const s=ensureNutrition();s.days[nutritionToday()].push({...m,id:Date.now()+Math.random()});saveNutrition(s);renderNutrition()}
-function removeNutritionMeal(id){const s=ensureNutrition();s.days[nutritionToday()]=s.days[nutritionToday()].filter(m=>m.id!==id);saveNutrition(s);renderNutrition()}
-function renderNutrition(){const s=ensureNutrition(),t=s.targets,meals=s.days[nutritionToday()]||[];const total=k=>meals.reduce((a,m)=>a+(Number(m[k])||0),0);
- [['Calories','calories',''],['Protein','protein','g'],['Carbs','carbs','g'],['Fat','fat','g']].forEach(([label,k,u])=>{const e=document.getElementById('nutrition'+label);if(e)e.textContent=total(k)+' / '+t[k]+u;const b=document.getElementById('nutrition'+label+'Bar');if(b)b.style.width=Math.min(100,total(k)/t[k]*100)+'%';});
- ['Calories','Protein','Carbs','Fat'].forEach(x=>{const e=document.getElementById('target'+x);if(e)e.value=t[x.toLowerCase()]});
- const plan=document.getElementById('todayMeals');if(plan)plan.innerHTML=meals.length?meals.map(m=>'<div class="meal-item"><div class="meal-item__head"><strong>'+m.type+': '+m.name+'</strong><button type="button" data-remove-meal="'+m.id+'">Remove</button></div><div class="meal-macros">'+mealMacros(m)+'</div></div>').join(''):'<div class="builder-empty">No meals planned yet. Add a recommendation below.</div>';
- const rec=document.getElementById('mealRecommendations');if(rec)rec.innerHTML=DEFAULT_MEALS.map((m,i)=>'<div class="meal-rec"><div class="meal-rec__head"><strong>'+m.name+'</strong><span>'+m.type+'</span></div><div class="meal-macros">'+mealMacros(m)+'</div><div class="meal-actions"><button class="btn-primary" type="button" data-add-rec="'+i+'">Add to Today</button></div></div>').join('');
- document.querySelectorAll('[data-add-rec]').forEach(b=>b.onclick=()=>addNutritionMeal(DEFAULT_MEALS[Number(b.dataset.addRec)]));document.querySelectorAll('[data-remove-meal]').forEach(b=>b.onclick=()=>removeNutritionMeal(Number(b.dataset.removeMeal)));
- const weekly=document.getElementById('weeklyMealPlan');if(weekly)weekly.innerHTML=Array.from({length:7},(_,d)=>{const date=nutritionDate(d),list=s.days[date]||[],label=new Date(date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});return '<div class="week-day"><div class="week-day__head"><strong>'+label+'</strong><span>'+list.reduce((a,m)=>a+(Number(m.calories)||0),0)+' cal</span></div><div class="week-day__meals">'+(list.length?list.map(m=>'<div class="week-meal"><span>'+m.type+': '+m.name+'</span><span>'+m.protein+'g P</span></div>').join(''):'<span class="builder-empty">No meals planned</span>')+'</div></div>'}).join('');
- const groceries={};for(let d=0;d<7;d++)(s.days[nutritionDate(d)]||[]).forEach(m=>(m.ingredients||[]).forEach(x=>groceries[x]=(groceries[x]||0)+1));const gl=document.getElementById('groceryList');if(gl)gl.innerHTML=Object.keys(groceries).length?Object.keys(groceries).sort().map(x=>'<label class="grocery-item"><input type="checkbox" data-grocery="'+x+'" '+(s.groceryChecked[x]?'checked':'')+'> '+x+' <small>×'+groceries[x]+'</small></label>').join(''):'<div class="builder-empty">Generate or add meals to build your grocery list.</div>';document.querySelectorAll('[data-grocery]').forEach(x=>x.onchange=()=>toggleGrocery(x.dataset.grocery,x.checked));
-}
-function initNutrition(){renderNutrition();document.getElementById('generateWeekBtn')?.addEventListener('click',generateNutritionWeek);document.getElementById('clearWeekBtn')?.addEventListener('click',clearNutritionWeek);document.getElementById('nutritionTargetForm')?.addEventListener('submit',e=>{e.preventDefault();const s=ensureNutrition();s.targets={calories:Number(document.getElementById('targetCalories').value)||2000,protein:Number(document.getElementById('targetProtein').value)||160,carbs:Number(document.getElementById('targetCarbs').value)||200,fat:Number(document.getElementById('targetFat').value)||65};saveNutrition(s);renderNutrition()});document.getElementById('customMealForm')?.addEventListener('submit',e=>{e.preventDefault();addNutritionMeal({name:document.getElementById('mealName').value.trim(),type:document.getElementById('mealType').value,calories:Number(document.getElementById('mealCalories').value),protein:Number(document.getElementById('mealProtein').value),carbs:Number(document.getElementById('mealCarbs').value)||0,fat:Number(document.getElementById('mealFat').value)||0});e.target.reset()})}
-document.addEventListener('DOMContentLoaded',initNutrition);
-
-// Password visibility controls
-function initPasswordToggles(){document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{const input=document.getElementById(btn.dataset.passwordToggle);if(!input)return;const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'Hide':'Show';btn.setAttribute('aria-label',(show?'Hide ':'Show ')+(input.placeholder||'password').toLowerCase())}))}
-document.addEventListener('DOMContentLoaded',initPasswordToggles);
-
-
-/* ===== HOME HUD QUICK COMMANDS ===== */
-function initHudCommands(){document.querySelectorAll('[data-hud-target]').forEach(btn=>btn.addEventListener('click',()=>document.getElementById(btn.dataset.hudTarget)?.scrollIntoView({behavior:'smooth',block:'start'})));document.querySelectorAll('[data-hud-view]').forEach(btn=>btn.addEventListener('click',()=>{const nav=document.querySelector('.app-nav [data-view="'+btn.dataset.hudView+'"]');if(nav)nav.click()}))}
-document.addEventListener('DOMContentLoaded',initHudCommands);
-
-/* ===== V12 COMMAND HUD DATA BRIDGE ===== */
-function renderCommandHud(){
-  if(typeof state==='undefined')return;
-  const rank=typeof getRank==='function'?getRank(state.level):{name:'E-Rank'};
-  const need=typeof xpNeededForLevel==='function'?xpNeededForLevel(state.level):100;
-  const pct=Math.min(100,Math.round((state.xp/Math.max(1,need))*100));
-  const set=(id,v)=>{const e=document.getElementById(id);if(e)e.textContent=v};
-  set('hudPlayerLevel','LV. '+state.level);set('hudPlayerRank',(rank.name||'E-RANK').toUpperCase());set('hudXpText',state.xp+' / '+need+' XP');
-  const combatTitle=typeof getEquippedCombatTitle==='function'?getEquippedCombatTitle():null,hudTitle=document.getElementById('hudCombatTitle');if(hudTitle){hudTitle.textContent=combatTitle?.name||'';hudTitle.hidden=!combatTitle}
-  const fill=document.getElementById('hudXpFill');if(fill)fill.style.width=pct+'%';
-  set('hudStreak',state.currentStreak||0);set('hudWorkouts',state.totalQuestsCompleted||0);
-  const plan=typeof WORKOUT_PLAN!=='undefined'?WORKOUT_PLAN[new Date().getDay()]:null;
-  if(plan){set('hudMissionName',plan.name.toUpperCase());set('hudMissionFocus',plan.focus+' // 30 MIN');}
-  const qs=state.dailyQuests||[],done=qs.filter(q=>q.completed).length,daily=qs.length?Math.round(done/qs.length*100):0;set('hudCorePercent',daily+'%');
-  const pa=getPerformanceAnalysis(), rec=recommendPerformanceMission(); window.SystemPerformance={analysis:pa,recommendation:rec};
-  const perfMap={str:'Str',end:'End',agi:'Agi',vit:'Vit'};
-  pa.rows.forEach(x=>{const suf=perfMap[x.stat],bar=document.getElementById('hudPerf'+suf),val=document.getElementById('hudPerf'+suf+'Val');if(bar)bar.style.width=x.percent+'%';if(val)val.textContent=x.percent+'%'});
-  set('hudPerfPriority',pa.rows.every(x=>x.score===0)?'ESTABLISHING BASELINE':performanceLabel(pa.weakest.stat)+' // '+rec.title.toUpperCase());
-}
-document.addEventListener('DOMContentLoaded',()=>{renderCommandHud();document.getElementById('hudBriefing')?.addEventListener('click',()=>document.getElementById('replayDailyBriefing')?.click());document.getElementById('hudPerfMission')?.addEventListener('click',()=>document.querySelector('.app-nav [data-view="missions"]')?.click())});
-const _systemRenderAll=renderAll;renderAll=function(){_systemRenderAll();renderCommandHud()};
-
-/* ===== V13 ORBITAL HOLOGRAM CONTROLLER ===== */
-function initHologramCommandUnit(){
- const core=document.querySelector('.system-core'),win=document.getElementById('holoWindow'),title=document.getElementById('holoTitle'),kicker=document.getElementById('holoKicker'),body=document.getElementById('holoBody');
- if(!core||!win)return;
- const modules={
-  player:()=>({k:'PLAYER // STATUS',t:'PLAYER PROFILE',b:'<div class="holo-data"><div>LEVEL<b>'+((state&&state.level)||1)+'</b></div><div>RANK<b>'+((typeof getRank==='function'?getRank(state.level).name:'E-Rank'))+'</b></div><div>XP<b>'+((state&&state.xp)||0)+'</b></div><div>STREAK<b>'+((state&&state.currentStreak)||0)+' DAYS</b></div></div><button class="holo-link" data-holo-view="profile">OPEN PROFILE</button>'}),
-  missions:()=>({k:'MISSION // CONTROL',t:'TODAY’S MISSION',b:'<strong>'+((typeof WORKOUT_PLAN!=="undefined"&&WORKOUT_PLAN[new Date().getDay()])?WORKOUT_PLAN[new Date().getDay()].name:'TRAINING MISSION')+'</strong><br>Objectives ready for deployment.<button class="holo-link" data-holo-target="daily-mission">ENTER MISSION</button>'}),
-  telemetry:()=>({k:'SYSTEM // TELEMETRY',t:'LIVE DATA',b:'<div class="holo-data"><div>STEPS<b>'+((document.getElementById("hudSteps")?.textContent)||"--")+'</b></div><div>ACTIVE<b>'+((document.getElementById("hudActive")?.textContent)||"--")+'</b></div><div>HEALTH LINK<b>READY</b></div><div>SYNC<b>ONLINE</b></div></div>'}),
-  side:()=>({k:'OPTIONAL // OBJECTIVES',t:'SIDE MISSIONS',b:'Bonus objectives provide additional XP without replacing the primary mission.<button class="holo-link" data-holo-view="missions">VIEW SIDE MISSIONS</button>'}),
-  boss:()=>({k:'GATE // DETECTED',t:'BOSS STAGE',b:'Weekly Gate encounters build combat progression. Rank Trials unlock only after promotion requirements are satisfied.<button class="holo-link" data-os-open="boss">ENTER BOSS STAGE</button>'}),
-  progress:()=>({k:'CAMPAIGN // ANALYTICS',t:'PROGRESS',b:'<div class="holo-data"><div>MISSIONS<b>'+((state&&state.totalQuestsCompleted)||0)+'</b></div><div>LEVEL<b>'+((state&&state.level)||1)+'</b></div></div><button class="holo-link" data-holo-view="progress">OPEN ANALYTICS</button>'}),
-  achievements:()=>({k:'SYSTEM // RECORDS',t:'ACHIEVEMENTS',b:'Unlocked achievements, rank milestones and personal records.<button class="holo-link" data-holo-view="progress">VIEW AWARDS</button>'}),
-  profile:()=>({k:'SYSTEM // CONFIG',t:'PROFILE & SETTINGS',b:'Player identity, account sync and system configuration.<button class="holo-link" data-holo-view="profile">OPEN SETTINGS</button>'})
- };
- function close(){core.classList.remove('is-projecting');win.setAttribute('aria-hidden','true');document.querySelectorAll('[data-holo]').forEach(x=>x.classList.remove('active'))}
- function open(name,btn){const m=modules[name]?.();if(!m)return;kicker.textContent=m.k;title.textContent=m.t;body.innerHTML=m.b;core.classList.add('is-projecting');win.setAttribute('aria-hidden','false');document.querySelectorAll('[data-holo]').forEach(x=>x.classList.toggle('active',x===btn));bindInside()}
- function bindInside(){body.querySelectorAll('[data-holo-view]').forEach(b=>b.onclick=()=>{document.querySelector('.app-nav [data-view="'+b.dataset.holoView+'"]')?.click();close()});body.querySelectorAll('[data-holo-target]').forEach(b=>b.onclick=()=>{document.getElementById(b.dataset.holoTarget)?.scrollIntoView({behavior:'smooth',block:'start'});close()});body.querySelectorAll('[data-os-open]').forEach(b=>b.onclick=()=>{window.SystemOS?.open?.(b.dataset.osOpen);close()})}
- document.querySelectorAll('[data-holo]').forEach(b=>b.onclick=()=>open(b.dataset.holo,b));document.getElementById('holoClose')?.addEventListener('click',close);
-}
-document.addEventListener('DOMContentLoaded',initHologramCommandUnit);
-
-
-/* ===== V14 THE SYSTEM OS WINDOW MANAGER ===== */
-function initSystemOS(){
- document.body.classList.add('system-os-ready');
- const deck=document.getElementById('commandDeck'); if(!deck)return;
- const top=document.createElement('div');top.className='os-topbar';top.innerHTML='<span><b>THE SYSTEM OS</b> // CENTRAL COMMAND</span><span class="os-topbar__right"><i id="osNetwork">SYSTEM ONLINE</i><i id="osClock">--:--</i></span>';deck.appendChild(top);
- const stage=document.createElement('section');stage.className='os-module-stage';stage.setAttribute('aria-hidden','true');stage.innerHTML='<div class="os-module-scan"></div><header class="os-module-head"><div><small id="osModuleKicker">SYSTEM // MODULE</small><strong id="osModuleTitle">MODULE</strong></div><div class="os-module-controls"><button id="osModuleMin" type="button" aria-label="Minimize">−</button><button id="osModuleClose" type="button" aria-label="Close">×</button></div></header><div id="osModuleBody" class="os-module-body"></div>';deck.appendChild(stage);
- const body=document.getElementById('osModuleBody'),title=document.getElementById('osModuleTitle'),kicker=document.getElementById('osModuleKicker');
- let parked=null,current=null;
- const map={
-  player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen']},
-  missions:{title:'MISSION CONTROL',kicker:'SYSTEM // MISSIONS',ids:['daily-mission','workoutBuilder','sideSystem']},
-  side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideMissionSystem']},
-  boss:{title:'BOSS STAGE',kicker:'GATE // ENCOUNTERS',ids:['bossStageSystem']},
-  telemetry:{title:'HEALTH TELEMETRY',kicker:'BIOMETRIC // HEALTH LINK',ids:['exerciseTracker']},
-  progress:{title:'CAMPAIGN PROGRESS',kicker:'SYSTEM // ANALYTICS',ids:['progressAnalytics','adaptiveProgression']},
-  achievements:{title:'ACHIEVEMENTS',kicker:'SYSTEM // RECORDS',ids:['achievementGrid']},
-  profile:{title:'SYSTEM CONFIGURATION',kicker:'PLAYER // SETTINGS',ids:['profileSettings']},
-  nutrition:{title:'NUTRITION MODULE',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']},
-  exercise:{title:'EXERCISE DATABASE',kicker:'SYSTEM // TRAINING ARCHIVE',ids:['exerciseLibrary']},
-  social:{title:'SOCIAL COMMAND',kicker:'NETWORK // CHALLENGES',ids:['osSocialCommand']}
- };
- function restore(){if(!parked)return;parked.forEach(({el,parent,next})=>{if(next&&next.parentNode===parent)parent.insertBefore(el,next);else parent.appendChild(el)});parked=null}
- function setActive(name,on=true){document.querySelectorAll('[data-os-module],[data-holo]').forEach(x=>x.classList.toggle('os-active',on&&(x.dataset.osModule===name||x.dataset.holo===name)))}
- function close(){restore();setActive(current,false);current=null;stage.classList.remove('active','minimized');stage.setAttribute('aria-hidden','true');document.body.classList.remove('os-module-open')}
- function open(name){
-  const m=map[name];if(!m)return;
-  if(current===name&&stage.classList.contains('minimized')){stage.classList.remove('minimized');document.body.classList.add('os-module-open');return}
-  restore();setActive(current,false);body.innerHTML='';parked=[];current=name;
-  if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand()}
-  m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});
-  if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // LINK READY</span><strong>'+m.title+'</strong><p>This SYSTEM module is online and ready for its connected data.</p></div></div>';
-  title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');stage.setAttribute('aria-hidden','false');document.body.classList.add('os-module-open');setActive(name,true);body.scrollTop=0;
-  requestAnimationFrame(()=>{try{if(name==='boss'&&typeof renderBossCommand==='function')renderBossCommand();if(name==='side'&&typeof renderSideSystem==='function')renderSideSystem()}catch(err){console.error('SYSTEM module render failed',name,err);window.SystemOS?.notify?.('MODULE OPEN // DATA RENDER ERROR','SYSTEM // DIAGNOSTIC')}})
- }
- window.SystemOS={open,close};
- document.getElementById('osModuleClose').onclick=close;
- document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');document.body.classList.toggle('os-module-open',!stage.classList.contains('minimized'))};
- document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const name=b.dataset.holo;if(name==='boss'||name==='side')open(name);else{const holo=document.getElementById('holoWindow');if(holo&&holo.getAttribute('aria-hidden')==='false')return;open(name)}},true));
- document.querySelectorAll('[data-hud-target]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open('missions')},true));
- document.querySelectorAll('[data-hud-view]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open(b.dataset.hudView==='progress'?'progress':'missions')},true));
- const clock=()=>{const e=document.getElementById('osClock');if(e)e.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};clock();setInterval(clock,30000);
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('active'))close()});
-}
-document.addEventListener('DOMContentLoaded',initSystemOS);
-
-
-/* ===== V15 MISSION LAUNCH / DEBRIEF ===== */
-function ensureMissionFx(){
- if(!document.getElementById('missionLaunchFlash')){const e=document.createElement('div');e.id='missionLaunchFlash';e.className='mission-launch-flash';e.innerHTML='<div><small>THE SYSTEM // MISSION CONTROL</small><strong>MISSION LAUNCH</strong><span>TRAINING LINK ESTABLISHED</span></div>';document.body.appendChild(e)}
- if(!document.getElementById('missionDebrief')){const e=document.createElement('div');e.id='missionDebrief';e.className='mission-debrief';e.innerHTML=`<div class="mission-debrief__card"><small>THE SYSTEM // AFTER ACTION REPORT</small><h1>MISSION COMPLETE</h1><div id="missionDebriefGrade" class="mission-debrief__grade">MISSION CLEARED</div><div class="mission-debrief__stats"><div><b id="missionDebriefXp">+0 XP</b><span>EXPERIENCE</span></div><div><b id="missionDebriefTime">00:00</b><span>TRAINING TIME</span></div><div><b id="missionDebriefPrCount">0</b><span>PERSONAL RECORDS</span></div><div><b id="missionDebriefStreak">0 DAYS</b><span>STREAK</span></div></div><div class="mission-debrief__growth"><small>ATTRIBUTE DEVELOPMENT</small><div id="missionDebriefGrowth"></div></div><p id="missionDebriefPr">ALL OBJECTIVES CLEARED</p><button type="button" id="missionDebriefClose">RETURN TO CENTRAL COMMAND</button></div>`;document.body.appendChild(e);document.getElementById('missionDebriefClose').onclick=()=>{e.classList.remove('active');setTimeout(showMomentumPrompt,250)}}
-}
-document.addEventListener('DOMContentLoaded',ensureMissionFx);
-const _osStartWorkoutMode=startWorkoutMode;
-startWorkoutMode=function(){ensureMissionFx();const f=document.getElementById('missionLaunchFlash');f.classList.remove('active');void f.offsetWidth;f.classList.add('active');setTimeout(()=>{_osStartWorkoutMode();f.classList.remove('active')},650)};
-function calculateMissionPerformance(seconds,prs){
- const m=missionForMode(adaptiveSystemMission()),p=getMissionProgress(),sets=flatSets(m),completed=sets.filter(x=>p[x.ei+'-'+x.si]?.done).length;
- const completion=sets.length?completed/sets.length:1;
- let targetHits=0,targetCount=0;
- sets.forEach(x=>{const target=parseTargetReps(x.target),actual=Number(p[x.ei+'-'+x.si]?.reps)||0;if(target>0){targetCount++;if(actual>=target)targetHits++}});
- const targetRate=targetCount?targetHits/targetCount:completion;
- const prRate=Math.min(1,(prs?.length||0)/Math.max(1,m.exercises.length));
- const timeRate=Math.min(1,seconds/(30*60));
- const consistency=Math.min(1,(Number(state.currentStreak)||0)/7);
- const modeFactor=m.mode==='full'?1:m.mode==='intense'?.9:.78;
- // Completion matters most. Targets and consistency reward quality without encouraging unsafe speed.
- const raw=(completion*.45+targetRate*.25+prRate*.12+timeRate*.08+consistency*.10)*100*modeFactor;
- const score=Math.max(0,Math.min(100,Math.round(raw)));
- const grade=score>=90?'S-RANK PERFORMANCE':score>=80?'A-RANK PERFORMANCE':score>=68?'B-RANK PERFORMANCE':score>=55?'C-RANK PERFORMANCE':'D-RANK PERFORMANCE';
- return{score,grade,completion:Math.round(completion*100),targetRate:Math.round(targetRate*100),prRate:Math.round(prRate*100),consistency:Math.round(consistency*100),mode:m.mode||'full'};
-}
-function missionPerformanceGrade(seconds,prs){return calculateMissionPerformance(seconds,prs).grade}
-function showBossCombatFx(hit){
- if(!hit||!hit.damage)return;
- let e=document.getElementById('bossCombatFx');
- if(!e){e=document.createElement('section');e.id='bossCombatFx';e.className='boss-combat-fx';e.innerHTML='<div class="bcf-scan"></div><div class="bcf-card"><small>THE SYSTEM // BOSS ENCOUNTER</small><div class="bcf-rank" id="bcfRank">E-RANK GATE</div><h2 id="bcfBoss">GATE BOSS</h2><div class="bcf-impact"><span id="bcfAttack">PLAYER ATTACK</span><b id="bcfDamage">-0</b></div><div class="bcf-hp-head"><span>BOSS HP</span><strong id="bcfHp">0 / 0</strong></div><div class="bcf-hp"><i id="bcfHpFill"></i></div><div id="bcfPhase" class="bcf-phase">PHASE I // ARMOR INTACT</div><div id="bcfResult" class="bcf-result"></div></div>';document.body.appendChild(e)}
- const hp=Math.max(0,Number(hit.hp)||0),max=Math.max(1,Number(hit.maxHp)||1),pct=Math.round(hp/max*100);
- document.getElementById('bcfRank').textContent=hit.encounterLabel?(hit.rank||'LEGACY')+' // '+hit.encounterLabel:(hit.rank||'E')+'-RANK GATE';
- document.getElementById('bcfBoss').textContent=hit.boss||'GATE BOSS';
- document.getElementById('bcfAttack').textContent=hit.attackLabel||(hit.critical?'CRITICAL HIT':'PLAYER ATTACK');
- document.getElementById('bcfDamage').textContent='-'+Number(hit.damage).toLocaleString();
- document.getElementById('bcfHp').textContent=hp.toLocaleString()+' / '+max.toLocaleString();
- const fill=document.getElementById('bcfHpFill');fill.style.width=Math.min(100,Math.round((hp+hit.damage)/max*100))+'%';
- document.getElementById('bcfPhase').textContent=hit.phaseLabel||(hit.defeated?'GATE CLEARED':pct>66?'PHASE I // ARMOR INTACT':pct>33?'PHASE II // DEFENSE BREAKING':'PHASE III // FINAL PHASE');
- document.getElementById('bcfResult').textContent=hit.resultLabel||(hit.defeated?'BOSS DEFEATED':'DAMAGE CONFIRMED');
- e.classList.remove('active','critical','defeated');if(hit.critical)e.classList.add('critical');if(hit.defeated)e.classList.add('defeated');void e.offsetWidth;e.classList.add('active');
- requestAnimationFrame(()=>requestAnimationFrame(()=>fill.style.width=pct+'%'));
- setTimeout(()=>e.classList.remove('active'),hit.defeated?3400:2400);
-}
-function showMissionDebrief(seconds,xp,prs){
- ensureMissionFx();prs=prs||[];
- const performance=calculateMissionPerformance(seconds,prs);
- document.getElementById('missionDebriefGrade').textContent=performance.grade+' // '+performance.score;
- window.SystemMissionPerformance=performance;const legacyTrialResult=typeof resolveActiveLegacyTrial==='function'?resolveActiveLegacyTrial(performance,seconds,prs):null;
- const bossHit=typeof applyMissionDamageToWeeklyGate==='function'?applyMissionDamageToWeeklyGate(performance,prs):null;
- const sessions=workoutHistory();if(sessions.length){sessions[sessions.length-1].performance={...performance};if(bossHit)sessions[sessions.length-1].bossDamage={...bossHit};if(legacyTrialResult)sessions[sessions.length-1].legacyTrial={chapter:legacyTrialResult.chapter,success:!!legacyTrialResult.success,damage:Number(legacyTrialResult.damage||legacyTrialResult.hit?.damage||0),score:Number(performance.score||0)};localStorage.setItem('systemWorkoutSessions',JSON.stringify(sessions.slice(-365)))}
- document.getElementById('missionDebriefTime').textContent=fmt(seconds);
- document.getElementById('missionDebriefXp').textContent='+'+xp+' XP';
- document.getElementById('missionDebriefPrCount').textContent=String(prs.length);
- document.getElementById('missionDebriefStreak').textContent=(state.currentStreak||0)+' DAYS';
- document.getElementById('missionDebriefPr').textContent=(bossHit?(bossHit.critical?'CRITICAL HIT // ':'BOSS HIT // ')+bossHit.damage.toLocaleString()+' DAMAGE • ':'')+(prs.length?'NEW PR // '+prs.join(' • '):'ALL OBJECTIVES CLEARED');
- const analysis=typeof getPerformanceAnalysis==='function'?getPerformanceAnalysis():null;
- const rows=analysis?.rows?.slice().sort((a,b)=>b.score-a.score).slice(0,2)||[];
- document.getElementById('missionDebriefGrowth').innerHTML=rows.length?rows.map(x=>'<span><b>'+performanceLabel(x.stat)+'</b><i>'+x.percent+'% DEVELOPMENT</i></span>').join(''):'<span><b>CALIBRATING</b><i>COMPLETE MORE MISSIONS</i></span>';
- document.getElementById('missionDebrief').classList.add('active');const trialHit=legacyTrialResult?.hit;if(trialHit?.damage){setTimeout(()=>showBossCombatFx(trialHit),260);if(bossHit?.damage)setTimeout(()=>showBossCombatFx(bossHit),legacyTrialResult.success?3900:2900)}else if(bossHit?.damage)setTimeout(()=>showBossCombatFx(bossHit),260);if(typeof applySquadGateDamage==='function')applySquadGateDamage(performance,prs);
-}
-
-/* ===== V16 CENTRAL COMMAND v2 CONTROLLER ===== */
-document.addEventListener('DOMContentLoaded',()=>{
- const os=window.SystemOS;if(!os)return;
- const map={missions:'missions',exercise:'exercise',nutrition:'nutrition',telemetry:'telemetry',social:'social',progress:'progress',profile:'profile'};
- document.querySelectorAll('[data-os-module]').forEach(b=>b.onclick=e=>{e.preventDefault();os.open(map[b.dataset.osModule])});
- const stack=document.createElement('div');stack.className='os-toast-stack';document.body.appendChild(stack);
- window.SystemOS.notify=(message,label='SYSTEM // NOTIFICATION')=>{const n=document.createElement('div');n.className='os-toast';n.innerHTML='<small>'+label+'</small><strong>'+message+'</strong>';stack.appendChild(n);setTimeout(()=>n.remove(),3200)};
-});
-
-
-/* ===== V17 SOCIAL COMMAND DATA LAYER ===== */
-const SOCIAL_KEY='theSystemSocialV1';
-function getSocial(){try{return Object.assign({friends:[],challenges:[]},JSON.parse(localStorage.getItem(SOCIAL_KEY)||'{}'))}catch(e){return {friends:[],challenges:[]}}}
-function saveSocial(x){localStorage.setItem(SOCIAL_KEY,JSON.stringify(x))}
-function socialScore(){return Number(state?.totalXp||0)}
-function buildSocialIdentity(){
- const me=getSystemSettings(),rank=getRank(state.level),title=typeof getEquippedCombatTitle==='function'?getEquippedCombatTitle():null;
- let side={};try{side=typeof loadSideSystem==='function'?loadSideSystem():{}}catch(e){}
- const victories=side.gateVictories||[],sessions=workoutHistory(),order=['E','D','C','B','A','S','S+','Shadow'],highest=victories.reduce((n,x)=>Math.max(n,order.indexOf(x.rank)),-1);
- return{name:me.name||'Player',xp:socialScore(),level:state.level,rank:rank.name,title:title?.name||'',streak:Number(state.currentStreak)||0,missions:Number(state.totalQuestsCompleted)||0,gates:victories.length,criticalHits:sessions.filter(x=>x?.bossDamage?.critical).length,bestScore:sessions.reduce((n,x)=>Math.max(n,Number(x?.performance?.score)||0),0),highestBoss:highest>=0?order[highest]:null,updatedAt:new Date().toISOString()}
-}
-function syncLocalSocialIdentity(){
- const s=getSocial(),identity=buildSocialIdentity();s.identity=identity;saveSocial(s);return identity
-}
-async function pushSocialIdentity(){
- const session=getCloudSession();if(!session?.user?.id)return false;const identity=syncLocalSocialIdentity();
- try{await cloudRequest('/rest/v1/player_profiles?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:session.user.id,profile:identity,updated_at:identity.updatedAt})});return true}catch(e){console.warn('Social identity sync unavailable',e);return false}
-}
-
-function renderSocialCommand(){
- const root=document.getElementById('osSocialCommand');if(!root)return;const s=getSocial(),me=syncLocalSocialIdentity(),rank=getRank(state.level);
- const players=[{...me,self:true},...s.friends].sort((a,b)=>(b.xp||0)-(a.xp||0));
- root.innerHTML='<div class="social-command"><section class="social-card"><div class="social-head"><span>FRIENDS // LEADERBOARD</span><b>'+players.length+' PLAYERS</b></div><div>'+players.map((p,i)=>'<div class="leader-row"><div class="leader-rank">#'+(i+1)+'</div><div class="leader-name"><strong>'+escapeHtml(p.name)+(p.self?' // YOU':'')+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+(p.title?' • '+escapeHtml(p.title):'')+'</small></div><div class="leader-xp">'+Number(p.xp||0).toLocaleString()+' XP</div></div>').join('')+'</div></section><section class="social-card"><div class="social-head"><span>HEAD-TO-HEAD // CHALLENGE</span><b>DUEL LINK</b></div><form id="challengeForm" class="challenge-form"><input id="challengePlayer" placeholder="Player name" required><select id="challengeType"><option value="xp">XP Sprint</option><option value="workouts">Mission Count</option><option value="streak">Streak Battle</option></select><select id="challengeLength"><option value="1">24 Hours</option><option value="3">3 Days</option><option value="7">7 Days</option></select><button type="submit">ISSUE CHALLENGE</button></form></section><section class="social-card social-card--wide"><div class="social-head"><span>ACTIVE // CHALLENGES</span><b>'+s.challenges.length+' ACTIVE</b></div><div class="challenge-list">'+(s.challenges.length?s.challenges.map(x=>'<div class="challenge-item"><strong>'+escapeHtml(x.opponent)+' // '+escapeHtml(x.type.toUpperCase())+'</strong><small>'+x.days+' DAY CHALLENGE • CREATED '+new Date(x.created).toLocaleDateString()+' • LOCAL DRAFT</small></div>').join(''):'<div class="social-empty">NO ACTIVE CHALLENGES // ISSUE A DUEL TO BEGIN</div>')+'</div></section></div>';
- document.getElementById('challengeForm').onsubmit=e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;const x=getSocial();x.challenges.unshift({id:Date.now(),opponent:name,type:document.getElementById('challengeType').value,days:Number(document.getElementById('challengeLength').value),created:new Date().toISOString(),status:'draft'});saveSocial(x);renderSocialCommand();window.SystemOS?.notify('CHALLENGE CREATED // '+name.toUpperCase(),'SOCIAL // HEAD-TO-HEAD')};
-}
-function escapeHtml(v){return String(v??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
-
-
-/* ===== V19 SYSTEM OS WINDOW SWITCHER + TASKBAR ===== */
-document.addEventListener('DOMContentLoaded',()=>{
- const os=window.SystemOS,deck=document.getElementById('commandDeck');if(!os||!deck)return;
- const dock=deck.querySelector('.os-dock');if(!dock)return;
- const task=document.createElement('div');task.className='os-taskbar';task.innerHTML='<span class="os-taskbar__label">ACTIVE MODULE</span><button id="osTaskCurrent" type="button"><b>◇</b><span>CENTRAL COMMAND</span></button><span class="os-taskbar__hint">ALT + 1–7 // QUICK SWITCH</span>';deck.appendChild(task);
- const current=document.getElementById('osTaskCurrent');
- const names={missions:'MISSION CONTROL',exercise:'EXERCISE DATABASE',nutrition:'NUTRITION',telemetry:'HEALTH TELEMETRY',social:'SOCIAL COMMAND',progress:'CAMPAIGN PROGRESS',profile:'SYSTEM CONFIG',player:'PLAYER STATUS',side:'SIDE MISSIONS',boss:'BOSS STAGE',achievements:'ACHIEVEMENTS'};
- const icons={missions:'◆',exercise:'⌁',nutrition:'◫',telemetry:'⌾',social:'◎',progress:'▥',profile:'⚙',player:'◈',side:'✦',boss:'⚠',achievements:'★'};
- const baseOpen=os.open,baseClose=os.close;let active=null;
- os.open=name=>{active=name;baseOpen(name);current.innerHTML='<b>'+(icons[name]||'◇')+'</b><span>'+(names[name]||'SYSTEM MODULE')+'</span>';task.classList.add('has-task')};
- os.close=()=>{baseClose();active=null;current.innerHTML='<b>◇</b><span>CENTRAL COMMAND</span>';task.classList.remove('has-task')};
- document.querySelectorAll('[data-os-module]').forEach(b=>b.onclick=e=>{e.preventDefault();os.open(b.dataset.osModule)});
- current.onclick=()=>{if(active)os.open(active)};
- const quick=['missions','exercise','nutrition','telemetry','social','progress','profile'];
- document.addEventListener('keydown',e=>{if(e.altKey&&/^[1-7]$/.test(e.key)){e.preventDefault();os.open(quick[Number(e.key)-1])}});
-});
-
-
-/* ===== V22 MISSION CONTROL // TACTICAL LAUNCH ===== */
-function initMissionControlV22(){
- const start=document.getElementById('start-mission-btn'),live=document.getElementById('workoutMode');if(!start||!live)return;
- let confirm=document.getElementById('missionLaunchConfirm');
- if(!confirm){confirm=document.createElement('section');confirm.id='missionLaunchConfirm';confirm.className='mission-launch-confirm';confirm.setAttribute('aria-hidden','true');confirm.innerHTML='<div class="mlc-card"><header><div><small>SYSTEM // MISSION CONTROL</small><h2>MISSION BRIEFING</h2></div><button id="mlcClose" type="button">×</button></header><div class="mlc-grid"><article><span>PRIMARY OBJECTIVE</span><strong id="mlcName">TRAINING MISSION</strong><small id="mlcFocus">SYSTEM ASSIGNED</small></article><article><span>LOADOUT</span><strong id="mlcLoadout">FULL PROTOCOL</strong><small id="mlcSets">0 SETS</small></article><article><span>REWARD</span><strong id="mlcXp">+0 XP</strong><small>MISSION COMPLETION</small></article><article><span>STATUS</span><strong class="mlc-ready">READY</strong><small>TRAINING LINK AVAILABLE</small></article></div><div class="mlc-objectives" id="mlcObjectives"></div><button id="mlcLaunch" class="mlc-launch" type="button">LAUNCH MISSION</button></div>';document.body.appendChild(confirm)}
- function openBrief(){const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m);document.getElementById('mlcName').textContent=m.name;document.getElementById('mlcFocus').textContent=(m.focus||'TRAINING').toUpperCase();document.getElementById('mlcLoadout').textContent=(m.mode||'full').toUpperCase()+' PROTOCOL';document.getElementById('mlcSets').textContent=sets.length+' SETS // '+m.exercises.length+' EXERCISES';document.getElementById('mlcXp').textContent='+'+m.xp+' XP';document.getElementById('mlcObjectives').innerHTML=m.exercises.map((e,i)=>'<div><b>0'+(i+1)+'</b><span><strong>'+escapeHtml(e[0])+'</strong><small>'+e[1]+' SETS // '+escapeHtml(String(e[2]))+'</small></span></div>').join('');confirm.classList.add('active');confirm.setAttribute('aria-hidden','false');document.body.classList.add('mission-brief-open')}
- start.onclick=openBrief;
- document.getElementById('mlcClose').onclick=()=>{confirm.classList.remove('active');confirm.setAttribute('aria-hidden','true');document.body.classList.remove('mission-brief-open')};
- document.getElementById('mlcLaunch').onclick=()=>{confirm.classList.add('launching');setTimeout(()=>{confirm.classList.remove('active','launching');confirm.setAttribute('aria-hidden','true');document.body.classList.remove('mission-brief-open');startWorkoutMode()},280)};
- if(!live.querySelector('.combat-hud')){
-  live.insertAdjacentHTML('afterbegin','<div class="combat-hud"><span><i></i> MISSION ACTIVE</span><b id="combatProtocol">TRAINING PROTOCOL</b><span>LINK // STABLE</span></div>');
-  const oldRender=renderLiveSet;renderLiveSet=function(){oldRender();const m=missionForMode(adaptiveSystemMission()),sets=flatSets(m),p=getMissionProgress(),done=Object.values(p).filter(v=>v.done).length,left=Math.max(0,sets.length-done),proto=document.getElementById('combatProtocol');if(proto)proto.textContent=left+' OBJECTIVE'+(left===1?'':'S')+' REMAINING'};
- }
-}
-document.addEventListener('DOMContentLoaded',initMissionControlV22);
-
-
-/* ===== V23 PROGRESSION EVENT SYSTEM ===== */
-function ensureProgressionFx(){
- if(document.getElementById('progressionEvent'))return;
- const e=document.createElement('section');e.id='progressionEvent';e.className='progression-event';e.setAttribute('aria-hidden','true');e.innerHTML='<div class="progression-rings"></div><div class="progression-card"><small id="progressionKicker">SYSTEM // PROGRESSION</small><div id="progressionGlyph" class="progression-glyph">↑</div><h1 id="progressionTitle">LEVEL UP</h1><strong id="progressionValue">LEVEL 2</strong><p id="progressionCopy">SYSTEM CAPABILITY INCREASED</p><button id="progressionClose" type="button">CONTINUE</button></div>';document.body.appendChild(e);document.getElementById('progressionClose').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')}
-}
-function showProgressionEvent(type,title,value,copy){
- ensureProgressionFx();const e=document.getElementById('progressionEvent'),glyph={level:'↑',rank:'◆',achievement:'★',boss:'⚠',xp:'+'}[type]||'◇';e.dataset.type=type;document.getElementById('progressionKicker').textContent=type==='boss'?'SYSTEM // CRITICAL EVENT':'SYSTEM // PROGRESSION';document.getElementById('progressionGlyph').textContent=glyph;document.getElementById('progressionTitle').textContent=title;document.getElementById('progressionValue').textContent=value;document.getElementById('progressionCopy').textContent=copy;e.classList.remove('active');void e.offsetWidth;e.classList.add('active');e.setAttribute('aria-hidden','false');document.getElementById('commandDeck')?.classList.add('progression-pulse');setTimeout(()=>document.getElementById('commandDeck')?.classList.remove('progression-pulse'),900)
-}
-document.addEventListener('DOMContentLoaded',ensureProgressionFx);
-const _v23LevelUp=showLevelUpModal;
-showLevelUpModal=function(newLevel,rank){const oldRank=getRank(Math.max(1,newLevel-1));const promoted=oldRank.name!==rank.name;showProgressionEvent(promoted?'rank':'level',promoted?'RANK PROMOTION':'LEVEL UP',promoted?rank.name.toUpperCase():'LEVEL '+newLevel,promoted?rank.title.toUpperCase():'SYSTEM CAPABILITY INCREASED // '+rank.title.toUpperCase())};
-const _v23CheckAchievements=checkAchievements;
-checkAchievements=function(){const before=new Set(state.achievements.filter(a=>a.unlocked).map(a=>a.id));_v23CheckAchievements();const fresh=state.achievements.find(a=>a.unlocked&&!before.has(a.id));if(fresh){const def=ACHIEVEMENTS.find(a=>a.id===fresh.id);if(def)showProgressionEvent('achievement','ACHIEVEMENT UNLOCKED',def.title.toUpperCase(),def.desc.toUpperCase())}};
-window.SystemProgression={show:showProgressionEvent,bossUnlocked:(name='BOSS STAGE')=>showProgressionEvent('boss','BOSS STAGE UNLOCKED',name.toUpperCase(),'HIGH-VALUE CHALLENGE AVAILABLE // PREPARE FOR DEPLOYMENT')};
-
-
-/* ===== V25 SOCIAL COMMAND // COMPETITIVE NETWORK ===== */
-function challengeMetric(type){if(type==='workouts')return Number(state?.totalQuestsCompleted||0);if(type==='streak')return Number(state?.currentStreak||0);return socialScore()}
-function challengeLabel(type){return type==='workouts'?'MISSIONS':type==='streak'?'DAY STREAK':'XP'}
-function renderSocialCommandV25(){
- const root=document.getElementById('osSocialCommand');if(!root)return;const s=getSocial(),me=syncLocalSocialIdentity(),rank=getRank(state.level),combatTitle=typeof getEquippedCombatTitle==='function'?getEquippedCombatTitle():null,players=[{...me,self:true},...s.friends].sort((a,b)=>(b.xp||0)-(a.xp||0)),myPos=Math.max(1,players.findIndex(p=>p.self)+1);
- root.innerHTML='<div class="social-command social-v25"><section class="social-network-head"><div><small>NETWORK // COMPETITIVE LINK</small><h2>SOCIAL COMMAND</h2><p>FRIEND RANKINGS // HEAD-TO-HEAD OPERATIONS</p></div><div class="social-network-stat"><b>#'+myPos+'</b><span>YOUR POSITION</span></div><div class="social-network-stat"><b>'+players.length+'</b><span>LINKED PLAYERS</span></div><div class="social-network-stat"><b>'+s.challenges.length+'</b><span>ACTIVE DUELS</span></div></section><div class="social-v25-grid"><section class="social-card social-rank-card"><div class="social-head"><span>FRIENDS // LEADERBOARD</span><b>XP RANKING</b></div><div class="leader-podium">'+players.slice(0,3).map((p,i)=>'<div class="podium p'+(i+1)+(p.self?' self':'')+'"><i>#'+(i+1)+'</i><strong>'+escapeHtml(p.name)+'</strong><small>LV '+(p.level||1)+(p.title?' • '+escapeHtml(p.title):'')+'</small><b>'+Number(p.xp||0).toLocaleString()+' XP</b></div>').join('')+'</div><div class="leader-table">'+players.slice(3).map((p,i)=>'<div class="leader-row '+(p.self?'self':'')+'"><div class="leader-rank">#'+(i+4)+'</div><div class="leader-name"><strong>'+escapeHtml(p.name)+(p.self?' // YOU':'')+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+(p.title?' • '+escapeHtml(p.title):'')+'</small></div><div class="leader-xp">'+Number(p.xp||0).toLocaleString()+' XP</div></div>').join('')+'</div></section><section class="social-card duel-console"><div class="social-head"><span>HEAD-TO-HEAD // CHALLENGE</span><b>DUEL CONSOLE</b></div><form id="challengeForm" class="challenge-form"><label>OPPONENT<input id="challengePlayer" placeholder="Player name" required></label><label>PROTOCOL<select id="challengeType"><option value="xp">XP Sprint</option><option value="workouts">Mission Count</option><option value="streak">Streak Battle</option></select></label><label>DURATION<select id="challengeLength"><option value="1">24 Hours</option><option value="3">3 Days</option><option value="7">7 Days</option></select></label><button type="submit">ISSUE CHALLENGE</button></form><div class="duel-note">LOCAL SIMULATION // NETWORK BACKEND PENDING</div></section></div><section class="social-card social-card--wide"><div class="social-head"><span>ACTIVE // CHALLENGES</span><b>'+s.challenges.length+' OPERATIONS</b></div><div class="challenge-list">'+(s.challenges.length?s.challenges.map(x=>{const mine=challengeMetric(x.type),target=Number(x.opponentScore||0),total=Math.max(1,mine+target),pct=Math.round(mine/total*100);return '<article class="challenge-item duel-item"><div class="duel-versus"><span>YOU</span><b>VS</b><span>'+escapeHtml(x.opponent)+'</span></div><div class="duel-meta"><strong>'+escapeHtml(x.type.toUpperCase())+' // '+x.days+' DAY OPERATION</strong><small>'+challengeLabel(x.type)+' • LOCAL DRAFT • '+new Date(x.created).toLocaleDateString()+'</small></div><div class="duel-score"><b>'+mine.toLocaleString()+'</b><div><i style="width:'+pct+'%"></i></div><b>'+target.toLocaleString()+'</b></div></article>'}).join(''):'<div class="social-empty">NO ACTIVE DUELS // ISSUE A CHALLENGE TO OPEN A COMPETITIVE LINK</div>')+'</div></section></div>';
- document.getElementById('challengeForm').onsubmit=e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;const x=getSocial(),type=document.getElementById('challengeType').value;x.challenges.unshift({id:Date.now(),opponent:name,type,days:Number(document.getElementById('challengeLength').value),created:new Date().toISOString(),status:'draft',startScore:challengeMetric(type),opponentScore:0});saveSocial(x);renderSocialCommandV25();window.SystemOS?.notify('DUEL LINK CREATED // '+name.toUpperCase(),'SOCIAL // HEAD-TO-HEAD')};
-}
-const _v25Social=renderSocialCommand;renderSocialCommand=renderSocialCommandV25;
-
-
-/* ===== V26 SOCIAL CLOUD NETWORK ===== */
-const SOCIAL_CLOUD_TABLE='social_profiles',SOCIAL_CHALLENGE_TABLE='social_challenges';
-function socialCloudUser(){return getCloudSession()?.user||null}
-function socialHandle(){const u=socialCloudUser(),me=getSystemSettings();return (me.name||u?.email?.split('@')[0]||'Player').trim()}
-let socialProfileSyncBusy=false,socialIdentityRefreshBusy=false;
-async function syncSocialProfile(options={}){
- const u=socialCloudUser();if(!u?.id||socialProfileSyncBusy)return false;const identity=buildSocialIdentity();socialProfileSyncBusy=true;
- try{await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:u.id,display_name:identity.name,xp:identity.xp,level:identity.level,rank:identity.rank,missions:identity.missions,streak:identity.streak,title:identity.title||null,gates:identity.gates||0,critical_hits:identity.criticalHits||0,best_score:identity.bestScore||0,highest_boss:identity.highestBoss||null,updated_at:identity.updatedAt})});if(options.refreshUnlocks!==false&&!socialIdentityRefreshBusy)setTimeout(()=>refreshIdentityUnlocks(),0);return true}finally{socialProfileSyncBusy=false}
-}
-async function fetchSocialNetwork(options={}){
- const u=socialCloudUser();if(!u?.id)return null;
- try{if(options.sync!==false)await syncSocialProfile({refreshUnlocks:false});const [profiles,challenges]=await Promise.all([cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id,display_name,xp,level,rank,missions,streak,title,gates,critical_hits,best_score,highest_boss,updated_at&order=xp.desc&limit=100'),cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?or=(challenger_id.eq.'+encodeURIComponent(u.id)+',opponent_id.eq.'+encodeURIComponent(u.id)+')&select=*&order=created_at.desc&limit=50')]);return{profiles,challenges}}catch(e){window.SystemOS?.notify('NETWORK LINK UNAVAILABLE // USING LOCAL DATA','SOCIAL // CLOUD');return null}
-}
-async function renderSocialCloud(){
- const root=document.getElementById('osSocialCommand');if(!root)return;renderSocialCommandV25();const u=socialCloudUser();
- const head=root.querySelector('.social-network-head');if(head)head.insertAdjacentHTML('beforeend','<div class="social-cloud-state '+(u?'online':'offline')+'"><i></i><span>'+(u?'CLOUD LINK':'LOCAL MODE')+'</span></div>');
- if(!u){root.querySelector('.duel-note').textContent='SIGN IN REQUIRED FOR LIVE NETWORK // LOCAL SIMULATION ACTIVE';return}
- const net=await fetchSocialNetwork();if(!net||!document.body.contains(root))return;installPlayerSearch(root);
- const profiles=net.profiles||[],mine=profiles.findIndex(p=>p.user_id===u.id),rankCard=root.querySelector('.social-rank-card');
- if(rankCard){const podium=profiles.slice(0,3).map((p,i)=>'<div class="podium p'+(i+1)+(p.user_id===u.id?' self':'')+'"><i>#'+(i+1)+'</i><strong>'+escapeHtml(p.display_name)+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+(p.title?' • '+escapeHtml(p.title):'')+'</small><b>'+Number(p.xp||0).toLocaleString()+' XP</b></div>').join(''),rows=profiles.slice(3).map((p,i)=>'<div class="leader-row '+(p.user_id===u.id?'self':'')+'"><div class="leader-rank">#'+(i+4)+'</div><div class="leader-name"><strong>'+escapeHtml(p.display_name)+(p.user_id===u.id?' // YOU':'')+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+(p.title?' • '+escapeHtml(p.title):'')+'</small></div><div class="leader-xp">'+Number(p.xp||0).toLocaleString()+' XP</div></div>').join('');rankCard.querySelector('.leader-podium').innerHTML=podium;rankCard.querySelector('.leader-table').innerHTML=rows}
- const stats=root.querySelectorAll('.social-network-stat b');if(stats[0])stats[0].textContent='#'+(mine>=0?mine+1:'--');if(stats[1])stats[1].textContent=profiles.length;if(stats[2])stats[2].textContent=net.challenges.length;
- const note=root.querySelector('.duel-note');if(note)note.textContent='CLOUD NETWORK ONLINE // LIVE ACCOUNT LINK';
- const form=document.getElementById('challengeForm');if(form)form.onsubmit=async e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;try{const matches=await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?display_name=ilike.'+encodeURIComponent(name)+'&select=user_id,display_name&limit=1');if(!matches.length)throw new Error('Player not found on the network.');if(matches[0].user_id===u.id)throw new Error('You cannot challenge yourself. Humanity has invented mirrors for that.');const type=document.getElementById('challengeType').value,days=Number(document.getElementById('challengeLength').value);await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({challenger_id:u.id,opponent_id:matches[0].user_id,challenger_name:socialHandle(),opponent_name:matches[0].display_name,type,duration_days:days,status:'pending',challenger_start:challengeMetric(type),opponent_start:0,created_at:new Date().toISOString()})});window.SystemOS?.notify('CHALLENGE TRANSMITTED // '+matches[0].display_name.toUpperCase(),'SOCIAL // NETWORK');renderSocialCloud()}catch(err){window.SystemOS?.notify(err.message.toUpperCase(),'SOCIAL // NETWORK ERROR')}};
-}
-async function searchSocialPlayers(query){
- const u=socialCloudUser();if(!u?.id||!query?.trim())return[];const q=query.trim();return cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?display_name=ilike.*'+encodeURIComponent(q)+'*&select=user_id,display_name,level,rank,title,xp,gates,best_score,highest_boss&order=xp.desc&limit=12')
-}
-function installPlayerSearch(root){
- if(!socialCloudUser()?.id||root.querySelector('.social-player-search'))return;const grid=root.querySelector('.social-v25-grid');if(!grid)return;
- const box=document.createElement('section');box.className='social-card social-player-search';box.innerHTML='<div class="social-head"><span>NETWORK // PLAYER SEARCH</span><b>FIND HUNTERS</b></div><form id="playerSearchForm" class="challenge-form"><label>PLAYER NAME<input id="playerSearchInput" placeholder="Search network" autocomplete="off"></label><button type="submit">SEARCH</button></form><div id="playerSearchResults" class="player-search-results"><div class="social-empty">ENTER A PLAYER NAME // NETWORK SEARCH READY</div></div>';grid.appendChild(box);
- box.querySelector('form').onsubmit=async e=>{e.preventDefault();const out=box.querySelector('#playerSearchResults');out.innerHTML='<div class="social-empty">SCANNING NETWORK...</div>';try{const rows=await searchSocialPlayers(box.querySelector('input').value),me=socialCloudUser().id;out.innerHTML=rows.filter(p=>p.user_id!==me).map(p=>'<article class="player-search-row" data-dossier-player="'+p.user_id+'"><div><strong>'+escapeHtml(p.display_name)+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+(p.title?' • '+escapeHtml(p.title):'')+'</small></div><div><b>'+Number(p.xp||0).toLocaleString()+' XP</b><small>'+Number(p.gates||0)+' GATES • BEST '+Number(p.best_score||0)+'</small></div><button type="button" data-challenge-player="'+escapeHtml(p.display_name)+'">CHALLENGE</button></article>').join('')||'<div class="social-empty">NO PLAYERS FOUND</div>';out.querySelectorAll('[data-dossier-player]').forEach(r=>r.onclick=e=>{if(!e.target.closest('[data-challenge-player]'))openPlayerDossier(r.dataset.dossierPlayer)});out.querySelectorAll('[data-challenge-player]').forEach(b=>b.onclick=()=>{const input=document.getElementById('challengePlayer');if(input){input.value=b.dataset.challengePlayer;input.focus()}})}catch(err){out.innerHTML='<div class="social-empty">NETWORK SEARCH UNAVAILABLE</div>'}};
-}
-renderSocialCommand=renderSocialCloud;
-const _v26Push=pushCloudBackup;pushCloudBackup=async function(){const r=await _v26Push();try{await syncSocialProfile()}catch(e){}return r};
-
-
-/* ===== V27 SOCIAL COMMAND // LIVE DUELS ===== */
-function duelProfileMetric(p,type){return Number(type==='workouts'?p?.missions:type==='streak'?p?.streak:p?.xp)||0}
-function duelEndsAt(x){const start=new Date(x.accepted_at||x.created_at).getTime();return start+(Number(x.duration_days)||1)*86400000}
-function duelState(x){if(x.status!=='active')return x.status;return Date.now()>=duelEndsAt(x)?'completed':'active'}
-function duelDelta(current,start){return Math.max(0,Number(current||0)-Number(start||0))}
-async function patchChallenge(id,body){await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(body)})}
-async function respondToChallenge(id,accept){
- const u=socialCloudUser();if(!u?.id)return;
- const rows=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id)+'&select=*');const x=rows[0];if(!x||x.opponent_id!==u.id||x.status!=='pending')return;
- if(!accept){await patchChallenge(id,{status:'declined'});window.SystemOS?.notify('CHALLENGE DECLINED','SOCIAL // DUEL');return renderSocialCloud()}
- await syncSocialProfile();const p=(await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?user_id=eq.'+encodeURIComponent(u.id)+'&select=xp,missions,streak&limit=1'))[0]||{};
- await patchChallenge(id,{status:'active',opponent_start:duelProfileMetric(p,x.type),accepted_at:new Date().toISOString()});window.SystemOS?.notify('DUEL ACCEPTED // OPERATION ACTIVE','SOCIAL // DUEL');renderSocialCloud()
-}
-async function cancelChallenge(id){const u=socialCloudUser();if(!u?.id)return;const rows=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id)+'&select=challenger_id,status');const x=rows[0];if(x?.challenger_id===u.id&&x.status==='pending'){await patchChallenge(id,{status:'cancelled'});renderSocialCloud()}}
-function liveDuelCard(x,profiles,u){
- const mine=x.challenger_id===u.id,otherId=mine?x.opponent_id:x.challenger_id,otherName=mine?x.opponent_name:x.challenger_name,me=profiles.find(p=>p.user_id===u.id)||{},other=profiles.find(p=>p.user_id===otherId)||{},stateNow=duelState(x),myStart=mine?x.challenger_start:x.opponent_start,theirStart=mine?x.opponent_start:x.challenger_start,myScore=duelDelta(duelProfileMetric(me,x.type),myStart),theirScore=duelDelta(duelProfileMetric(other,x.type),theirStart),total=Math.max(1,myScore+theirScore),pct=Math.round(myScore/total*100),end=duelEndsAt(x),remaining=Math.max(0,end-Date.now()),hours=Math.ceil(remaining/36e5);
- if(x.status==='pending'){const incoming=x.opponent_id===u.id;return '<article class="challenge-item network-request '+(incoming?'incoming':'outgoing')+'"><div class="duel-versus"><span>'+escapeHtml(x.challenger_name)+'</span><b>VS</b><span>'+escapeHtml(x.opponent_name)+'</span></div><div class="duel-meta"><strong>'+challengeLabel(x.type)+' // '+x.duration_days+' DAY CHALLENGE</strong><small>'+(incoming?'INCOMING CHALLENGE':'AWAITING RESPONSE')+'</small></div><div class="duel-actions">'+(incoming?'<button data-duel-accept="'+x.id+'">ACCEPT</button><button data-duel-decline="'+x.id+'">DECLINE</button>':'<button data-duel-cancel="'+x.id+'">CANCEL</button>')+'</div></article>'}
- if(!['active','completed'].includes(stateNow))return '';
- const finished=stateNow==='completed',result=myScore===theirScore?'DRAW':myScore>theirScore?'VICTORY':'DEFEAT';
- return '<article class="challenge-item duel-item live-duel '+(finished?'duel-finished':'')+'"><div class="duel-versus"><span>YOU</span><b>VS</b><span>'+escapeHtml(otherName)+'</span></div><div class="duel-meta"><strong>'+challengeLabel(x.type)+' // '+(finished?result:'LIVE OPERATION')+'</strong><small>'+(finished?'FINAL SCORE':hours+'H REMAINING • '+x.duration_days+' DAY DUEL')+'</small></div><div class="duel-score"><b>'+myScore.toLocaleString()+'</b><div><i style="width:'+pct+'%"></i></div><b>'+theirScore.toLocaleString()+'</b></div></article>'
-}
-async function renderSocialCloudV27(){
- const root=document.getElementById('osSocialCommand');if(!root)return;await renderSocialCloud();const u=socialCloudUser();if(!u||!document.body.contains(root))return;
- const net=await fetchSocialNetwork();if(!net)return;const profiles=net.profiles||[],challenges=net.challenges||[];
- const consoleCard=root.querySelector('.duel-console');if(consoleCard){const form=consoleCard.querySelector('#challengeForm');form?.insertAdjacentHTML('beforebegin','<div class="player-search"><label>PLAYER DISCOVERY<input id="networkPlayerSearch" placeholder="Search network callsign"></label><div id="playerSearchResults"></div></div>');const search=document.getElementById('networkPlayerSearch'),results=document.getElementById('playerSearchResults');let t;search.oninput=()=>{clearTimeout(t);t=setTimeout(()=>{const q=search.value.trim().toLowerCase();results.innerHTML=q.length<2?'':profiles.filter(p=>p.user_id!==u.id&&p.display_name.toLowerCase().includes(q)).slice(0,6).map(p=>'<button type="button" data-player-pick="'+escapeHtml(p.display_name)+'"><span>'+escapeHtml(p.display_name)+'</span><small>LV '+p.level+' • '+escapeHtml(p.rank)+' • '+Number(p.xp).toLocaleString()+' XP</small></button>').join('')||'<small class="no-player">NO MATCHING PLAYER</small>';results.querySelectorAll('[data-player-pick]').forEach(b=>b.onclick=()=>{document.getElementById('challengePlayer').value=b.dataset.playerPick;search.value=b.dataset.playerPick;results.innerHTML=''})},220)}}
- const list=root.querySelector('.challenge-list'),head=root.querySelector('.social-card--wide .social-head b');if(list){const cards=challenges.map(x=>liveDuelCard(x,profiles,u)).filter(Boolean);list.innerHTML=cards.join('')||'<div class="social-empty">NO ACTIVE NETWORK OPERATIONS</div>';if(head)head.textContent=cards.length+' OPERATIONS';list.querySelectorAll('[data-duel-accept]').forEach(b=>b.onclick=()=>respondToChallenge(b.dataset.duelAccept,true));list.querySelectorAll('[data-duel-decline]').forEach(b=>b.onclick=()=>respondToChallenge(b.dataset.duelDecline,false));list.querySelectorAll('[data-duel-cancel]').forEach(b=>b.onclick=()=>cancelChallenge(b.dataset.duelCancel))}
-}
-renderSocialCommand=renderSocialCloudV27;
-
-
-/* ===== V28 SOCIAL COMMAND // FRIENDS + SQUADS ===== */
-const SOCIAL_FRIEND_TABLE='social_friendships',SOCIAL_SQUAD_TABLE='social_squads',SOCIAL_MEMBER_TABLE='social_squad_members';
-async function fetchCommunityNetwork(){
- const u=socialCloudUser();if(!u?.id)return null;try{const [friends,squads,members]=await Promise.all([
- cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE+'?or=(requester_id.eq.'+encodeURIComponent(u.id)+',addressee_id.eq.'+encodeURIComponent(u.id)+')&select=*&order=created_at.desc'),
- cloudRequest('/rest/v1/'+SOCIAL_SQUAD_TABLE+'?select=*&order=created_at.desc&limit=100'),
- cloudRequest('/rest/v1/'+SOCIAL_MEMBER_TABLE+'?select=squad_id,user_id,display_name,role,joined_at')
- ]);return{friends,squads,members}}catch(e){return null}
-}
-function friendshipPeerId(f,userId){return f.requester_id===userId?f.addressee_id:f.requester_id}
-function friendshipStatusFor(userId,friendships,peerId){
- const f=friendships.find(x=>friendshipPeerId(x,userId)===peerId&&['pending','accepted'].includes(x.status));if(!f)return null;
- return{...f,incoming:f.status==='pending'&&f.addressee_id===userId,outgoing:f.status==='pending'&&f.requester_id===userId}
-}
-async function removeFriend(id){const u=socialCloudUser();if(!u?.id)return;await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE+'?id=eq.'+encodeURIComponent(id),{method:'DELETE',headers:{Prefer:'return=minimal'}});window.SystemOS?.notify('FRIEND LINK REMOVED','SOCIAL // FRIENDS');renderSocialCommand()}
-async function sendFriendRequest(userId,name){const u=socialCloudUser();if(!u?.id||userId===u.id)return;try{await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({requester_id:u.id,addressee_id:userId,requester_name:socialHandle(),addressee_name:name,status:'pending'})});window.SystemOS?.notify('FRIEND REQUEST SENT // '+name.toUpperCase(),'SOCIAL // FRIEND LINK');renderSocialCommand()}catch(e){window.SystemOS?.notify((e.message||'FRIEND LINK FAILED').toUpperCase(),'SOCIAL // NETWORK')}}
-async function respondFriend(id,status){await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status,accepted_at:status==='accepted'?new Date().toISOString():null})});renderSocialCommand()}
-function squadMemberProfiles(squadId,members,profiles){const rows=members.filter(m=>m.squad_id===squadId);return rows.map(m=>({member:m,profile:profiles.find(p=>p.user_id===m.user_id)||{user_id:m.user_id,display_name:m.display_name,level:1,rank:'E-Rank',xp:0}})).sort((a,b)=>Number(b.profile.xp||0)-Number(a.profile.xp||0))}
-async function createSquad(name){const u=socialCloudUser();if(!u?.id)return;const rows=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_TABLE,{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({name,owner_id:u.id})});const sq=rows[0];if(sq)await cloudRequest('/rest/v1/'+SOCIAL_MEMBER_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({squad_id:sq.id,user_id:u.id,display_name:socialHandle(),role:'owner'})});window.SystemOS?.notify('SQUAD CREATED // '+name.toUpperCase(),'SOCIAL // SQUAD');renderSocialCommand()}
-async function joinSquad(id){const u=socialCloudUser();if(!u?.id)return;try{await cloudRequest('/rest/v1/'+SOCIAL_MEMBER_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({squad_id:id,user_id:u.id,display_name:socialHandle(),role:'member'})});window.SystemOS?.notify('SQUAD LINK ESTABLISHED','SOCIAL // SQUAD');renderSocialCommand()}catch(e){window.SystemOS?.notify((e.message||'SQUAD LINK FAILED').toUpperCase(),'SOCIAL // SQUAD')}}
-async function leaveSquad(id){const u=socialCloudUser();if(!u?.id)return;await cloudRequest('/rest/v1/'+SOCIAL_MEMBER_TABLE+'?squad_id=eq.'+encodeURIComponent(id)+'&user_id=eq.'+encodeURIComponent(u.id),{method:'DELETE',headers:{Prefer:'return=minimal'}});renderSocialCommand()}
-async function renderCommunityV28(){
- const root=document.getElementById('osSocialCommand');if(!root)return;await renderSocialCloudV27();const u=socialCloudUser();if(!u||!document.body.contains(root))return;
- const [net,community]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);if(!net||!community)return;const profiles=net.profiles||[],friends=community.friends||[],squads=community.squads||[],members=community.members||[],squadLegacy=await squadLegacyMap(squads),accepted=friends.filter(f=>f.status==='accepted'),friendIds=new Set(accepted.map(f=>f.requester_id===u.id?f.addressee_id:f.requester_id)),incoming=friends.filter(f=>f.status==='pending'&&f.addressee_id===u.id);
- const shell=root.querySelector('.social-v25');if(!shell)return;
- const friendProfiles=profiles.filter(p=>p.user_id===u.id||friendIds.has(p.user_id)).sort((a,b)=>b.xp-a.xp),outgoing=friends.filter(f=>f.status==='pending'&&f.requester_id===u.id);
- shell.insertAdjacentHTML('beforeend','<section class="community-grid"><article class="social-card friend-command"><div class="social-head"><span>FRIENDS // NETWORK</span><b>'+accepted.length+' LINKED</b></div><div class="friend-requests">'+(incoming.length?incoming.map(f=>'<div><span><strong>'+escapeHtml(f.requester_name)+'</strong><small>REQUESTING FRIEND LINK</small></span><span><button data-friend-accept="'+f.id+'">ACCEPT</button><button data-friend-decline="'+f.id+'">DECLINE</button></span></div>').join(''):'<small>NO INCOMING FRIEND REQUESTS</small>')+'</div><div class="friend-pending">'+(outgoing.length?outgoing.map(f=>'<div><span><strong>'+escapeHtml(f.addressee_name)+'</strong><small>REQUEST PENDING</small></span><button data-friend-cancel="'+f.id+'">CANCEL</button></div>').join(''):'')+'</div><div class="friend-leaderboard">'+friendProfiles.map((p,i)=>{const link=p.user_id===u.id?null:accepted.find(f=>friendshipPeerId(f,u.id)===p.user_id);return '<div><b>#'+(i+1)+'</b><span><strong>'+escapeHtml(p.display_name)+(p.user_id===u.id?' // YOU':'')+'</strong><small>LV '+p.level+' • '+escapeHtml(p.rank)+(p.title?' • '+escapeHtml(p.title):'')+'</small></span><em>'+Number(p.xp).toLocaleString()+' XP</em>'+(link?'<span class="friend-actions"><button data-friend-challenge="'+escapeHtml(p.display_name)+'">DUEL</button><button data-friend-remove="'+link.id+'">REMOVE</button></span>':'')+'</div>'}).join('')+'</div></article><article class="social-card squad-command"><div class="social-head"><span>SQUADS // GROUP OPS</span><b>'+squads.length+' ONLINE</b></div><form id="squadCreateForm"><input id="squadName" maxlength="40" placeholder="New squad name" required><button>CREATE SQUAD</button></form><div class="squad-list">'+squads.map(s=>{const sm=members.filter(m=>m.squad_id===s.id),mine=sm.some(m=>m.user_id===u.id);return '<div class="squad-row" data-dossier-squad="'+s.id+'"><span><strong>'+escapeHtml(s.name)+'</strong><small>'+sm.length+' MEMBER'+(sm.length===1?'':'S')+' • '+(s.owner_id===u.id?'COMMANDER':'GROUP')+' • '+escapeHtml(squadLegacy[s.id]?.title||'UNPROVEN UNIT')+'</small></span><button '+(s.owner_id===u.id?'disabled':mine?'data-squad-leave="'+s.id+'"':'data-squad-join="'+s.id+'"')+'>'+(s.owner_id===u.id?'YOUR SQUAD':mine?'LEAVE':'JOIN')+'</button></div>'}).join('')+'</div></article></section>');
- const discovery=document.getElementById('playerSearchResults');if(discovery){const search=document.getElementById('networkPlayerSearch');let t;search.oninput=()=>{clearTimeout(t);t=setTimeout(()=>{const q=search.value.trim().toLowerCase();discovery.innerHTML=q.length<2?'':profiles.filter(p=>p.user_id!==u.id&&p.display_name.toLowerCase().includes(q)).slice(0,6).map(p=>'<div class="player-result"><button type="button" data-player-pick="'+escapeHtml(p.display_name)+'"><span>'+escapeHtml(p.display_name)+'</span><small>LV '+p.level+' • '+escapeHtml(p.rank)+'</small></button>'+(()=>{const fs=friendshipStatusFor(u.id,friends,p.user_id);return fs?.status==='accepted'?'<b>FRIEND</b>':fs?.incoming?'<b>REQUEST RECEIVED</b>':fs?.outgoing?'<b>PENDING</b>':'<button class="friend-add" data-friend-id="'+p.user_id+'" data-friend-name="'+escapeHtml(p.display_name)+'">+ FRIEND</button>'})()+'</div>').join('')||'<small class="no-player">NO MATCHING PLAYER</small>';discovery.querySelectorAll('[data-player-pick]').forEach(b=>b.onclick=()=>{document.getElementById('challengePlayer').value=b.dataset.playerPick;search.value=b.dataset.playerPick;discovery.innerHTML=''});discovery.querySelectorAll('[data-friend-id]').forEach(b=>b.onclick=()=>sendFriendRequest(b.dataset.friendId,b.dataset.friendName))},180)}}
- root.querySelectorAll('[data-friend-accept]').forEach(b=>b.onclick=()=>respondFriend(b.dataset.friendAccept,'accepted'));root.querySelectorAll('[data-friend-decline]').forEach(b=>b.onclick=()=>respondFriend(b.dataset.friendDecline,'declined'));root.querySelectorAll('[data-friend-cancel]').forEach(b=>b.onclick=()=>removeFriend(b.dataset.friendCancel));root.querySelectorAll('[data-friend-remove]').forEach(b=>b.onclick=()=>{if(confirm('Remove this friend link?'))removeFriend(b.dataset.friendRemove)});root.querySelectorAll('[data-friend-challenge]').forEach(b=>b.onclick=()=>{const input=document.getElementById('challengePlayer');if(input){input.value=b.dataset.friendChallenge;input.focus()}});root.querySelectorAll('[data-dossier-squad]').forEach(r=>r.onclick=e=>{if(!e.target.closest('button'))openSquadDossier(r.dataset.dossierSquad)});document.getElementById('squadCreateForm').onsubmit=e=>{e.preventDefault();const n=document.getElementById('squadName').value.trim();if(n.length>=2)createSquad(n)};root.querySelectorAll('[data-squad-join]').forEach(b=>b.onclick=()=>joinSquad(b.dataset.squadJoin));root.querySelectorAll('[data-squad-leave]').forEach(b=>b.onclick=()=>leaveSquad(b.dataset.squadLeave));
-}
-renderSocialCommand=renderCommunityV28;
-
-
-/* ===== V29 SQUAD COMMAND // COMPETITIVE OPERATIONS ===== */
-const SOCIAL_SQUAD_CHALLENGE_TABLE='social_squad_challenges';
-function squadTotals(squadId,members,profiles){const ids=new Set(members.filter(m=>m.squad_id===squadId).map(m=>m.user_id)),ps=profiles.filter(p=>ids.has(p.user_id));return{members:ps.length,xp:ps.reduce((a,p)=>a+Number(p.xp||0),0),workouts:ps.reduce((a,p)=>a+Number(p.missions||0),0),level:ps.length?Math.round(ps.reduce((a,p)=>a+Number(p.level||1),0)/ps.length):0}}
-function squadProgress(total){
- const xp=Math.max(0,Number(total?.xp)||0),missions=Math.max(0,Number(total?.workouts)||0),members=Math.max(0,Number(total?.members)||0);
- const level=Math.max(1,Math.floor(Math.sqrt(xp/2500))+1),base=Math.pow(level-1,2)*2500,next=Math.pow(level,2)*2500,pct=Math.max(0,Math.min(100,Math.round((xp-base)/Math.max(1,next-base)*100)));
- const title=level>=10?'APEX UNIT':level>=7?'ELITE STRIKE TEAM':level>=5?'VANGUARD':level>=3?'ACTIVE HUNTERS':'AWAKENED UNIT';
- const missionsList=[{name:'UNIT DEPLOYMENT',detail:'Complete 10 squad missions',value:missions,target:10},{name:'FORCE ASSEMBLY',detail:'Reach 25,000 combined XP',value:xp,target:25000},{name:'FULL PARTY',detail:'Recruit 4 squad members',value:members,target:4}].map(x=>({...x,pct:Math.min(100,Math.round(x.value/x.target*100)),complete:x.value>=x.target}));
- return{level,title,xp,base,next,pct,missions:missionsList}
-}
-const SOCIAL_SQUAD_GATE_TABLE='social_squad_gates',SOCIAL_SQUAD_HIT_TABLE='social_squad_gate_hits',SOCIAL_SQUAD_VICTORY_TABLE='social_squad_gate_victories';
-function squadWeekKey(){const d=new Date(),x=new Date(d);x.setHours(0,0,0,0);x.setDate(d.getDate()-((d.getDay()+6)%7));return x.toISOString().slice(0,10)}
-function squadBossForLevel(level){if(level>=10)return{name:'ECLIPSE COLOSSUS',tier:'APEX RAID',hp:240000};if(level>=7)return{name:'ABYSSAL WARDEN',tier:'ELITE RAID',hp:150000};if(level>=5)return{name:'IRON TYRANT',tier:'VANGUARD RAID',hp:90000};if(level>=3)return{name:'GATE DEVOURER',tier:'STRIKE RAID',hp:55000};return{name:'DUNGEON BEHEMOTH',tier:'SQUAD RAID',hp:30000}}
-async function ensureSquadGate(squad,total){
- const week=squadWeekKey(),progress=squadProgress(total),boss=squadBossForLevel(progress.level);let rows=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_GATE_TABLE+'?squad_id=eq.'+encodeURIComponent(squad.id)+'&week_key=eq.'+week+'&select=*&limit=1');
- if(rows.length)return rows[0];rows=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_GATE_TABLE,{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({squad_id:squad.id,week_key:week,boss_name:boss.name,boss_tier:boss.tier,max_hp:boss.hp,damage:0,defeated:false})});return rows[0]||null
-}
-async function fetchSquadVictories(squadId){try{return await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_VICTORY_TABLE+'?squad_id=eq.'+encodeURIComponent(squadId)+'&select=*&order=cleared_at.desc&limit=20')}catch(e){return[]}}
-async function recordSquadGateVictory(squad,gate){
- try{const old=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_VICTORY_TABLE+'?gate_id=eq.'+encodeURIComponent(gate.id)+'&select=id&limit=1');if(old.length)return old[0];const hits=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_HIT_TABLE+'?gate_id=eq.'+encodeURIComponent(gate.id)+'&select=*'),by={};hits.forEach(h=>{by[h.user_id]=by[h.user_id]||{user_id:h.user_id,name:h.display_name,damage:0};by[h.user_id].damage+=Number(h.damage||0)});const c=Object.values(by).sort((x,y)=>y.damage-x.damage),m=c[0]||null,rows=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_VICTORY_TABLE,{method:'POST',headers:{Prefer:'return=representation'},body:JSON.stringify({gate_id:gate.id,squad_id:squad.id,week_key:gate.week_key,boss_name:gate.boss_name,boss_tier:gate.boss_tier,max_hp:gate.max_hp,total_damage:gate.max_hp,mvp_user_id:m?.user_id||null,mvp_name:m?.name||null,mvp_damage:m?.damage||0,contributors:c.length,cleared_at:new Date().toISOString()})});return rows[0]||null}catch(e){return null}
-}
-function showSquadVictoryFx(hit){let e=document.getElementById('squadVictoryFx');if(!e){e=document.createElement('div');e.id='squadVictoryFx';e.className='squad-victory-fx';e.innerHTML='<div><small>SQUAD // GATE OPERATION</small><h2>RAID CLEARED</h2><strong id="svBoss"></strong><span id="svMvp"></span><b>UNIT VICTORY RECORDED</b></div>';document.body.appendChild(e)}document.getElementById('svBoss').textContent=hit.boss;document.getElementById('svMvp').textContent=hit.mvp?'MVP // '+hit.mvp:'SQUAD VICTORY';e.classList.remove('active');void e.offsetWidth;e.classList.add('active');setTimeout(()=>e.classList.remove('active'),3400)}
-async function applySquadGateDamage(performance,prs=[]){
- const u=socialCloudUser();if(!u?.id||!performance)return null;try{const [community,net]=await Promise.all([fetchCommunityNetwork(),fetchSocialNetwork()]);if(!community||!net)return null;const membership=community.members.find(m=>m.user_id===u.id),squad=membership&&community.squads.find(s=>s.id===membership.squad_id);if(!squad)return null;const total=squadTotals(squad.id,community.members,net.profiles),gate=await ensureSquadGate(squad,total);if(!gate||gate.defeated)return null;
- const run=(workoutHistory().slice(-1)[0]||{}),runKey=[u.id,run.date||systemMissionKey(),run.mission||'mission',run.seconds||0,run.workoutMode||'full'].join(':');const prior=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_HIT_TABLE+'?gate_id=eq.'+encodeURIComponent(gate.id)+'&run_key=eq.'+encodeURIComponent(runKey)+'&select=id&limit=1');if(prior.length)return null;
- const critical=prs.length>0,damage=Math.max(250,Math.round((Number(performance.score)||0)*55*(critical?1.2:1))),next=Math.min(Number(gate.max_hp)||0,Number(gate.damage||0)+damage),defeated=next>=Number(gate.max_hp||0);
- await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_HIT_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({gate_id:gate.id,squad_id:squad.id,user_id:u.id,display_name:socialHandle(),run_key:runKey,damage,critical,score:Number(performance.score)||0})});
- await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_GATE_TABLE+'?id=eq.'+encodeURIComponent(gate.id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({damage:next,defeated,defeated_at:defeated?new Date().toISOString():null})});
- let victory=null;if(defeated){victory=await recordSquadGateVictory(squad,{...gate,damage:next,defeated:true});setTimeout(refreshIdentityUnlocks,800);queueReward({title:'SQUAD GATE CLEARED',detail:gate.boss_name,amount:0,intensity:'major',source:'achievement'});showSquadVictoryFx({boss:gate.boss_name,mvp:victory?.mvp_name||null})}
- window.SystemOS?.notify((defeated?'SQUAD BOSS DEFEATED // ':'SQUAD HIT // ')+damage.toLocaleString()+' DAMAGE','SQUAD // GATE OPERATION');return{damage,critical,defeated,hp:Math.max(0,gate.max_hp-next),maxHp:gate.max_hp,boss:gate.boss_name}
- }catch(e){return null}
-}
-async function fetchSquadGateIntel(squad,total){
- try{const gate=await ensureSquadGate(squad,total);if(!gate)return null;const [hits,victories]=await Promise.all([cloudRequest('/rest/v1/'+SOCIAL_SQUAD_HIT_TABLE+'?gate_id=eq.'+encodeURIComponent(gate.id)+'&select=*&order=damage.desc'),fetchSquadVictories(squad.id)]);const by={};hits.forEach(h=>{const k=h.user_id;by[k]=by[k]||{name:h.display_name,damage:0,hits:0};by[k].damage+=Number(h.damage||0);by[k].hits++});return{gate,contributors:Object.values(by).sort((a,b)=>b.damage-a.damage),victories}
- }catch(e){return null}
-}
-async function fetchSquadChallenges(squadIds){if(!squadIds.length)return[];return cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?or=('+squadIds.map(id=>'challenger_squad_id.eq.'+encodeURIComponent(id)+',opponent_squad_id.eq.'+encodeURIComponent(id)).join(',')+')&select=*&order=created_at.desc&limit=50')}
-async function squadChallenge(id,type,days){const u=socialCloudUser(),community=await fetchCommunityNetwork(),net=await fetchSocialNetwork();if(!u||!community||!net)return;const mine=community.squads.find(s=>s.owner_id===u.id),opp=community.squads.find(s=>s.id===id);if(!mine||!opp)return;const a=squadTotals(mine.id,community.members,net.profiles),b=squadTotals(opp.id,community.members,net.profiles),metric=type==='workouts'?'workouts':'xp';await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({challenger_squad_id:mine.id,opponent_squad_id:opp.id,challenger_name:mine.name,opponent_name:opp.name,type,duration_days:Number(days),status:'pending',challenger_start:a[metric],opponent_start:b[metric],created_by:u.id})});window.SystemOS?.notify('SQUAD CHALLENGE TRANSMITTED // '+opp.name.toUpperCase(),'SOCIAL // SQUAD OPS');renderSocialCommand()}
-async function respondSquadChallenge(id,accept){const u=socialCloudUser(),community=await fetchCommunityNetwork(),net=await fetchSocialNetwork();if(!u||!community||!net)return;const rows=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id)+'&select=*'),x=rows[0],owned=community.squads.find(s=>s.id===x?.opponent_squad_id&&s.owner_id===u.id);if(!x||!owned||x.status!=='pending')return;const total=squadTotals(owned.id,community.members,net.profiles),metric=x.type==='workouts'?'workouts':'xp';await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify(accept?{status:'active',opponent_start:total[metric],accepted_at:new Date().toISOString()}:{status:'declined'})});renderSocialCommand()}
-const SQUAD_ACHIEVEMENTS=[{id:'first_raid',name:'FIRST RAID',desc:'Clear the first Squad Gate.',test:v=>v.length>=1},{id:'gatebreakers',name:'GATEBREAKERS',desc:'Clear 5 Squad Gates.',test:v=>v.length>=5},{id:'apex_raiders',name:'APEX RAIDERS',desc:'Clear an Apex Raid.',test:v=>v.some(x=>String(x.boss_tier).includes('APEX'))},{id:'raid_veterans',name:'RAID VETERANS',desc:'Clear 10 Squad Gates.',test:v=>v.length>=10}];
-function squadRaidStreak(v){if(!v.length)return 0;const w=[...new Set(v.map(x=>x.week_key).filter(Boolean))].sort().reverse();let n=1;for(let i=1;i<w.length;i++){if(Math.round((new Date(w[i-1]+'T00:00:00')-new Date(w[i]+'T00:00:00'))/86400000)===7)n++;else break}return n}
-function squadAchievementState(v,u){const streak=squadRaidStreak(v),unlocked=SQUAD_ACHIEVEMENTS.filter(x=>x.test(v)).map(x=>x.id);if(streak>=3)unlocked.push('weekly_dominance');const mvp=v.filter(x=>x.mvp_user_id===u).length;return{unlocked,streak,mvp,title:v.some(x=>String(x.boss_tier).includes('APEX'))?'APEX RAIDERS':v.length>=10?'RAID VETERANS':v.length>=5?'GATEBREAKERS':v.length?'GATEBREAKERS INITIATE':'UNPROVEN UNIT'}}
-function squadAchievementCatalog(s){return[...SQUAD_ACHIEVEMENTS,{id:'weekly_dominance',name:'WEEKLY DOMINANCE',desc:'Clear Squad Gates 3 consecutive weeks.'}].map(x=>({...x,unlocked:s.unlocked.includes(x.id)}))}
-const SOCIAL_IDENTITY_KEY='systemSocialIdentityCard';
-function getIdentityCard(){try{return Object.assign({callsign:'',motto:'',frame:'SYSTEM',emblem:'RANK'},JSON.parse(localStorage.getItem(SOCIAL_IDENTITY_KEY)||'{}'))}catch(e){return{callsign:'',motto:'',frame:'SYSTEM',emblem:'RANK'}}}
-function saveIdentityCard(x){localStorage.setItem(SOCIAL_IDENTITY_KEY,JSON.stringify(x));return x}
-function socialCallsign(profile){const c=getIdentityCard();return profile?.user_id===socialCloudUser()?.id&&c.callsign?c.callsign:(profile?.display_name||'HUNTER')}
-function renderIdentityCard(profile,squad,legacy){
- const c=profile?.user_id===socialCloudUser()?.id?getIdentityCard():{},name=socialCallsign(profile),rank=profile?.rank||'E-Rank',letter=identityEmblem(c,profile);
- const ar=profile?.user_id===socialCloudUser()?.id?ascensionRecord():null,prestige=ar?ascensionRewardProfile():null;return '<div class="hunter-id-card frame-'+escapeHtml(c.frame||'SYSTEM').toLowerCase()+'"><div class="hunter-id-card__emblem">'+escapeHtml(letter)+'</div><div><small>THE SYSTEM // HUNTER ID</small><h3>'+escapeHtml(name)+'</h3><strong>'+escapeHtml(rank)+' • LV '+Number(profile?.level||1)+'</strong>'+(profile?.title?'<span>'+escapeHtml(profile.title)+'</span>':'')+(squad?'<em>'+escapeHtml(squad.name)+' // '+escapeHtml(legacy?.title||'UNPROVEN UNIT')+'</em>':'')+(ar?.completed?'<i class="hunter-id-card__ascension">ASCENSION '+ar.completed+' // '+ar.tier+(prestige?' // '+prestige.title+' // +'+prestige.xpBonus+'% XP':'')+'</i>':'')+(c.motto?'<p>“'+escapeHtml(c.motto)+'”</p>':'')+'</div></div>'
-}
-const IDENTITY_UNLOCK_SEEN_KEY='systemIdentityUnlocksSeen',IDENTITY_EARNED_KEY='systemIdentityEarnedV1';
-function identityOwnerKey(){return socialCloudUser()?.id||'local'}
-function identityEarnedLedger(){try{const all=JSON.parse(localStorage.getItem(IDENTITY_EARNED_KEY)||'{}');return Array.isArray(all[identityOwnerKey()])?all[identityOwnerKey()]:[]}catch(e){return[]}}
-function saveIdentityEarnedLedger(ids){let all={};try{all=JSON.parse(localStorage.getItem(IDENTITY_EARNED_KEY)||'{}')||{}}catch(e){}all[identityOwnerKey()]=[...new Set(ids)];localStorage.setItem(IDENTITY_EARNED_KEY,JSON.stringify(all));return all[identityOwnerKey()]}
-function identitySeenKey(){return IDENTITY_UNLOCK_SEEN_KEY+':'+identityOwnerKey()}
-function identityUnlockIds(s){return[...s.frames,...s.emblems].filter(x=>x.unlocked).map(x=>x.id)}
-function showIdentityUnlockFx(item,type){
- let e=document.getElementById('identityUnlockFx');if(!e){e=document.createElement('div');e.id='identityUnlockFx';e.className='identity-unlock-fx';e.innerHTML='<div><small>SYSTEM // REWARD ACQUIRED</small><h2>NEW IDENTITY UNLOCK</h2><div id="iuIcon"></div><strong id="iuName"></strong><span id="iuType"></span><p id="iuWhy"></p></div>';document.body.appendChild(e)}
- document.getElementById('iuIcon').textContent=type==='FRAME'?'▱':'◆';document.getElementById('iuName').textContent=item.name;document.getElementById('iuType').textContent=type+' // COSMETIC REWARD';document.getElementById('iuWhy').textContent=item.why;e.classList.remove('active');void e.offsetWidth;e.classList.add('active');setTimeout(()=>e.classList.remove('active'),3000)
-}
-function checkIdentityUnlockTransitions(profile,legacy,trophies=null,hunterLegacy=null,{initialize=false}={}){
- const s=identityUnlockState(profile,legacy,trophies,hunterLegacy),all=[...s.frames.map(x=>({...x,type:'FRAME'})),...s.emblems.map(x=>({...x,type:'EMBLEM'}))],ids=identityUnlockIds(s),earned=saveIdentityEarnedLedger([...identityEarnedLedger(),...ids]),seenKey=identitySeenKey();let seen;try{seen=JSON.parse(localStorage.getItem(seenKey)||'null')}catch(e){seen=null}
- if(!Array.isArray(seen)||initialize){localStorage.setItem(seenKey,JSON.stringify(earned));return[]}
- const fresh=all.filter(x=>x.unlocked&&!seen.includes(x.id));if(fresh.length){localStorage.setItem(seenKey,JSON.stringify([...new Set([...seen,...earned])]));fresh.forEach((x,i)=>setTimeout(()=>{queueReward({title:'NEW SYSTEM REWARD',detail:x.name+' '+x.type,amount:0,intensity:'major',source:'achievement'});showIdentityUnlockFx(x,x.type)},i*2300))}
- return fresh
-}
-async function refreshIdentityUnlocks(){
- if(socialIdentityRefreshBusy)return;socialIdentityRefreshBusy=true;
- try{const u=socialCloudUser();if(!u?.id)return;const [net,community]=await Promise.all([fetchSocialNetwork({sync:false}),fetchCommunityNetwork()]),p=net?.profiles?.find(x=>x.user_id===u.id);if(!p)return;const m=community?.members?.find(x=>x.user_id===u.id),sq=m&&community.squads.find(x=>x.id===m.squad_id),victories=sq?await fetchSquadVictories(sq.id):[],legacy=sq?{...(await squadLegacyMap([sq]))[sq.id],victories:victories.length}:null;const trophies=trophyCollection(victories),ctx=saveLegacyContext(p,trophies,legacy);checkIdentityUnlockTransitions(p,legacy,trophies,ctx.hunter)}catch(e){}finally{socialIdentityRefreshBusy=false}
-}
-function identityUnlockState(profile,legacy,trophies=null,hunterLegacy=null){
- const level=Number(profile?.level||state.level||1),gates=Number(profile?.gates||0),streak=Number(profile?.streak||state.currentStreak||0),mvp=Number(legacy?.mvp||0),raids=Number(legacy?.victories||0);
- const frames=[{id:'SYSTEM',name:'SYSTEM',unlocked:true,why:'Standard issue'},{id:'RAID',name:'RAID',unlocked:gates>=1||raids>=1,why:'Clear a Gate'},{id:'VANGUARD',name:'VANGUARD',unlocked:level>=20,why:'Reach C-Rank / LV 20'},{id:'ELITE',name:'ELITE',unlocked:level>=50,why:'Reach S-Rank / LV 50'},{id:'MVP',name:'MVP',unlocked:mvp>=1,why:'Earn a Squad Raid MVP'},{id:'SHADOW',name:'SHADOW',unlocked:level>=90,why:'Reach Shadow / LV 90'},{id:'ARCHIVE',name:'ARCHIVE',unlocked:!!trophies?.sets?.find(x=>x.id==='raid_collector'&&x.unlocked),why:'Collect 4 Boss trophy classes'},{id:'ASCENDANT',name:'ASCENDANT',unlocked:Number(hunterLegacy?.level||0)>=3,why:'Reach Legacy Level 3'},{id:'VETERAN',name:'VETERAN',unlocked:Number(hunterLegacy?.level||0)>=5,why:'Reach Legacy Level 5'},{id:'MYTHIC',name:'MYTHIC',unlocked:Number(hunterLegacy?.level||0)>=7,why:'Reach Legacy Level 7'},{id:'SOVEREIGN',name:'SOVEREIGN',unlocked:Number(hunterLegacy?.level||0)>=10,why:'Reach Legacy Level 10'},{id:'TRIALBORN',name:'TRIALBORN',unlocked:legacyTrialWins().includes(2),why:'Clear the Trial of Command'},{id:'OVERLORD',name:'OVERLORD',unlocked:legacyTrialWins().includes(3),why:'Conquer the Sovereign Trial'},{id:'NEXUS',name:'NEXUS',unlocked:legacyArtifact().unlocked,why:'Forge the complete Legacy Nexus'},{id:'ASCENDED',name:'ASCENDED',unlocked:ascensionRecord().completed>=1,why:'Complete 1 Legacy Ascension'},{id:'ASCENSION_MASTER',name:'ASCENSION MASTER',unlocked:ascensionRecord().completed>=3,why:'Complete 3 Legacy Ascensions'},{id:'EXALTED',name:'EXALTED',unlocked:ascensionRecord().completed>=5,why:'Complete 5 Legacy Ascensions'},{id:'ETERNAL',name:'ETERNAL',unlocked:ascensionRecord().completed>=10,why:'Complete 10 Legacy Ascensions'}];
- const emblems=[{id:'RANK',name:'RANK',unlocked:true,why:'Standard rank emblem'},{id:'GATE',name:'GATE',unlocked:gates>=5,why:'Clear 5 Gates'},{id:'STREAK',name:'STREAK',unlocked:streak>=30,why:'30-day streak'},{id:'APEX',name:'APEX',unlocked:legacy?.title==='APEX RAIDERS',why:'Join an Apex Raider unit'},{id:'SCOUT',name:'SCOUT',unlocked:!!trophies?.sets?.find(x=>x.id==='gate_scout'&&x.unlocked),why:'Collect 2 Boss trophy classes'},{id:'CROWN',name:'CROWN',unlocked:!!trophies?.complete,why:'Complete all 5 Boss trophy classes'},{id:'LEGACY',name:'LEGACY',unlocked:Number(hunterLegacy?.level||0)>=5,why:'Reach Legacy Level 5'},{id:'SOVEREIGN_SIGIL',name:'SOVEREIGN SIGIL',unlocked:Number(hunterLegacy?.level||0)>=10,why:'Reach Legacy Level 10'},{id:'RESOLVE',name:'RESOLVE',unlocked:legacyTrialWins().includes(1),why:'Clear the Trial of Resolve'},{id:'CORE',name:'SOVEREIGN CORE',unlocked:legacyTrialWins().includes(3),why:'Conquer the Sovereign Trial'},{id:'NEXUS_CORE',name:'NEXUS CORE',unlocked:legacyArtifact().unlocked,why:'Forge the complete Legacy Nexus'},{id:'ASCENSION',name:'ASCENSION',unlocked:ascensionRecord().completed>=1,why:'Complete 1 Legacy Ascension'},{id:'MASTER_MARK',name:'MASTER MARK',unlocked:ascensionRecord().completed>=3,why:'Complete 3 Legacy Ascensions'},{id:'ETERNAL_MARK',name:'ETERNAL MARK',unlocked:ascensionRecord().completed>=10,why:'Complete 10 Legacy Ascensions'}];
- const earned=new Set(identityEarnedLedger());frames.forEach(x=>x.unlocked=!!x.unlocked||earned.has(x.id));emblems.forEach(x=>x.unlocked=!!x.unlocked||earned.has(x.id));
- return{frames,emblems,level,gates,streak,mvp,raids}
-}
-function identityEmblem(c,profile){if(c.emblem==='GATE')return '◇';if(c.emblem==='STREAK')return '✦';if(c.emblem==='APEX')return '▲';if(c.emblem==='SCOUT')return '◈';if(c.emblem==='CROWN')return '♛';if(c.emblem==='LEGACY')return '✧';if(c.emblem==='SOVEREIGN_SIGIL')return '♜';if(c.emblem==='RESOLVE')return 'Ⅰ';if(c.emblem==='CORE')return 'Ⅲ';if(c.emblem==='NEXUS_CORE')return '◆';if(c.emblem==='ASCENSION')return 'A'+ascensionRecord().completed;if(c.emblem==='MASTER_MARK')return 'Ⅲ';if(c.emblem==='ETERNAL_MARK')return '∞';const rank=profile?.rank||'E-Rank';return rank.replace('-Rank','').replace('+','⁺').slice(0,6)}
-async function installIdentityEditor(){
- const root=document.getElementById('osSocialCommand');if(!root||root.querySelector('.identity-editor'))return;const c=getIdentityCard(),shell=root.querySelector('.social-v25');if(!shell)return;let profile=null,legacy=null;try{const u=socialCloudUser(),[net,community]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);profile=net?.profiles?.find(p=>p.user_id===u?.id)||null;const m=community?.members?.find(x=>x.user_id===u?.id),sq=m&&community.squads.find(x=>x.id===m.squad_id);if(sq){const v=await fetchSquadVictories(sq.id);legacy={...(await squadLegacyMap([sq]))[sq.id],victories:v.length,trophies:trophyCollection(v)}}}catch(e){}
- const hunterLegacy=hunterLegacyState(profile,legacy?.trophies,legacy),unlocks=identityUnlockState(profile,legacy,legacy?.trophies,hunterLegacy);checkIdentityUnlockTransitions(profile,legacy,legacy?.trophies,hunterLegacy,{initialize:!localStorage.getItem(identitySeenKey())});const frame=unlocks.frames.find(x=>x.id===c.frame&&x.unlocked)?c.frame:'SYSTEM',emblem=unlocks.emblems.find(x=>x.id===c.emblem&&x.unlocked)?c.emblem:'RANK';if(frame!==c.frame||emblem!==c.emblem)saveIdentityCard({...c,frame,emblem});
- const options=x=>x.map(v=>'<option value="'+v.id+'" '+(!v.unlocked?'disabled':'')+'>'+v.name+(v.unlocked?'':' // LOCKED')+'</option>').join('');
- const s=document.createElement('section');s.className='social-card identity-editor';s.innerHTML='<div class="social-head"><span>IDENTITY // HUNTER CARD</span><b>ACCOMPLISHMENT UNLOCKS</b></div><form id="identityCardForm"><label>CALLSIGN<input id="identityCallsign" maxlength="24" value="'+escapeHtml(c.callsign)+'" placeholder="'+escapeHtml(socialHandle())+'"></label><label>MOTTO<input id="identityMotto" maxlength="64" value="'+escapeHtml(c.motto)+'" placeholder="Optional field motto"></label><label>FRAME<select id="identityFrame">'+options(unlocks.frames)+'</select></label><label>EMBLEM<select id="identityEmblem">'+options(unlocks.emblems)+'</select></label><button>SAVE IDENTITY</button></form><div class="identity-unlocks">'+[...unlocks.frames,...unlocks.emblems].map(x=>'<span class="'+(x.unlocked?'unlocked':'locked')+'"><b>'+x.name+'</b><small>'+escapeHtml(x.why)+'</small></span>').join('')+'</div><small>COSMETIC ONLY // UNLOCKED BY TRAINING // NO COMBAT OR XP BONUS</small>';shell.insertBefore(s,shell.firstChild);s.querySelector('#identityFrame').value=frame;s.querySelector('#identityEmblem').value=emblem;s.querySelector('form').onsubmit=e=>{e.preventDefault();saveIdentityCard({callsign:s.querySelector('#identityCallsign').value.trim(),motto:s.querySelector('#identityMotto').value.trim(),frame:s.querySelector('#identityFrame').value,emblem:s.querySelector('#identityEmblem').value});window.SystemOS?.notify('HUNTER IDENTITY UPDATED','SOCIAL // IDENTITY')}
-}
-function ensureRewardVault(){let e=document.getElementById('systemRewardVault');if(e)return e;e=document.createElement('aside');e.id='systemRewardVault';e.className='reward-vault';e.setAttribute('aria-hidden','true');e.innerHTML='<header><div><small>SYSTEM // COLLECTION ARCHIVE</small><h2>REWARD VAULT</h2></div><button aria-label="Close reward vault">×</button></header><div id="rewardVaultBody"></div>';document.body.appendChild(e);e.querySelector('header button').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')};return e}
-const TROPHY_CLASSES=[
- {id:'DUNGEON',tier:'SQUAD RAID',name:'DUNGEON',mark:'I'},
- {id:'STRIKE',tier:'STRIKE RAID',name:'STRIKE',mark:'II'},
- {id:'VANGUARD',tier:'VANGUARD RAID',name:'VANGUARD',mark:'III'},
- {id:'ELITE',tier:'ELITE RAID',name:'ELITE',mark:'IV'},
- {id:'APEX',tier:'APEX RAID',name:'APEX',mark:'V'}
-];
-function trophyClass(tier){return TROPHY_CLASSES.find(x=>x.tier===tier)||TROPHY_CLASSES[0]}
-function trophyCollection(victories){
- const classes=TROPHY_CLASSES.map(c=>{const rows=victories.filter(v=>v.boss_tier===c.tier);return{...c,count:rows.length,unlocked:rows.length>0,detail:rows.length?rows.length+' RAID CLEAR'+(rows.length===1?'':'S'):'Defeat a '+c.tier+' boss'}});
- const unique=classes.filter(x=>x.unlocked).length,total=victories.length;
- const sets=[{id:'gate_scout',name:'GATE SCOUT',detail:'Collect 2 trophy classes',unlocked:unique>=2},{id:'raid_collector',name:'RAID COLLECTOR',detail:'Collect 4 trophy classes',unlocked:unique>=4},{id:'complete_archive',name:'COMPLETE RAID ARCHIVE',detail:'Collect all 5 trophy classes',unlocked:unique>=5}];
- return{classes,sets,unique,total,complete:unique===TROPHY_CLASSES.length}
-}
-const LEGACY_CONTEXT_KEY='systemLegacyContextV1';
-function cachedLegacyContext(){
- try{const x=JSON.parse(localStorage.getItem(LEGACY_CONTEXT_KEY)||'null');if(x?.hunter)return x}catch(e){}
- const profile=typeof buildSocialIdentity==='function'?buildSocialIdentity():null,hunter=hunterLegacyState(profile,null,null);return{profile,trophies:null,squad:null,hunter,updatedAt:null}
-}
-function saveLegacyContext(profile,trophies,squad){
- const ctx={profile:profile||null,trophies:trophies||null,squad:squad||null,hunter:hunterLegacyState(profile,trophies,squad),updatedAt:new Date().toISOString()};localStorage.setItem(LEGACY_CONTEXT_KEY,JSON.stringify(ctx));return ctx
-}
-async function refreshLegacyContext(){
- const u=socialCloudUser?.(),fallback=typeof buildSocialIdentity==='function'?buildSocialIdentity():null;if(!u?.id)return saveLegacyContext(fallback,null,null);
- try{const [net,community]=await Promise.all([fetchSocialNetwork({sync:false}),fetchCommunityNetwork()]),profile=net?.profiles?.find(x=>x.user_id===u.id)||fallback,m=community?.members?.find(x=>x.user_id===u.id),sq=m&&community?.squads?.find(x=>x.id===m.squad_id),victories=sq?await fetchSquadVictories(sq.id):[],squad=sq?{...squadAchievementState(victories,u.id),victories:victories.length}:null,trophies=trophyCollection(victories),ctx=saveLegacyContext(profile,trophies,squad);renderLegacyMissions?.();return ctx}catch(e){return cachedLegacyContext()}
-}
-function currentHunterLegacy(){return cachedLegacyContext().hunter||hunterLegacyState(typeof buildSocialIdentity==='function'?buildSocialIdentity():null,null,null)}
-function hunterLegacyState(profile,trophies=null,legacy=null){
- const level=Number(profile?.level||state.level||1),streak=Number(profile?.streak||state.currentStreak||0),missions=Number(profile?.missions||state.totalQuestsCompleted||0),gates=Number(profile?.gates||0),classes=Number(trophies?.unique||0),raids=Number(trophies?.total||legacy?.victories||0),mvp=Number(legacy?.mvp||0);
- const score=Math.max(0,(level>=50?(level-49)*20:0)+(missions*3)+(gates*25)+(streak*8)+(classes*250)+(raids*80)+(mvp*150));
- const lvl=Math.floor(Math.sqrt(score/500))+1,base=Math.pow(lvl-1,2)*500,next=Math.pow(lvl,2)*500,progress=next>base?Math.max(0,Math.min(100,((score-base)/(next-base))*100)):100;
- const title=lvl>=10?'SOVEREIGN LEGACY':lvl>=7?'MYTHIC HUNTER':lvl>=5?'VETERAN HUNTER':lvl>=3?'ASCENDANT':'AWAKENED LEGACY';
- return{score,level:lvl,title,progress,next:Math.max(0,next-score),components:{missions,gates,streak,classes,raids,mvp},active:level>=50||classes>=2}
-}
-const LEGACY_ASCENSION_KEY='systemLegacyAscension';
-function legacyAscension(){try{const x=Object.assign({cycle:0,history:[],baseline:null},JSON.parse(localStorage.getItem(LEGACY_ASCENSION_KEY)||'{}'));x.cycle=Math.max(0,Number(x.cycle)||0);x.history=Array.isArray(x.history)?x.history.filter(v=>v&&Number(v.cycle)>=1):[];x.baseline=x.baseline&&typeof x.baseline==='object'?x.baseline:null;return x}catch(e){return{cycle:0,history:[],baseline:null}}}
-function ascensionRecord(){
- const a=legacyAscension(),completed=(a.history||[]).filter(x=>Number(x.cycle)>=1),marks=completed.length;
- const tier=marks>=10?'ETERNAL':marks>=5?'EXALTED':marks>=3?'MASTER':marks>=1?'ASCENDED':'UNASCENDED';
- return{current:Number(a.cycle||0),completed:marks,tier,history:completed,mark:'A'+marks}
-}
-function ascensionRewardProfile(){
- const r=ascensionRecord(),marks=Number(r.completed||0),current=Number(r.current||0);
- const xpBonus=Math.min(25,marks*2),legacyBonus=Math.min(50,marks*5);
- const title=marks>=10?'ETERNAL ASCENDANT':marks>=5?'EXALTED HUNTER':marks>=3?'ASCENSION MASTER':marks>=1?'ASCENDED HUNTER':'UNASCENDED';
- const rewards=[
-  {at:1,name:'ASCENDED HUNTER',detail:'+2% XP bonus • Ascended identity frame',unlocked:marks>=1},
-  {at:3,name:'ASCENSION MASTER',detail:'+6% XP bonus • Master prestige emblem',unlocked:marks>=3},
-  {at:5,name:'EXALTED HUNTER',detail:'+10% XP bonus • Exalted identity frame',unlocked:marks>=5},
-  {at:10,name:'ETERNAL ASCENDANT',detail:'+20% XP bonus • Eternal prestige aura',unlocked:marks>=10}
- ];
- const next=rewards.find(x=>!x.unlocked)||null,progress=next?Math.min(100,Math.round(marks/next.at*100)):100;return{marks,current,title,xpBonus,legacyBonus,rewards,next,progress};
-}
-function ascensionRewardMultiplier(){return 1+(ascensionRewardProfile().xpBonus/100)}
-function ascensionRewardPanel(){
- const p=ascensionRewardProfile(),next=p.next;
- return '<div class="ascension-rewards"><strong>ASCENSION // PRESTIGE</strong><span><small>PRESTIGE TITLE</small><b>'+escapeHtml(p.title)+'</b></span><span><small>ASCENSION MARKS</small><b>'+p.marks+'</b></span><span><small>XP AMPLIFIER</small><b>+'+p.xpBonus+'%</b></span><span><small>LEGACY BONUS</small><b>+'+p.legacyBonus+'%</b></span>'+(next?'<p>NEXT REWARD // A'+next.at+' • '+escapeHtml(next.name)+'<br><small>'+escapeHtml(next.detail)+'</small><i class="ascension-reward-track"><u style="width:'+p.progress+'%"></u></i><small>'+p.marks+' / '+next.at+' ASCENSIONS</small></p>':'<p>MAXIMUM PRESTIGE // ETERNAL REWARD TRACK COMPLETE</p>')+'</div>';
-}
-const ASCENSION_REWARD_SEEN_KEY='systemAscensionRewardSeenV1';
-function checkAscensionPrestigeUnlocks(){
- const unlocked=ascensionPrestigeRewards().filter(x=>x.unlocked),ids=unlocked.map(x=>x.id);let seen=[];try{seen=JSON.parse(localStorage.getItem(ASCENSION_REWARD_SEEN_KEY)||'[]')}catch(e){}
- const fresh=unlocked.filter(x=>!seen.includes(x.id));if(fresh.length){localStorage.setItem(ASCENSION_REWARD_SEEN_KEY,JSON.stringify([...new Set([...seen,...ids])]));fresh.forEach((x,i)=>setTimeout(()=>queueReward({title:'PRESTIGE REWARD UNLOCKED',detail:x.name+' • '+x.detail,amount:0,intensity:'major',source:'ascension'}),i*1200))}return fresh;
-}
-function ascensionPrestigeRewards(){
- const p=ascensionRewardProfile();return p.rewards.map(x=>({id:'prestige_'+x.at,name:x.name,detail:x.detail,unlocked:x.unlocked,kind:'ASCENSION PRESTIGE',mark:'A'+x.at,stat:x.unlocked?'PERMANENT REWARD ACTIVE':'COMPLETE ASCENSION '+x.at}));
-}
-function ascensionHistoryRewards(){
- const rows=ascensionRecord().history||[];return rows.slice().reverse().map(x=>({id:'ascension_history_'+x.cycle,name:'ASCENSION '+x.cycle+' COMPLETE',detail:(x.prestigeTitle||'ASCENDED HUNTER')+' • +'+Number(x.xpBonus||0)+'% XP recorded',unlocked:true,kind:'ASCENSION RECORD',earnedAt:x.completedAt,stat:'A'+x.cycle}));
-}
-function ascensionAchievements(){
- const r=ascensionRecord();return[
-  {id:'asc_awakening',name:'SECOND AWAKENING',detail:'Complete your first Legacy Ascension',unlocked:r.completed>=1,kind:'ASCENSION ACHIEVEMENT',mark:'A1'},
-  {id:'asc_master',name:'CYCLE MASTER',detail:'Complete 3 Legacy Ascensions',unlocked:r.completed>=3,kind:'ASCENSION ACHIEVEMENT',mark:'A3'},
-  {id:'asc_exalted',name:'BEYOND LIMITS',detail:'Complete 5 Legacy Ascensions',unlocked:r.completed>=5,kind:'ASCENSION ACHIEVEMENT',mark:'A5'},
-  {id:'asc_eternal',name:'ETERNAL HUNTER',detail:'Complete 10 Legacy Ascensions',unlocked:r.completed>=10,kind:'ASCENSION ACHIEVEMENT',mark:'A10'}
- ]}
-function ascensionMarks(){
- const r=ascensionRecord();return[
-  {id:'ascension_1',name:'ASCENSION MARK I',detail:'Complete the first Legacy cycle',unlocked:r.completed>=1,kind:'ASCENSION MARK',mark:'Ⅰ'},
-  {id:'ascension_3',name:'ASCENSION MARK III',detail:'Complete 3 Legacy cycles',unlocked:r.completed>=3,kind:'ASCENSION MARK',mark:'Ⅲ'},
-  {id:'ascension_5',name:'ASCENSION MARK V',detail:'Complete 5 Legacy cycles',unlocked:r.completed>=5,kind:'ASCENSION MARK',mark:'Ⅴ'},
-  {id:'ascension_10',name:'ETERNAL MARK',detail:'Complete 10 Legacy cycles',unlocked:r.completed>=10,kind:'ASCENSION MARK',mark:'Ⅹ'}
- ]}
-function ascendLegacy(){
- const artifact=legacyArtifact(),old=legacyAscension();if(!artifact.unlocked)return false;
- const ctx=cachedLegacyContext(),profile=ctx.profile||(typeof buildSocialIdentity==='function'?buildSocialIdentity():{missions:state.totalQuestsCompleted,gates:0,streak:state.currentStreak}),components=ctx.hunter?.components||{},base={missions:Number(profile.missions||components.missions||0),gates:Number(profile.gates||components.gates||0),streak:Number(profile.streak||components.streak||0),raids:Number(components.raids||0),mvp:Number(components.mvp||0)};
- const completedCycle=Number(old.cycle||0),reward=completedCycle>=1?ascensionRewardProfile():null; const next={cycle:completedCycle+1,baseline:base,history:[...(old.history||[]),...(completedCycle>=1?[{cycle:completedCycle,completedAt:new Date().toISOString(),prestigeTitle:reward?.title||'ASCENDED HUNTER',xpBonus:reward?.xpBonus||0}]:[])]};
- localStorage.setItem(LEGACY_ASCENSION_KEY,JSON.stringify(next));localStorage.setItem(LEGACY_TRIAL_KEY,'[]');localStorage.setItem(LEGACY_MISSION_KEY,'[]');
- queueReward({title:'LEGACY ASCENSION',detail:'ASCENSION '+next.cycle+' // NEW LEGACY CYCLE INITIALIZED',amount:0,intensity:'major',source:'achievement'}); const post=ascensionRewardProfile(); checkAscensionPrestigeUnlocks(); if(post.completed!==0||post.marks>0) queueReward({title:'PRESTIGE UPDATED',detail:post.title+' • +'+post.xpBonus+'% XP AMPLIFIER',amount:0,intensity:'major',source:'ascension'});window.SystemOS?.notify('ASCENSION '+next.cycle+' ONLINE','LEGACY // NEW CYCLE');renderLegacyMissions();return true
-}
-const LEGACY_MISSION_KEY='systemLegacyMissionClaims';
-function legacyMissionClaims(){try{return JSON.parse(localStorage.getItem(LEGACY_MISSION_KEY)||'[]')}catch(e){return[]}}
-function ascensionModifiers(){
- const n=Number(legacyAscension().cycle||0),mods=[];
- if(n>=1)mods.push({id:'precision',name:'PRECISION PROTOCOL',detail:'Mission targets scale with Ascension difficulty.',mult:1+.12*Math.min(n,5)});
- if(n>=2)mods.push({id:'consistency',name:'CONSISTENCY LOCK',detail:'Streak directives demand sustained deployment.',streakBonus:7*Math.min(n-1,4)});
- if(n>=3)mods.push({id:'gate',name:'GATE PRESSURE',detail:'Gate and raid directives receive an additional combat quota.',combatBonus:2*Math.min(n-2,4)});
- if(n>=5)mods.push({id:'sovereign',name:'SOVEREIGN CONDITION',detail:'Final Trial requires all directives plus a 30-day active streak.',trialStreak:30});
- return{cycle:n,mods,label:n>=5?'SOVEREIGN':n>=3?'ELITE':n>=1?'HARDENED':'STANDARD'}
-}
-function legacyMissions(x){
- const c=x.components||{},asc=legacyAscension(),n=asc.cycle||0,b=asc.baseline||{},baseScale=1+n*.2,mod=ascensionModifiers(),scale=baseScale*(mod.mods.find(x=>x.id==='precision')?.mult||1),delta=(k)=>n?Math.max(0,Number(c[k]||0)-Number(b[k]||0)):Number(c[k]||0),defs=[
-  {id:'mission_100',chapter:1,name:'CENTURY OF DISCIPLINE',detail:'Complete 100 missions',value:delta('missions'),target:Math.round(100*scale),lp:300},
-  {id:'streak_30',chapter:1,name:'UNBROKEN ROUTINE',detail:'Maintain a 30-day streak',value:n?Number(c.streak||0):delta('streak'),target:Math.round(30*scale)+(mod.mods.find(x=>x.id==='consistency')?.streakBonus||0),lp:350},
-  {id:'gates_10',chapter:2,name:'GATE VETERAN',detail:'Record 10 Gate clears',value:delta('gates'),target:Math.round(10*scale)+(mod.mods.find(x=>x.id==='gate')?.combatBonus||0),lp:400},
-  {id:'raids_10',chapter:2,name:'RAID CAMPAIGN',detail:'Complete 10 Squad raids',value:delta('raids'),target:Math.round(10*scale)+(mod.mods.find(x=>x.id==='gate')?.combatBonus||0),lp:500},
-  {id:'classes_5',chapter:3,name:'ARCHIVE DOMINION',detail:'Collect all 5 Boss trophy classes',value:Number(c.classes||0),target:5,lp:600},
-  {id:'mvp_3',chapter:3,name:'VANGUARD COMMAND',detail:'Earn 3 Squad Raid MVPs',value:delta('mvp'),target:Math.round(3*scale),lp:650}
- ];const claimed=legacyMissionClaims();return defs.map(m=>({...m,complete:Number(m.value)>=m.target,claimed:claimed.includes(m.id),progress:Math.min(100,Number(m.value)/m.target*100)}))
-}
-const LEGACY_TRIAL_KEY='systemLegacyTrials';
-const LEGACY_CHAPTERS=[
- {id:1,name:'AWAKENING',subtitle:'Prove the discipline that created the Hunter.',trial:'TRIAL OF RESOLVE',guardian:'THE IRON SENTINEL'},
- {id:2,name:'GATEFRONT',subtitle:'Carry that discipline into Gate operations.',trial:'TRIAL OF COMMAND',guardian:'THE GATE WARDEN'},
- {id:3,name:'SOVEREIGN PATH',subtitle:'Master the raid archive and lead from the front.',trial:'SOVEREIGN TRIAL',guardian:'THE LEGACY SOVEREIGN'}
-];
-function legacyTrialWins(){try{return JSON.parse(localStorage.getItem(LEGACY_TRIAL_KEY)||'[]')}catch(e){return[]}}
-function legacyTrialRewards(){
- const wins=legacyTrialWins();return[
-  {id:'trial_resolve',name:'RESOLVE SIGIL',detail:'Clear the Trial of Resolve',unlocked:wins.includes(1),kind:'LEGACY RELIC',mark:'Ⅰ'},
-  {id:'trial_command',name:'WARDEN CREST',detail:'Clear the Trial of Command',unlocked:wins.includes(2),kind:'LEGACY RELIC',mark:'Ⅱ'},
-  {id:'trial_sovereign',name:'SOVEREIGN CORE',detail:'Clear the Sovereign Trial',unlocked:wins.includes(3),kind:'LEGACY RELIC',mark:'Ⅲ'}
- ]}
-function legacyArtifact(){
- const relics=legacyTrialRewards(),complete=relics.every(x=>x.unlocked);return{id:'legacy_nexus',name:'LEGACY NEXUS',detail:'Forged from the Resolve Sigil, Warden Crest and Sovereign Core.',unlocked:complete,kind:'LEGACY ARTIFACT',mark:'◆',components:relics.length}
-}
-
-function ascensionTrialProfile(chapter){
- const n=Number(legacyAscension().cycle||0),base=[0,120,180,260][Number(chapter.id)||0]||120,mult=1+Math.min(n,10)*.18,maxHp=Math.round(base*mult);
- const affixes=[];if(n>=1)affixes.push('HARDENED');if(n>=3)affixes.push('ENRAGED');if(n>=5&&chapter.id===3)affixes.push('SOVEREIGN');if(n>=7)affixes.push('RELENTLESS');
- return{maxHp,affixes,rank:n?'ASCENSION '+n:'LEGACY',guardian:n?chapter.guardian+' // A'+n:chapter.guardian}
-}
-const LEGACY_TRIAL_HISTORY_KEY='systemLegacyTrialHistory';
-function legacyTrialHistory(){try{return JSON.parse(localStorage.getItem(LEGACY_TRIAL_HISTORY_KEY)||'[]')}catch(e){return[]}}
-function recordLegacyTrial(c,trial,meta={}){
- const rows=legacyTrialHistory(),asc=legacyAscension(),entry={id:'trial-'+Date.now(),chapter:c.id,trial:c.trial,guardian:trial.guardian,ascension:Number(asc.cycle||0),difficulty:ascensionModifiers().label,maxHp:trial.maxHp,affixes:[...trial.affixes],attempts:Number(meta.attempts||1),totalDamage:Number(meta.totalDamage||trial.maxHp||0),armedAt:meta.armedAt||null,combatSeconds:meta.armedAt?Math.max(0,Math.round((Date.now()-new Date(meta.armedAt).getTime())/1000)):0,clearedAt:new Date().toISOString()};
- rows.push(entry);localStorage.setItem(LEGACY_TRIAL_HISTORY_KEY,JSON.stringify(rows.slice(-100)));return entry
-}
-function legacyTrialRecord(){
- const rows=legacyTrialHistory(),highest=rows.reduce((n,x)=>Math.max(n,Number(x.ascension||0)),0),sovereign=rows.filter(x=>x.chapter===3).length,scored=rows.filter(x=>Number.isFinite(Number(x.performanceScore))),best=scored.reduce((n,x)=>Math.max(n,Number(x.performanceScore||0)),0),withAttempts=rows.filter(x=>Number(x.attempts)>0),fewestAttempts=withAttempts.length?Math.min(...withAttempts.map(x=>Number(x.attempts))):0,withTime=rows.filter(x=>Number(x.combatSeconds)>0),fastestSeconds=withTime.length?Math.min(...withTime.map(x=>Number(x.combatSeconds))):0,avgAttempts=withAttempts.length?withAttempts.reduce((n,x)=>n+Number(x.attempts),0)/withAttempts.length:0;
- return{clears:rows.length,highestAscension:highest,sovereignClears:sovereign,bestPerformance:best,fewestAttempts,fastestSeconds,avgAttempts,recent:rows.slice(-5).reverse()}
-}
-function legacyTrialAchievements(){
- const rows=legacyTrialHistory(),has=p=>rows.some(p);return[
-  {id:'trial_first_blood',name:'GUARDIAN BREAKER',detail:'Clear your first Legacy Trial',unlocked:rows.length>=1,kind:'TRIAL ACHIEVEMENT',mark:'Ⅰ'},
-  {id:'trial_one_shot',name:'ONE-SHOT CLEAR',detail:'Defeat a Guardian in a single workout',unlocked:has(x=>Number(x.attempts)===1),kind:'TRIAL ACHIEVEMENT',mark:'1X'},
-  {id:'trial_perfect',name:'PERFECT EXECUTION',detail:'Clear a Trial with a 95+ performance score and 100% completion',unlocked:has(x=>Number(x.performanceScore)>=95&&Number(x.completion)>=100),kind:'TRIAL ACHIEVEMENT',mark:'S'},
-  {id:'trial_sovereign',name:'SOVEREIGN SLAYER',detail:'Clear the Sovereign Trial',unlocked:has(x=>Number(x.chapter)===3),kind:'TRIAL ACHIEVEMENT',mark:'Ⅲ'},
-  {id:'trial_ascended',name:'ASCENDED GUARDIAN',detail:'Clear a Legacy Trial during Ascension 1 or higher',unlocked:has(x=>Number(x.ascension)>=1),kind:'TRIAL ACHIEVEMENT',mark:'A'},
-  {id:'trial_veteran',name:'TRIAL VETERAN',detail:'Record 10 Legacy Trial clears',unlocked:rows.length>=10,kind:'TRIAL ACHIEVEMENT',mark:'X'}
- ]}
-function formatTrialTime(seconds){const s=Math.max(0,Number(seconds||0));if(!s)return'--';const h=Math.floor(s/3600),m=Math.floor((s%3600)/60);return h?h+'H '+m+'M':Math.max(1,m)+'M'}
-
-function attachPerformanceToTrialEntry(id,performance,seconds,prs){
- const rows=legacyTrialHistory(),x=rows.find(r=>r.id===id);if(!x||!performance)return false;Object.assign(x,{performanceScore:Number(performance.score||0),performanceGrade:performance.grade||'',completion:Number(performance.completion||0),targetRate:Number(performance.targetRate||0),missionMode:performance.mode||'full',durationSeconds:Number(seconds||0),personalRecords:Number(prs?.length||0)});localStorage.setItem(LEGACY_TRIAL_HISTORY_KEY,JSON.stringify(rows.slice(-100)));return true
-}
-function attachPerformanceToLatestTrial(performance,seconds,prs){
- const rows=legacyTrialHistory();if(!rows.length||!performance)return false;const x=rows[rows.length-1],age=Date.now()-new Date(x.clearedAt).getTime();if(age>10*60*1000||x.performanceScore!=null)return false;
- Object.assign(x,{performanceScore:Number(performance.score||0),performanceGrade:performance.grade||'',completion:Number(performance.completion||0),targetRate:Number(performance.targetRate||0),missionMode:performance.mode||'full',durationSeconds:Number(seconds||0),personalRecords:Number(prs?.length||0)});
- localStorage.setItem(LEGACY_TRIAL_HISTORY_KEY,JSON.stringify(rows.slice(-100)));return true
-}
-const LEGACY_ACTIVE_TRIAL_KEY='systemLegacyActiveTrial';
-function activeLegacyTrial(){try{return JSON.parse(localStorage.getItem(LEGACY_ACTIVE_TRIAL_KEY)||'null')}catch(e){return null}}
-function clearActiveLegacyTrial(){localStorage.removeItem(LEGACY_ACTIVE_TRIAL_KEY)}
-function legacyTrialPhase(active){
- if(!active?.trial)return null;const max=Math.max(1,Number(active.trial.maxHp||1)),hp=Math.max(0,max-Number(active.damage||0)),pct=hp/max;
- return pct<=.25?{id:3,name:'FINAL PHASE',mult:1.2,objective:'FINISH STRONG',hint:'High completion and a strong score maximize final damage.'}:pct<=.6?{id:2,name:'BREAK PHASE',mult:1.1,objective:'BREAK THE GUARD',hint:'Consistent mission execution receives increased damage.'}:{id:1,name:'OPENING PHASE',mult:1,objective:'ESTABLISH PRESSURE',hint:'Complete the mission cleanly to strip Guardian HP.'}
-}
-function legacyTrialCombatState(active=activeLegacyTrial()){
- if(!active?.trial)return null;const phase=legacyTrialPhase(active),max=active.trial.maxHp,hp=Math.max(0,max-Number(active.damage||0));return{...phase,hp,maxHp:max,pct:Math.round(hp/max*100),attempts:Number(active.attempts||0),lastScore:Number(active.lastScore||0),combo:Number(active.combo||0),lastAttack:active.lastAttack||'',lastSpecial:active.lastSpecial||''}
-}
-function legacyTrialCombo(active=activeLegacyTrial()){
- const attempts=Number(active?.attempts||0),last=Number(active?.lastScore||0),combo=Number(active?.combo||0);
- return{count:combo,mult:1+Math.min(combo,5)*.05,lastScore:last,attempts}
-}
-function legacyTrialAttackRating(performance,phase,combo){
- const score=Number(performance?.score||0),completion=Number(performance?.completion||0),prs=Number(performance?.personalRecords||0);
- const quality=score>=95&&completion>=100?'PERFECT STRIKE':score>=88?'CRITICAL STRIKE':score>=75?'HEAVY STRIKE':'STANDARD STRIKE';
- return{quality,critical:score>=88,mult:(score>=95?1.12:score>=88?1.07:1)*(combo?.mult||1)*(phase?.mult||1)}
-}
-function legacyTrialSpecial(active,performance){
- const phase=legacyTrialPhase(active),score=Number(performance?.score||0),completion=Number(performance?.completion||0),combo=Number(active?.combo||0),chapter=Number(active?.chapter||0);
- if(phase?.id===3&&score>=90&&completion>=95)return{name:'EXECUTION',mult:1.25,detail:'Final-phase precision bonus'};
- if(chapter===2&&combo>=3&&score>=82)return{name:'GUARD BREAK',mult:1.18,detail:'Command Trial combo breach'};
- if(chapter===3&&score>=88&&completion>=100)return{name:'SOVEREIGN STRIKE',mult:1.22,detail:'Perfect completion against Sovereign guardian'};
- if(score>=92)return{name:'OVERDRIVE',mult:1.12,detail:'Elite mission performance'};
- return{name:'',mult:1,detail:''}
-}
-function resolveActiveLegacyTrial(performance,seconds,prs){
- const active=activeLegacyTrial();if(!active||!performance)return null;
- const required=[0,65,75,85][Number(active.chapter)||0]+Math.min(Number(active.ascension||0),5)*2,trial=active.trial,c={id:active.chapter,trial:active.trialName,guardian:active.guardianBase},previous=Math.max(0,Number(active.damage||0)),phase=legacyTrialPhase(active),combo=legacyTrialCombo(active),attack=legacyTrialAttackRating(performance,phase,combo),special=legacyTrialSpecial(active,performance),missionDamage=Math.max(1,Math.round(trial.maxHp*(Number(performance.score||0)/Math.max(100,required+15))*attack.mult*special.mult)),total=Math.min(trial.maxHp,previous+missionDamage),remaining=Math.max(0,trial.maxHp-total),success=(Number(performance.score||0)>=required&&Number(performance.completion||0)>=90)||remaining===0;
- if(!success){active.damage=total;active.attempts=Number(active.attempts||0)+1;active.combo=Number(performance.score||0)>=70?Math.min(5,Number(active.combo||0)+1):0;active.lastScore=Number(performance.score||0);active.lastAttack=special.name?attack.quality+' // '+special.name:attack.quality;active.lastSpecial=special.name;localStorage.setItem(LEGACY_ACTIVE_TRIAL_KEY,JSON.stringify(active));const hit={rank:trial.rank,boss:trial.guardian,damage:missionDamage,maxHp:trial.maxHp,hp:remaining,critical:attack.critical,attackLabel:special.name||attack.quality,specialLabel:special.detail,defeated:false,encounterLabel:'LEGACY TRIAL',phaseLabel:phase.name+' // '+phase.objective+(special.name?' // '+special.name:''),resultLabel:'GUARDIAN DAMAGED'};window.SystemOS?.notify('TRIAL CONTINUES // '+remaining+' HP REMAINING','LEGACY // SCORE '+performance.score+' / '+required);setTimeout(renderLegacyMissions,350);return{success:false,required,remaining,damage:missionDamage,special:special.name,chapter:c.id,hit}}
- const wins=legacyTrialWins(),finalAttempts=Number(active.attempts||0)+1;localStorage.setItem(LEGACY_TRIAL_KEY,JSON.stringify([...new Set([...wins,c.id])]));const entry=recordLegacyTrial(c,trial,{attempts:finalAttempts,totalDamage:trial.maxHp,armedAt:active.armedAt});attachPerformanceToTrialEntry(entry.id,performance,seconds,prs);clearActiveLegacyTrial();
- const hit={rank:trial.rank,boss:trial.guardian,damage:Math.max(1,trial.maxHp-previous),maxHp:trial.maxHp,hp:0,critical:c.id===3||trial.affixes.includes('ENRAGED')||special.mult>1,attackLabel:special.name||attack.quality,defeated:true,encounterLabel:'LEGACY TRIAL',phaseLabel:'GUARDIAN DEFEATED',resultLabel:'GUARDIAN DEFEATED'};
- queueReward({title:c.id===3?'SOVEREIGN TRIAL CLEARED':'LEGACY TRIAL CLEARED',detail:c.trial+' • '+trial.guardian+' • SCORE '+performance.score+(special.name?' • '+special.name:''),amount:0,intensity:'major',source:'achievement'});
- const relic=legacyTrialRewards().find(r=>r.id==='trial_'+(c.id===1?'resolve':c.id===2?'command':'sovereign'));if(relic)setTimeout(()=>queueReward({title:'LEGACY RELIC ACQUIRED',detail:relic.name+' • '+relic.detail,amount:0,intensity:'major',source:'achievement'}),700);if(c.id===3&&legacyArtifact().unlocked)setTimeout(()=>queueReward({title:'LEGACY ARTIFACT FORGED',detail:'LEGACY NEXUS • CAMPAIGN RELICS SYNCHRONIZED',amount:0,intensity:'major',source:'achievement'}),1500);setTimeout(()=>{renderLegacyMissions();refreshIdentityUnlocks?.()},450);return{success:true,required,attempts:finalAttempts,chapter:c.id,damage:hit.damage,hit}
-}
-function legacyCampaign(ms){
- const wins=legacyTrialWins();let previous=true;const chapters=LEGACY_CHAPTERS.map(c=>{const missions=ms.filter(m=>m.chapter===c.id),directivesComplete=missions.every(m=>m.complete),trialCleared=wins.includes(c.id),unlocked=c.id===1||previous,modifier=ascensionModifiers(),trialCondition=c.id!==3||!modifier.mods.find(x=>x.id==='sovereign')||Number(state.currentStreak||0)>=30,trialUnlocked=unlocked&&directivesComplete&&trialCondition,complete=directivesComplete&&trialCleared,missionProgress=missions.length?missions.reduce((n,m)=>n+m.progress,0)/missions.length:0,progress=Math.min(100,missionProgress*.8+(trialCleared?20:0));previous=previous&&complete;return{...c,missions,directivesComplete,trialCleared,trialUnlocked,trialCondition,complete,unlocked,progress}});const active=chapters.find(c=>c.unlocked&&!c.complete)||chapters[chapters.length-1];return{chapters,active,complete:chapters.every(c=>c.complete)}
-}
-function runLegacyTrial(id){
- const x=currentHunterLegacy(),ms=legacyMissions(x),campaign=legacyCampaign(ms),c=campaign.chapters.find(z=>z.id===Number(id));if(!c?.trialUnlocked||c.trialCleared)return;
- const trial=ascensionTrialProfile(c),asc=legacyAscension();localStorage.setItem(LEGACY_ACTIVE_TRIAL_KEY,JSON.stringify({chapter:c.id,trialName:c.trial,guardianBase:c.guardian,ascension:Number(asc.cycle||0),trial,damage:0,attempts:0,combo:0,armedAt:new Date().toISOString()}));
- queueReward({title:'LEGACY TRIAL ARMED',detail:c.trial+' • COMPLETE A SYSTEM MISSION TO ENGAGE '+trial.guardian,amount:0,intensity:'major',source:'achievement'});window.SystemOS?.notify('TRIAL ARMED // COMPLETE A SYSTEM MISSION','LEGACY // '+c.trial);renderLegacyMissions()
-}
-function renderLegacyMissions(){
-  const panel=document.getElementById('legacyMissions');
-  const list=document.getElementById('legacyMissionList');
-  const meta=document.getElementById('legacyMissionMeta');
-  if(!panel||!list)return;
-
-  const x=currentHunterLegacy();
-  const trialRecord=legacyTrialRecord();
-  const armed=activeLegacyTrial();
-  const combat=legacyTrialCombatState(armed);
-
-  panel.hidden=!x.active;
-  if(!x.active)return;
-
-  const ms=legacyMissions(x);
-  const campaign=legacyCampaign(ms);
-  const asc=legacyAscension();
-  const mods=ascensionModifiers();
-
-  meta.textContent=(asc.cycle?'ASCENSION '+asc.cycle+' // '+mods.label+' // ':'')+
-    (campaign.complete?'CAMPAIGN COMPLETE':'CHAPTER '+campaign.active.id+' // '+campaign.active.name);
-
-  const combatHtml=armed&&combat
-    ? '<section class="legacy-combat-brief"><div><small>ACTIVE LEGACY ENCOUNTER</small><h3>'+escapeHtml(armed.trialName)+'</h3><b>'+escapeHtml(armed.trial.guardian)+'</b></div>'+
-      '<div class="legacy-combat-brief__stats">'+
-      '<span><small>GUARDIAN HP</small><strong>'+combat.hp+' / '+combat.maxHp+'</strong></span>'+
-      '<span><small>PHASE</small><strong>'+escapeHtml(combat.name)+'</strong></span>'+
-      '<span><small>ATTEMPTS</small><strong>'+combat.attempts+'</strong></span>'+
-      '<span><small>LAST SCORE</small><strong>'+(combat.lastScore||'--')+'</strong></span>'+
-      '<span><small>COMBO</small><strong>'+(combat.combo?'x'+combat.combo:'--')+'</strong></span>'+
-      '<span><small>LAST ATTACK</small><strong>'+escapeHtml(combat.lastAttack||'--')+'</strong></span></div>'+
-      '<div class="legacy-combat-brief__hp"><i style="width:'+combat.pct+'%"></i></div>'+
-      '<p><strong>'+escapeHtml(combat.objective)+'</strong> // '+escapeHtml(combat.hint)+'</p></section>'
-    : '';
-
-  const recordHtml=trialRecord.clears
-    ? '<div class="legacy-trial-record">'+
-      '<span><small>TRIAL CLEARS</small><b>'+trialRecord.clears+'</b></span>'+
-      '<span><small>SOVEREIGN CLEARS</small><b>'+trialRecord.sovereignClears+'</b></span>'+
-      '<span><small>HIGHEST ASCENSION</small><b>A'+trialRecord.highestAscension+'</b></span>'+
-      '<span><small>BEST TRIAL SCORE</small><b>'+trialRecord.bestPerformance+'</b></span>'+
-      '<span><small>FEWEST ATTEMPTS</small><b>'+(trialRecord.fewestAttempts||'--')+'</b></span>'+
-      '<span><small>FASTEST CLEAR</small><b>'+formatTrialTime(trialRecord.fastestSeconds)+'</b></span>'+
-      '<span><small>AVG ATTEMPTS</small><b>'+(trialRecord.avgAttempts?trialRecord.avgAttempts.toFixed(1):'--')+'</b></span></div>'
-    : '';
-
-  const modifierHtml=mods.mods.length
-    ? '<div class="ascension-modifiers"><strong>ASCENSION CONDITIONS</strong>'+
-      mods.mods.map(m=>'<span><b>'+escapeHtml(m.name)+'</b><small>'+escapeHtml(m.detail)+'</small></span>').join('')+
-      '</div>'
-    : '';
-
-  const chaptersHtml=campaign.chapters.map(ch=>{
-    const chapterClass=ch.complete?'complete':(ch.unlocked?'active':'locked');
-    const missionsHtml=ch.missions.map(m=>
-      '<article class="'+(m.complete?'complete ':'')+(m.claimed?'claimed':'')+(ch.unlocked?'':' chapter-locked')+'">'+
-      '<div><small>LEGACY DIRECTIVE // +'+m.lp+' LP MILESTONE</small><b>'+escapeHtml(m.name)+'</b><span>'+escapeHtml(m.detail)+'</span></div>'+
-      '<strong>'+Math.min(m.target,Number(m.value||0))+' / '+m.target+'</strong>'+
-      '<div class="legacy-mission-track"><i style="width:'+m.progress+'%"></i></div>'+
-      '<em>'+(m.claimed?'RECORDED':(m.complete?'DIRECTIVE COMPLETE':(ch.unlocked?'IN PROGRESS':'CHAPTER LOCKED')))+'</em></article>'
-    ).join('');
-
-    let trialHtml='';
-    if(ch.trialUnlocked){
-      const profile=ascensionTrialProfile(ch);
-      const isArmed=armed?.chapter===ch.id;
-      const title=ch.trialCleared?'TRIAL CLEARED':(isArmed?'TRIAL ARMED // COMPLETE SYSTEM MISSION':'BEGIN '+escapeHtml(ch.trial));
-      const hpText=isArmed?Math.max(0,profile.maxHp-Number(armed.damage||0))+' / '+profile.maxHp+' HP':profile.maxHp+' HP';
-      const attempts=isArmed&&armed.attempts?' • '+armed.attempts+' ATTEMPT'+(armed.attempts===1?'':'S'):'';
-      const phase=isArmed&&combat?' • '+combat.name:'';
-      const affixes=profile.affixes.length?' • '+profile.affixes.join(' / '):'';
-      trialHtml='<button class="legacy-trial-btn" data-legacy-trial="'+ch.id+'">'+title+
-        '<small>'+escapeHtml(profile.guardian)+' • '+hpText+attempts+phase+affixes+'</small></button>';
-    }else{
-      trialHtml='<div class="legacy-trial-lock">FINAL TRIAL // '+
-        (ch.directivesComplete?'AWAITING PREVIOUS CHAPTER':'COMPLETE ALL CHAPTER DIRECTIVES')+
-        (ch.directivesComplete&&!ch.trialCondition?' // 30-DAY STREAK REQUIRED':'')+'</div>';
-    }
-
-    return '<section class="legacy-chapter '+chapterClass+'"><header><span>CHAPTER '+String(ch.id).padStart(2,'0')+
-      '</span><b>'+escapeHtml(ch.name)+'</b><small>'+escapeHtml(ch.subtitle)+'</small><em>'+Math.round(ch.progress)+
-      '%</em></header><div class="legacy-chapter-track"><i style="width:'+ch.progress+'%"></i></div>'+
-      missionsHtml+trialHtml+'</section>';
-  }).join('');
-
-  const ascendHtml=campaign.complete&&legacyArtifact().unlocked
-    ? '<button class="legacy-ascend-btn" id="legacyAscendBtn">INITIATE LEGACY ASCENSION<small>PRESERVE IDENTITY • TROPHIES • HISTORY // RESET CAMPAIGN ONLY</small></button>'
-    : '';
-
-  list.innerHTML=ascensionRewardPanel()+combatHtml+recordHtml+modifierHtml+
-    '<div class="legacy-campaign-map">'+chaptersHtml+ascendHtml+'</div>';
-
-  const ascendBtn=document.getElementById('legacyAscendBtn');
-  if(ascendBtn)ascendBtn.onclick=()=>{
-    if(confirm('Begin a new Legacy Ascension cycle? Campaign directives and Trials reset. Identity, trophies and training history are preserved.'))ascendLegacy();
-  };
-
-  list.querySelectorAll('[data-legacy-trial]').forEach(b=>{
-    b.disabled=b.textContent.includes('CLEARED');
-    b.onclick=()=>runLegacyTrial(b.dataset.legacyTrial);
-  });
-
-  const claims=legacyMissionClaims();
-  const fresh=ms.filter(m=>m.complete&&!m.claimed);
-  if(fresh.length){
-    localStorage.setItem(LEGACY_MISSION_KEY,JSON.stringify([...claims,...fresh.map(m=>m.id)]));
-    fresh.forEach((m,i)=>setTimeout(()=>queueReward({
-      title:'LEGACY DIRECTIVE COMPLETE',
-      detail:m.name+' • +'+m.lp+' LP MILESTONE',
-      amount:0,
-      intensity:'major',
-      source:'achievement'
-    }),i*900));
-  }
-}
-
-function legacyPanel(x){return '<section class="hunter-legacy '+(x.active?'active':'dormant')+'"><div><small>HUNTER // PERMANENT LEGACY</small><h3>'+escapeHtml(x.title)+'</h3><strong>LEGACY LV '+x.level+'</strong></div><b>'+x.score.toLocaleString()+' LP</b><div class="hunter-legacy__track"><i style="width:'+x.progress+'%"></i></div><span>'+(x.active?x.next.toLocaleString()+' LP TO NEXT LEGACY LEVEL':'REACH S-RANK OR COLLECT 2 TROPHY CLASSES TO AWAKEN')+'</span></section>'}
-function ensureVaultDetail(){let e=document.getElementById('vaultRewardDetail');if(e)return e;e=document.createElement('div');e.id='vaultRewardDetail';e.className='vault-detail';e.setAttribute('aria-hidden','true');e.innerHTML='<div class="vault-detail__panel"><button class="vault-detail__close" aria-label="Close reward detail">×</button><div id="vaultDetailBody"></div></div>';document.body.appendChild(e);e.querySelector('button').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')};return e}
-function openVaultDetail(item){
- const e=ensureVaultDetail(),body=document.getElementById('vaultDetailBody'),earned=item.earnedAt?new Date(item.earnedAt).toLocaleDateString():null;
- body.innerHTML='<small>SYSTEM // REWARD ANALYSIS</small><div class="vault-detail__icon">'+(item.kind==='TROPHY'?'▲':item.unlocked?'◆':'◇')+'</div><h2>'+escapeHtml(item.name)+'</h2><strong>'+escapeHtml(item.kind||'REWARD')+(item.class?' // '+escapeHtml(item.class):'')+' // '+(item.unlocked?'ACQUIRED':'LOCKED')+'</strong><p>'+escapeHtml(item.detail||'No additional data recorded.')+'</p><div class="vault-detail__meta"><span><small>STATUS</small><b>'+(item.unlocked?'UNLOCKED':'REQUIREMENT INCOMPLETE')+'</b></span>'+(earned?'<span><small>DATE RECORDED</small><b>'+earned+'</b></span>':'')+(item.stat?'<span><small>RECORD</small><b>'+escapeHtml(item.stat)+'</b></span>':'')+'</div>'+(item.equip?'<button id="vaultEquipReward">EQUIP '+escapeHtml(item.kind)+'</button>':'');
- e.classList.add('active');e.setAttribute('aria-hidden','false');const b=document.getElementById('vaultEquipReward');if(b)b.onclick=()=>{const c=getIdentityCard();saveIdentityCard({...c,[item.kind==='FRAME'?'frame':'emblem']:item.id});b.textContent='EQUIPPED';window.SystemOS?.notify(item.name+' EQUIPPED','REWARD VAULT')}
-}
-async function openRewardVault(){
- const e=ensureRewardVault(),body=document.getElementById('rewardVaultBody');e.classList.add('active');e.setAttribute('aria-hidden','false');body.innerHTML='<div class="vault-loading">SYSTEM // INDEXING REWARDS</div>';
- let legacy=null,victories=[];try{const u=socialCloudUser(),community=await fetchCommunityNetwork(),m=community?.members?.find(x=>x.user_id===u?.id),sq=m&&community.squads.find(x=>x.id===m.squad_id);if(sq){victories=await fetchSquadVictories(sq.id);legacy={...squadAchievementState(victories,u.id),victories:victories.length}}}catch(e){}
- const relics=legacyTrialRewards(),artifact=legacyArtifact(),ascension=ascensionMarks(),prestige=ascensionPrestigeRewards(),ascensionAchievementsList=ascensionAchievements(),ascensionHistory=ascensionHistoryRewards(),trialAchievements=legacyTrialAchievements(),trialRecord=legacyTrialRecord(),trialHistory=trialRecord.recent.map(x=>({id:x.id,name:x.trial,detail:x.guardian+' • '+x.difficulty+(x.affixes.length?' • '+x.affixes.join(' / '):'')+(x.performanceScore!=null?' • SCORE '+x.performanceScore+' • '+Math.round((x.durationSeconds||0)/60)+' MIN':' • PERFORMANCE PENDING'),unlocked:true,kind:'TRIAL CLEAR',earnedAt:x.clearedAt,stat:'A'+x.ascension+' • '+x.maxHp+' HP'+(x.personalRecords?' • '+x.personalRecords+' PR':'')})),trophies=trophyCollection(victories),hunterLegacy=hunterLegacyState(buildSocialIdentity(),trophies,legacy),identity=identityUnlockState(buildSocialIdentity(),legacy,trophies,hunterLegacy),achievements=ACHIEVEMENTS.map(x=>({id:x.id,name:x.title,detail:x.desc,unlocked:!!state.achievements?.includes?.(x.id)||!!x.requirement(state),kind:'ACHIEVEMENT'})),squad=squadAchievementCatalog(legacy||{unlocked:[]}).map(x=>({...x,kind:'SQUAD LEGACY'})),bosses=victories.slice(0,12).map(x=>({id:x.id,name:x.boss_name,detail:x.boss_tier+' Squad Gate cleared',unlocked:true,kind:'TROPHY',class:trophyClass(x.boss_tier).name,earnedAt:x.cleared_at,stat:Number(x.max_hp||0).toLocaleString()+' HP'}));
- const registry={},key=x=>{const k='v'+Object.keys(registry).length;registry[k]=x;return k},section=(title,items)=>'<section><div class="vault-head"><strong>'+title+'</strong><b>'+items.filter(x=>x.unlocked).length+' / '+items.length+' UNLOCKED</b></div><div class="vault-grid">'+items.map(x=>{const k=key(x);return '<article tabindex="0" data-vault-item="'+k+'" class="'+(x.unlocked?'unlocked':'locked')+'"><span>'+(x.unlocked?'◆':'◇')+'</span><div><b>'+escapeHtml(x.name)+'</b><small>'+escapeHtml(x.detail||x.why||'')+'</small></div><em>'+(x.unlocked?'ACQUIRED':'LOCKED')+'</em></article>'}).join('')+'</div></section>';
- const frames=identity.frames.map(x=>({...x,kind:'FRAME',detail:x.why,equip:x.unlocked})),emblems=identity.emblems.map(x=>({...x,kind:'EMBLEM',detail:x.why,equip:x.unlocked}));
- body.innerHTML=legacyPanel(hunterLegacy)+section('IDENTITY // FRAMES',frames)+section('IDENTITY // EMBLEMS',emblems)+section('HUNTER // ACHIEVEMENTS',achievements)+section('SQUAD // LEGACY',squad)+section('LEGACY // TRIAL RELICS',relics)+section('LEGACY // ARTIFACT',[artifact])+section('LEGACY // ASCENSION MARKS',ascension)+section('ASCENSION // PRESTIGE REWARDS',prestige)+section('ASCENSION // ACHIEVEMENTS',ascensionAchievementsList)+section('ASCENSION // HISTORY',ascensionHistory)+section('LEGACY // TRIAL ACHIEVEMENTS',trialAchievements)+section('LEGACY // TRIAL HISTORY',trialHistory)+section('TROPHY // COLLECTION CLASSES',trophies.classes.map(x=>({...x,kind:'TROPHY CLASS'})))+section('TROPHY // SET REWARDS',trophies.sets.map(x=>({...x,kind:'COLLECTION'})))+'<section><div class="vault-head"><strong>BOSS // TROPHY ARCHIVE</strong><b>'+bosses.length+' RECORDED</b></div><div class="vault-trophies">'+(bosses.length?bosses.map(x=>{const k=key(x);return '<article tabindex="0" data-vault-item="'+k+'"><span>▲</span><div><b>'+escapeHtml(x.name)+'</b><small>'+escapeHtml(x.detail)+' • '+new Date(x.earnedAt).toLocaleDateString()+'</small></div></article>'}).join(''):'<div class="vault-empty">NO SQUAD BOSS TROPHIES RECORDED</div>')+'</div></section>';
- body.querySelectorAll('[data-vault-item]').forEach(n=>{const open=()=>openVaultDetail(registry[n.dataset.vaultItem]);n.onclick=open;n.onkeydown=ev=>{if(ev.key==='Enter'||ev.key===' '){ev.preventDefault();open()}}})
-}
-function installRewardVaultButton(){const root=document.getElementById('osSocialCommand');if(!root||root.querySelector('[data-reward-vault]'))return;const shell=root.querySelector('.social-v25');if(!shell)return;const b=document.createElement('button');b.className='reward-vault-launch';b.dataset.rewardVault='1';b.innerHTML='<span>◆</span><div><b>SYSTEM REWARD VAULT</b><small>FRAMES • EMBLEMS • ACHIEVEMENTS • RAID TROPHIES</small></div><em>OPEN ARCHIVE</em>';b.onclick=openRewardVault;shell.insertBefore(b,shell.firstChild)}
-function ensureSocialDossier(){let e=document.getElementById('socialDossier');if(e)return e;e=document.createElement('aside');e.id='socialDossier';e.className='social-dossier';e.setAttribute('aria-hidden','true');e.innerHTML='<button class="social-dossier__close" aria-label="Close dossier">×</button><div id="socialDossierBody"></div>';document.body.appendChild(e);e.querySelector('button').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')};return e}
-async function openPlayerDossier(userId){
- const e=ensureSocialDossier(),body=document.getElementById('socialDossierBody');body.innerHTML='<div class="social-dossier__loading">SYSTEM // RETRIEVING HUNTER DOSSIER</div>';e.classList.add('active');e.setAttribute('aria-hidden','false');
- try{const [net,community]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);const p=net?.profiles?.find(x=>x.user_id===userId);if(!p)throw Error();const membership=community?.members?.find(m=>m.user_id===userId),squad=membership&&community.squads.find(s=>s.id===membership.squad_id),legacy=squad?(await squadLegacyMap([squad]))[squad.id]:null;
- const victories=squad?await fetchSquadVictories(squad.id):[],hunterLegacy=hunterLegacyState(p,trophyCollection(victories),legacy);body.innerHTML=renderIdentityCard(p,squad,legacy)+legacyPanel(hunterLegacy)+'<small>SYSTEM // HUNTER DOSSIER</small><h2>'+escapeHtml(p.display_name)+'</h2><div class="dossier-rank">'+escapeHtml(p.rank||'E-Rank')+' • LEVEL '+Number(p.level||1)+'</div>'+(p.title?'<div class="dossier-title">'+escapeHtml(p.title)+'</div>':'')+'<div class="dossier-grid"><span><b>'+Number(p.xp||0).toLocaleString()+'</b><small>TOTAL XP</small></span><span><b>'+Number(p.missions||0)+'</b><small>MISSIONS</small></span><span><b>'+Number(p.gates||0)+'</b><small>GATES</small></span><span><b>'+Number(p.best_score||0)+'</b><small>BEST SCORE</small></span><span><b>'+Number(p.critical_hits||0)+'</b><small>CRITICALS</small></span><span><b>'+Number(p.streak||0)+'</b><small>DAY STREAK</small></span></div><div class="dossier-squad"><small>SQUAD AFFILIATION</small><strong>'+(squad?escapeHtml(squad.name):'UNAFFILIATED')+'</strong><span>'+(squad?escapeHtml(legacy?.title||'UNPROVEN UNIT'):'NO ACTIVE UNIT')+'</span></div><div class="dossier-actions"><button data-dossier-duel="'+escapeHtml(p.display_name)+'">ISSUE DUEL</button></div>';
- body.querySelector('[data-dossier-duel]').onclick=()=>{const input=document.getElementById('challengePlayer');if(input){input.value=p.display_name;e.classList.remove('active');input.focus()}}
- }catch(err){body.innerHTML='<div class="social-dossier__loading">DOSSIER UNAVAILABLE</div>'}
-}
-async function openSquadDossier(squadId){
- const e=ensureSocialDossier(),body=document.getElementById('socialDossierBody');body.innerHTML='<div class="social-dossier__loading">SYSTEM // RETRIEVING UNIT DOSSIER</div>';e.classList.add('active');e.setAttribute('aria-hidden','false');
- try{const [net,community]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]),s=community?.squads?.find(x=>x.id===squadId);if(!s)throw Error();const total=squadTotals(s.id,community.members,net.profiles),progress=squadProgress(total),victories=await fetchSquadVictories(s.id),legacy=squadAchievementState(victories,null),roster=squadMemberProfiles(s.id,community.members,net.profiles);
- body.innerHTML='<small>SYSTEM // SQUAD DOSSIER</small><h2>'+escapeHtml(s.name)+'</h2><div class="dossier-title">'+escapeHtml(legacy.title)+'</div><div class="dossier-grid"><span><b>'+progress.level+'</b><small>UNIT LEVEL</small></span><span><b>'+total.members+'</b><small>OPERATIVES</small></span><span><b>'+total.xp.toLocaleString()+'</b><small>TOTAL XP</small></span><span><b>'+victories.length+'</b><small>RAID CLEARS</small></span><span><b>'+legacy.streak+'</b><small>RAID STREAK</small></span><span><b>'+legacy.unlocked.length+'</b><small>ACHIEVEMENTS</small></span></div><div class="dossier-roster">'+roster.map((x,i)=>'<button data-dossier-player="'+x.profile.user_id+'"><b>#'+(i+1)+'</b><span>'+escapeHtml(x.profile.display_name)+'</span><small>LV '+Number(x.profile.level||1)+' • '+escapeHtml(x.profile.rank||'E-Rank')+'</small></button>').join('')+'</div>';
- body.querySelectorAll('[data-dossier-player]').forEach(b=>b.onclick=()=>openPlayerDossier(b.dataset.dossierPlayer))
- }catch(err){body.innerHTML='<div class="social-dossier__loading">DOSSIER UNAVAILABLE</div>'}
-}
-async function squadLegacyMap(squads){const out={};await Promise.all(squads.map(async s=>{const v=await fetchSquadVictories(s.id);out[s.id]={...squadAchievementState(v,null),victories:v.length}}));return out}
-async function renderSquadCommandV29(){
- const root=document.getElementById('osSocialCommand');if(!root)return;await renderCommunityV28();installIdentityEditor();installRewardVaultButton();const u=socialCloudUser();if(!u||!document.body.contains(root))return;const [net,community]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);if(!net||!community)return;const profiles=net.profiles||[],members=community.members||[],squads=community.squads||[],myMemberships=members.filter(m=>m.user_id===u.id),myIds=myMemberships.map(m=>m.squad_id),challenges=await fetchSquadChallenges(myIds);
- const legacy=await squadLegacyMap(squads),ranked=squads.map(s=>({s,...squadTotals(s.id,members,profiles),legacy:legacy[s.id]})).sort((a,b)=>b.xp-a.xp);const shell=root.querySelector('.social-v25');if(!shell)return;const primary=myIds.length?squads.find(s=>s.id===myIds[0]):null,primaryRoster=primary?squadMemberProfiles(primary.id,members,profiles):[],primaryTotals=primary?squadTotals(primary.id,members,profiles):null,primaryProgress=primary?squadProgress(primaryTotals):null;
- if(primary){fetchSquadGateIntel(primary,primaryTotals).then(intel=>{if(!intel||!document.body.contains(shell))return;const g=intel.gate,pct=Math.max(0,Math.min(100,Math.round(Number(g.damage||0)/Math.max(1,Number(g.max_hp||1))*100))),mvp=intel.contributors[0],ach=squadAchievementState(intel.victories,u.id),catalog=squadAchievementCatalog(ach);const card=document.createElement('section');card.className='social-card squad-gate';card.innerHTML='<div class="social-head"><span>SQUAD // WEEKLY GATE</span><b>'+(g.defeated?'CLEARED':'ACTIVE RAID')+'</b></div><div class="squad-gate-head"><div><small>'+escapeHtml(g.boss_tier)+'</small><h3>'+escapeHtml(g.boss_name)+'</h3></div><div><b>'+Math.max(0,Number(g.max_hp)-Number(g.damage)).toLocaleString()+'</b><span>HP REMAINING</span></div></div><div class="squad-gate-hp"><i style="width:'+(100-pct)+'%"></i></div><div class="squad-gate-meta"><span>'+Number(g.damage||0).toLocaleString()+' DAMAGE</span><span>'+pct+'% CLEARED</span><span>'+(mvp?'MVP // '+escapeHtml(mvp.name)+' • '+mvp.damage.toLocaleString():'NO HITS RECORDED')+'</span></div><div class="squad-contributors">'+intel.contributors.slice(0,5).map((x,i)=>'<div><b>#'+(i+1)+'</b><span>'+escapeHtml(x.name)+'</span><em>'+x.damage.toLocaleString()+' DMG</em></div>').join('')+'</div><div class="squad-victory-history"><strong>VICTORY RECORD // '+intel.victories.length+' CLEARS</strong>'+intel.victories.slice(0,3).map(v=>'<span><b>'+escapeHtml(v.boss_name)+'</b><small>'+escapeHtml(v.boss_tier)+' • MVP '+escapeHtml(v.mvp_name||'SQUAD')+'</small></span>').join('')+'</div><div class="squad-achievements"><div class="squad-achievements__head"><span><small>SQUAD // LEGACY</small><strong>'+ach.title+'</strong></span><em>'+ach.streak+' WEEK RAID STREAK • '+ach.mvp+' MVP'+(ach.mvp===1?'':'S')+'</em></div><div class="squad-achievement-grid">'+catalog.map(x=>'<article class="'+(x.unlocked?'unlocked':'locked')+'"><b>'+x.name+'</b><small>'+x.desc+'</small><span>'+(x.unlocked?'UNLOCKED':'LOCKED')+'</span></article>').join('')+'</div></div>';const before=shell.querySelector('.squad-ops');shell.insertBefore(card,before||null)});}
- if(primary)shell.insertAdjacentHTML('beforeend','<section class="social-card squad-identity"><div class="squad-identity__head"><div><small>SQUAD // ACTIVE UNIT</small><h3>'+escapeHtml(primary.name)+'</h3><div class="squad-legacy-badge">'+escapeHtml(legacy[primary.id]?.title||'UNPROVEN UNIT')+'</div><p>'+(primary.owner_id===u.id?'COMMANDER ACCESS':'MEMBER ACCESS')+' • '+primaryRoster.length+' OPERATIVES</p></div><div><b>'+squadTotals(primary.id,members,profiles).xp.toLocaleString()+'</b><span>TOTAL XP</span></div></div><div class="squad-roster">'+primaryRoster.map((x,i)=>'<article><b>#'+(i+1)+'</b><span><strong>'+escapeHtml(x.profile.display_name)+(x.profile.user_id===u.id?' // YOU':'')+'</strong><small>'+escapeHtml(x.member.role||'member').toUpperCase()+' • LV '+Number(x.profile.level||1)+' • '+escapeHtml(x.profile.rank||'E-Rank')+(x.profile.title?' • '+escapeHtml(x.profile.title):'')+'</small></span><em>'+Number(x.profile.xp||0).toLocaleString()+' XP</em></article>').join('')+'</div></section>');
- if(primaryProgress)shell.insertAdjacentHTML('beforeend','<section class="social-card squad-progression"><div class="social-head"><span>SQUAD // PROGRESSION</span><b>LV '+primaryProgress.level+' • '+primaryProgress.title+'</b></div><div class="squad-level-track"><div><strong>UNIT LEVEL '+primaryProgress.level+'</strong><small>'+primaryProgress.xp.toLocaleString()+' XP • NEXT '+primaryProgress.next.toLocaleString()+'</small></div><span><i style="width:'+primaryProgress.pct+'%"></i></span></div><div class="squad-missions">'+primaryProgress.missions.map(x=>'<article class="'+(x.complete?'complete':'')+'"><div><strong>'+x.name+'</strong><small>'+x.detail+'</small></div><b>'+Math.min(x.value,x.target).toLocaleString()+' / '+x.target.toLocaleString()+'</b><span><i style="width:'+x.pct+'%"></i></span></article>').join('')+'</div></section>');
- shell.insertAdjacentHTML('beforeend','<section class="squad-ops social-card"><div class="social-head"><span>SQUAD COMMAND // COMPETITIVE OPERATIONS</span><b>'+ranked.length+' SQUADS</b></div><div class="squad-ops-grid"><div><div class="squad-rankings">'+ranked.map((x,i)=>'<article class="'+(myIds.includes(x.s.id)?'mine':'')+'"><b>#'+(i+1)+'</b><span><strong>'+escapeHtml(x.s.name)+'</strong><small>'+x.members+' MEMBERS • AVG LV '+x.level+' • '+escapeHtml(x.legacy?.title||'UNPROVEN UNIT')+'</small></span><em>'+x.xp.toLocaleString()+' XP</em>'+(community.squads.some(s=>s.owner_id===u.id)&&!myIds.includes(x.s.id)?'<button data-squad-target="'+x.s.id+'" data-squad-name="'+escapeHtml(x.s.name)+'">CHALLENGE</button>':'')+'</article>').join('')+'</div></div><div class="squad-battles"><h4>GROUP OPERATIONS</h4>'+(challenges.length?challenges.map(x=>{const mine=x.challenger_squad_id;const a=squadTotals(x.challenger_squad_id,members,profiles),b=squadTotals(x.opponent_squad_id,members,profiles),metric=x.type==='workouts'?'workouts':'xp',as=Math.max(0,a[metric]-Number(x.challenger_start||0)),bs=Math.max(0,b[metric]-Number(x.opponent_start||0)),incoming=community.squads.some(s=>s.id===x.opponent_squad_id&&s.owner_id===u.id);return '<article class="squad-battle"><strong>'+escapeHtml(x.challenger_name)+' <i>VS</i> '+escapeHtml(x.opponent_name)+'</strong><small>'+escapeHtml(legacy[x.challenger_squad_id]?.title||'UNPROVEN UNIT')+' VS '+escapeHtml(legacy[x.opponent_squad_id]?.title||'UNPROVEN UNIT')+' • '+challengeLabel(x.type)+' • '+x.duration_days+' DAY • '+x.status.toUpperCase()+'</small>'+(x.status==='active'?'<div><b>'+as.toLocaleString()+'</b><span>LIVE</span><b>'+bs.toLocaleString()+'</b></div>':x.status==='pending'&&incoming?'<div class="squad-response"><button data-squad-accept="'+x.id+'">ACCEPT</button><button data-squad-decline="'+x.id+'">DECLINE</button></div>':'')+'</article>'}).join(''):'<div class="social-empty">NO SQUAD OPERATIONS ACTIVE</div>')+'</div></div><form id="squadChallengeForm" class="squad-challenge-form" hidden><strong id="squadTargetLabel">CHALLENGE SQUAD</strong><input id="squadTargetId" type="hidden"><select id="squadChallengeType"><option value="xp">Squad XP</option><option value="workouts">Mission Count</option></select><select id="squadChallengeDays"><option value="1">24 Hours</option><option value="3">3 Days</option><option value="7">7 Days</option></select><button>TRANSMIT CHALLENGE</button></form></section>');
- root.querySelectorAll('[data-squad-target]').forEach(b=>b.onclick=()=>{const f=document.getElementById('squadChallengeForm');f.hidden=false;document.getElementById('squadTargetId').value=b.dataset.squadTarget;document.getElementById('squadTargetLabel').textContent='TARGET // '+b.dataset.squadName.toUpperCase()});document.getElementById('squadChallengeForm').onsubmit=e=>{e.preventDefault();squadChallenge(document.getElementById('squadTargetId').value,document.getElementById('squadChallengeType').value,document.getElementById('squadChallengeDays').value)};root.querySelectorAll('[data-squad-accept]').forEach(b=>b.onclick=()=>respondSquadChallenge(b.dataset.squadAccept,true));root.querySelectorAll('[data-squad-decline]').forEach(b=>b.onclick=()=>respondSquadChallenge(b.dataset.squadDecline,false));
-}
-renderSocialCommand=renderSquadCommandV29;
-
-
-/* ===== V30 SYSTEM ALERT CENTER ===== */
-const SYSTEM_NOTIFICATION_TABLE='system_notifications';
-function localAlerts(){try{return JSON.parse(localStorage.getItem('systemAlertsV30')||'[]')}catch(e){return[]}}
-function saveLocalAlerts(a){localStorage.setItem('systemAlertsV30',JSON.stringify(a.slice(0,100)))}
-async function systemAlert(type,title,body='',sourceId='',module='social',targetUserId=null){
- const u=socialCloudUser(),id=targetUserId||u?.id;if(id){try{await cloudRequest('/rest/v1/'+SYSTEM_NOTIFICATION_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({user_id:id,type,title,body,source_id:String(sourceId||''),action_module:module})});return}catch(e){}}
- const a=localAlerts();a.unshift({id:'local-'+Date.now(),type,title,body,source_id:sourceId,action_module:module,created_at:new Date().toISOString(),read_at:null});saveLocalAlerts(a)
-}
-async function fetchSystemAlerts(){const u=socialCloudUser();if(!u)return localAlerts();try{return await cloudRequest('/rest/v1/'+SYSTEM_NOTIFICATION_TABLE+'?user_id=eq.'+encodeURIComponent(u.id)+'&select=*&order=created_at.desc&limit=100')}catch(e){return localAlerts()}}
-async function markAlert(id,all=false){const u=socialCloudUser(),now=new Date().toISOString();if(u&&!String(id).startsWith('local-')){await cloudRequest('/rest/v1/'+SYSTEM_NOTIFICATION_TABLE+(all?'?user_id=eq.'+encodeURIComponent(u.id)+'&read_at=is.null':'?id=eq.'+encodeURIComponent(id)),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({read_at:now})})}else{const a=localAlerts().map(x=>(all||x.id===id)?{...x,read_at:now}:x);saveLocalAlerts(a)}renderAlertCenter()}
-function ensureAlertCenter(){if(document.getElementById('systemAlertCenter'))return;const e=document.createElement('aside');e.id='systemAlertCenter';e.className='system-alert-center';e.setAttribute('aria-hidden','true');e.innerHTML='<header><div><small>SYSTEM // COMMUNICATIONS</small><h2>ALERT CENTER</h2></div><button id="alertCenterClose">×</button></header><div class="alert-tools"><span id="alertCount">0 UNREAD</span><button id="alertReadAll">MARK ALL READ</button></div><div id="alertFeed" class="alert-feed"></div>';document.body.appendChild(e);document.getElementById('alertCenterClose').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')};document.getElementById('alertReadAll').onclick=()=>markAlert('',true)}
-async function renderAlertCenter(){ensureAlertCenter();const a=await fetchSystemAlerts(),feed=document.getElementById('alertFeed'),unread=a.filter(x=>!x.read_at).length;document.getElementById('alertCount').textContent=unread+' UNREAD';document.querySelectorAll('.system-alert-badge').forEach(b=>{b.textContent=unread;b.hidden=!unread});feed.innerHTML=a.length?a.map(x=>'<article class="system-alert '+(!x.read_at?'unread':'')+'" data-alert-id="'+x.id+'" data-alert-module="'+escapeHtml(x.action_module||'social')+'"><i>'+({friend:'◎',duel:'⚔',squad:'◆',boss:'⚠',progress:'★',system:'◇'}[x.type]||'◇')+'</i><span><strong>'+escapeHtml(x.title)+'</strong><p>'+escapeHtml(x.body||'')+'</p><small>'+new Date(x.created_at).toLocaleString()+'</small></span><b>›</b></article>').join(''):'<div class="social-empty">NO SYSTEM ALERTS</div>';feed.querySelectorAll('[data-alert-id]').forEach(x=>x.onclick=async()=>{await markAlert(x.dataset.alertId);document.getElementById('systemAlertCenter').classList.remove('active');window.SystemOS?.open(x.dataset.alertModule||'social')})}
-function openAlertCenter(){ensureAlertCenter();const e=document.getElementById('systemAlertCenter');e.classList.add('active');e.setAttribute('aria-hidden','false');renderAlertCenter().catch(err=>{console.error('Alert Center failed to load',err);document.getElementById('alertFeed').innerHTML='<div class="social-empty">ALERTS UNAVAILABLE // TRY AGAIN</div>'})}
-function installAlertButton(){ensureAlertCenter();const deck=document.getElementById('commandDeck'),dock=deck?.querySelector('.os-dock');if(!dock||document.getElementById('systemAlertBtn'))return;const b=document.createElement('button');b.id='systemAlertBtn';b.className='system-alert-btn';b.innerHTML='<b>◉</b><span>ALERTS</span><i class="system-alert-badge" hidden>0</i>';b.onclick=openAlertCenter;dock.appendChild(b);renderAlertCenter()}
-document.addEventListener('DOMContentLoaded',()=>{installAlertButton();setInterval(()=>{if(socialCloudUser())renderAlertCenter()},60000)});
-const _v30Friend=sendFriendRequest;sendFriendRequest=async function(userId,name){await _v30Friend(userId,name);await systemAlert('friend','FRIEND LINK REQUEST',socialHandle()+' wants to connect.',userId,'social',userId)};
-const _v30Challenge=squadChallenge;squadChallenge=async function(id,type,days){const c=await fetchCommunityNetwork(),target=c?.squads.find(s=>s.id===id),owner=target?.owner_id;await _v30Challenge(id,type,days);if(owner)await systemAlert('squad','SQUAD CHALLENGE INCOMING',socialHandle()+' issued a '+challengeLabel(type)+' squad challenge.',id,'social',owner)};
-const _v30Duel=respondToChallenge;respondToChallenge=async function(id,accept){const rows=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(id)+'&select=*'),x=rows[0];await _v30Duel(id,accept);if(x&&accept)await systemAlert('duel','DUEL ACCEPTED',socialHandle()+' accepted your challenge.',id,'social',x.challenger_id)};
-
-
-/* ===== V31 HARDENING // INTEGRATION FIXES ===== */
-// Keep OS taskbar synchronized even when the module's native close control is used.
-document.addEventListener('DOMContentLoaded',()=>{const close=document.getElementById('osModuleClose'),task=document.getElementById('osTaskCurrent');if(close&&task)close.addEventListener('click',()=>{task.innerHTML='<b>◇</b><span>CENTRAL COMMAND</span>';task.closest('.os-taskbar')?.classList.remove('has-task')})});
-
-// Daily quests are not training days. Weekly training-day credit comes from completed workouts.
-function creditWeeklyTrainingDay(){
- const g=state.weeklyGoals.find(x=>x.id==='w_days');if(!g||g.completed)return;
- const key='weeklyTrainingCredit:'+getTodayStr();if(localStorage.getItem(key))return;
- localStorage.setItem(key,'1');g.progress++;if(g.progress>=g.target){g.completed=true;state.weeklyCompleted++;addSystemMessage('Weekly Objective Complete: '+g.title+' — +'+g.xpReward+' XP','achievement');addXp(g.xpReward,'weekly');checkAllWeeklyComplete()}
-}
-function creditWeeklyWorkout(){
- const g=state.weeklyGoals.find(x=>x.id==='w_workouts');if(!g||g.completed)return;
- const key='weeklyWorkoutCredit:'+systemMissionKey();if(localStorage.getItem(key))return;
- localStorage.setItem(key,'1');g.progress++;if(g.progress>=g.target){g.completed=true;state.weeklyCompleted++;addSystemMessage('Weekly Objective Complete: '+g.title+' — +'+g.xpReward+' XP','achievement');addXp(g.xpReward,'weekly');checkAllWeeklyComplete()}
-}
-const _v31FinishWorkout=finishWorkout;finishWorkout=function(){creditWeeklyTrainingDay();creditWeeklyWorkout();return _v31FinishWorkout()};
-
-// Mission briefing remains attached after Mission Control rerenders.
-const _v31RenderMission=renderSystemMission;renderSystemMission=function(){_v31RenderMission();const b=document.getElementById('start-mission-btn');if(b&&!b.disabled)initMissionControlV22()};
-
-// Cross-user notifications are emitted by Supabase triggers. Avoid duplicate/failed client inserts.
-sendFriendRequest=async function(userId,name){const u=socialCloudUser();if(!u?.id||userId===u.id)return;try{await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({requester_id:u.id,addressee_id:userId,requester_name:socialHandle(),addressee_name:name,status:'pending'})});window.SystemOS?.notify?.('FRIEND REQUEST SENT // '+name.toUpperCase(),'SOCIAL // FRIEND LINK');renderSocialCommand()}catch(e){window.SystemOS?.notify?.((e.message||'FRIEND LINK FAILED').toUpperCase(),'SOCIAL // NETWORK')}}
-const _v31RespondDuel=respondToChallenge;respondToChallenge=async function(id,accept){return _v31RespondDuel(id,accept)};
-const _v31SquadChallenge=squadChallenge;squadChallenge=async function(id,type,days){return _v31SquadChallenge(id,type,days)};
-
-// Diagnostic self-check for the major runtime integrations.
-window.SystemDiagnostics=async function(){
- const checks=[
-  ['OS',!!window.SystemOS?.open],
-  ['Mission Control',!!document.getElementById('start-mission-btn')],
-  ['Workout HUD',!!document.getElementById('workoutMode')],
-  ['Progression',!!window.SystemProgression?.show],
-  ['Alert Center',!!document.getElementById('systemAlertCenter')],
-  ['Cloud Session',!!socialCloudUser()]
- ];let cloud=false;try{if(socialCloudUser()){await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id&limit=1');cloud=true}}catch(e){}
- checks.push(['Social Cloud',cloud]);return checks.map(([name,ok])=>({name,ok}))
-};
-
-
-/* ===== V33 SESSION + SOCIAL LIFECYCLE HARDENING ===== */
-let cloudRefreshPromise=null;
-function cloudSessionExpired(s=getCloudSession()){if(!s?.access_token)return true;const exp=Number(s.expires_at||0);if(exp)return Date.now()>=exp*1000-60000;try{const p=JSON.parse(atob(s.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Date.now()>=Number(p.exp||0)*1000-60000}catch(e){return false}}
-async function refreshCloudSession(){
- const s=getCloudSession();if(!s?.refresh_token)throw new Error('Session expired. Sign in again.');
- if(cloudRefreshPromise)return cloudRefreshPromise;
- cloudRefreshPromise=(async()=>{const r=await fetch(SYSTEM_CLOUD.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SYSTEM_CLOUD.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:s.refresh_token})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.msg||data.message||data.error_description||'Session expired. Sign in again.');localStorage.setItem(CLOUD_SESSION_KEY,JSON.stringify(data));return data})().finally(()=>cloudRefreshPromise=null);return cloudRefreshPromise
-}
-const _v33CloudRequest=cloudRequest;
-cloudRequest=async function(path,opts={}){
- const authPath=path.startsWith('/auth/v1/');
- let s=getCloudSession();if(!authPath&&s?.refresh_token&&cloudSessionExpired(s)){try{await refreshCloudSession()}catch(e){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();throw e}}
- try{return await _v33CloudRequest(path,opts)}catch(e){
-  const msg=String(e.message||'');s=getCloudSession();
-  if(!authPath&&s?.refresh_token&&/jwt|token|expired|unauthorized|401/i.test(msg)){try{await refreshCloudSession();return await _v33CloudRequest(path,opts)}catch(x){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();throw x}}
-  throw e
- }
-};
-async function validateCloudSession(){
- const s=getCloudSession();if(!s?.access_token)return false;
- try{if(cloudSessionExpired(s)&&s.refresh_token)await refreshCloudSession();await _v33CloudRequest('/auth/v1/user');return true}catch(e){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();renderCloudAccount();return false}
-}
-document.addEventListener('DOMContentLoaded',()=>{if(getCloudSession()?.access_token)validateCloudSession()});
-
-// Canonical multiplayer "missions" metric is completed workout sessions, not daily quest cards.
-function socialMissionCount(){return workoutHistory().length}
-const _v33SyncSocialProfile=syncSocialProfile;
-syncSocialProfile=async function(){
- const u=socialCloudUser();if(!u?.id)return false;const rank=getRank(state.level);
- await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:u.id,display_name:socialHandle(),xp:socialScore(),level:state.level,rank:rank.name,missions:socialMissionCount(),streak:Number(state.currentStreak||0),updated_at:new Date().toISOString()})});return true
-};
-
-// Keep cloud competitive stats fresh immediately after a workout instead of waiting for Social Command to open.
-const _v33FinishWorkout=finishWorkout;
-finishWorkout=function(){const result=_v33FinishWorkout();if(socialCloudUser()?.id)setTimeout(()=>syncSocialProfile().catch(()=>{}),250);return result};
-
-
-/* ===== V34 SOCIAL LIFECYCLE INTEGRITY ===== */
-function pairMatch(a,b,u,v){return (a===u&&b===v)||(a===v&&b===u)}
-async function existingFriendLink(otherId){
- const u=socialCloudUser();if(!u?.id)return null;const rows=await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE+'?or=(and(requester_id.eq.'+encodeURIComponent(u.id)+',addressee_id.eq.'+encodeURIComponent(otherId)+'),and(requester_id.eq.'+encodeURIComponent(otherId)+',addressee_id.eq.'+encodeURIComponent(u.id)+'))&select=*&order=created_at.desc&limit=1');return rows[0]||null
-}
-sendFriendRequest=async function(userId,name){
- const u=socialCloudUser();if(!u?.id||userId===u.id)return;
- try{const old=await existingFriendLink(userId);if(old&&['pending','accepted'].includes(old.status)){window.SystemOS?.notify(old.status==='accepted'?'FRIEND LINK ALREADY ACTIVE':'FRIEND REQUEST ALREADY PENDING','SOCIAL // FRIEND LINK');return}
- await cloudRequest('/rest/v1/'+SOCIAL_FRIEND_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({requester_id:u.id,addressee_id:userId,requester_name:socialHandle(),addressee_name:name,status:'pending'})});window.SystemOS?.notify('FRIEND REQUEST SENT // '+name.toUpperCase(),'SOCIAL // FRIEND LINK');renderSocialCommand()}catch(e){window.SystemOS?.notify((e.message||'FRIEND LINK FAILED').toUpperCase(),'SOCIAL // NETWORK')}
-};
-const _v34RenderSocialCloud=renderSocialCloud;
-renderSocialCloud=async function(){
- await _v34RenderSocialCloud();const u=socialCloudUser(),form=document.getElementById('challengeForm');if(!u?.id||!form)return;
- form.onsubmit=async e=>{e.preventDefault();const name=document.getElementById('challengePlayer').value.trim();if(!name)return;try{
-  const matches=await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?display_name=ilike.'+encodeURIComponent(name)+'&select=user_id,display_name&limit=1');if(!matches.length)throw new Error('Player not found on the network.');const opp=matches[0];if(opp.user_id===u.id)throw new Error('You cannot challenge yourself.');
-  const pending=await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE+'?or=(and(challenger_id.eq.'+encodeURIComponent(u.id)+',opponent_id.eq.'+encodeURIComponent(opp.user_id)+'),and(challenger_id.eq.'+encodeURIComponent(opp.user_id)+',opponent_id.eq.'+encodeURIComponent(u.id)+'))&status=in.(pending,active)&select=id,status&limit=1');if(pending.length)throw new Error('A duel with this player is already pending or active.');
-  const type=document.getElementById('challengeType').value,days=Number(document.getElementById('challengeLength').value);await syncSocialProfile();await cloudRequest('/rest/v1/'+SOCIAL_CHALLENGE_TABLE,{method:'POST',headers:{Prefer:'return=minimal'},body:JSON.stringify({challenger_id:u.id,opponent_id:opp.user_id,challenger_name:socialHandle(),opponent_name:opp.display_name,type,duration_days:days,status:'pending',challenger_start:challengeMetric(type),opponent_start:0,created_at:new Date().toISOString()})});window.SystemOS?.notify('CHALLENGE TRANSMITTED // '+opp.display_name.toUpperCase(),'SOCIAL // NETWORK');renderSocialCommand()
- }catch(err){window.SystemOS?.notify(String(err.message||'DUEL FAILED').toUpperCase(),'SOCIAL // NETWORK ERROR')}}
-};
-async function finalizeExpiredDuels(challenges){
- const expired=(challenges||[]).filter(x=>x.status==='active'&&Date.now()>=duelEndsAt(x));if(!expired.length)return false;
- await Promise.all(expired.map(x=>patchChallenge(x.id,{status:'completed'}).catch(()=>null)));return true
-}
-const _v34FetchSocial=fetchSocialNetwork;
-fetchSocialNetwork=async function(){let net=await _v34FetchSocial();if(net&&await finalizeExpiredDuels(net.challenges)){net=await _v34FetchSocial()}return net};
-
-const _v34JoinSquad=joinSquad;
-joinSquad=async function(id){const u=socialCloudUser();if(!u?.id)return;const c=await fetchCommunityNetwork();if(c?.members.some(m=>m.squad_id===id&&m.user_id===u.id)){window.SystemOS?.notify('SQUAD LINK ALREADY ACTIVE','SOCIAL // SQUAD');return}return _v34JoinSquad(id)};
-const _v34SquadChallenge=squadChallenge;
-squadChallenge=async function(id,type,days){const u=socialCloudUser(),c=await fetchCommunityNetwork();if(!u||!c)return;const mine=c.squads.find(s=>s.owner_id===u.id);if(!mine||mine.id===id)return;const existing=await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?or=(and(challenger_squad_id.eq.'+encodeURIComponent(mine.id)+',opponent_squad_id.eq.'+encodeURIComponent(id)+'),and(challenger_squad_id.eq.'+encodeURIComponent(id)+',opponent_squad_id.eq.'+encodeURIComponent(mine.id)+'))&status=in.(pending,active)&select=id&limit=1');if(existing.length){window.SystemOS?.notify('SQUAD OPERATION ALREADY PENDING OR ACTIVE','SOCIAL // SQUAD OPS');return}return _v34SquadChallenge(id,type,days)};
-
-
-/* ===== V35 COMPETITIVE SCORING + FINAL RESULTS ===== */
-challengeMetric=function(type){if(type==='workouts')return socialMissionCount();if(type==='streak')return Number(state?.currentStreak||0);return socialScore()};
-
-async function finalizeExpiredDuels(challenges){
- const expired=(challenges||[]).filter(x=>x.status==='active'&&Date.now()>=duelEndsAt(x));if(!expired.length)return false;
- const profiles=await cloudRequest('/rest/v1/'+SOCIAL_CLOUD_TABLE+'?select=user_id,xp,missions,streak');
- for(const x of expired){const a=profiles.find(p=>p.user_id===x.challenger_id)||{},b=profiles.find(p=>p.user_id===x.opponent_id)||{},as=duelDelta(duelProfileMetric(a,x.type),x.challenger_start),bs=duelDelta(duelProfileMetric(b,x.type),x.opponent_start),result=as===bs?'draw':as>bs?'challenger':'opponent';await patchChallenge(x.id,{status:'completed',challenger_final:as,opponent_final:bs,result,completed_at:new Date().toISOString()})}
- return true
-}
-const _v35LiveDuelCard=liveDuelCard;
-liveDuelCard=function(x,profiles,u){
- if(x.status!=='completed'||x.challenger_final==null||x.opponent_final==null)return _v35LiveDuelCard(x,profiles,u);
- const mine=x.challenger_id===u.id,otherName=mine?x.opponent_name:x.challenger_name,myScore=Number(mine?x.challenger_final:x.opponent_final),theirScore=Number(mine?x.opponent_final:x.challenger_final),total=Math.max(1,myScore+theirScore),pct=Math.round(myScore/total*100),result=myScore===theirScore?'DRAW':myScore>theirScore?'VICTORY':'DEFEAT';
- return '<article class="challenge-item duel-item live-duel duel-finished"><div class="duel-versus"><span>YOU</span><b>VS</b><span>'+escapeHtml(otherName)+'</span></div><div class="duel-meta"><strong>'+challengeLabel(x.type)+' // '+result+'</strong><small>FINAL SCORE // LOCKED</small></div><div class="duel-score"><b>'+myScore.toLocaleString()+'</b><div><i style="width:'+pct+'%"></i></div><b>'+theirScore.toLocaleString()+'</b></div></article>'
-};
-async function finalizeExpiredSquadChallenges(challenges,members,profiles){
- const now=Date.now(),expired=(challenges||[]).filter(x=>x.status==='active'&&now>=new Date(x.accepted_at||x.created_at).getTime()+(Number(x.duration_days)||1)*86400000);if(!expired.length)return false;
- for(const x of expired){const a=squadTotals(x.challenger_squad_id,members,profiles),b=squadTotals(x.opponent_squad_id,members,profiles),metric=x.type==='workouts'?'workouts':'xp',as=Math.max(0,a[metric]-Number(x.challenger_start||0)),bs=Math.max(0,b[metric]-Number(x.opponent_start||0)),result=as===bs?'draw':as>bs?'challenger':'opponent';await cloudRequest('/rest/v1/'+SOCIAL_SQUAD_CHALLENGE_TABLE+'?id=eq.'+encodeURIComponent(x.id),{method:'PATCH',headers:{Prefer:'return=minimal'},body:JSON.stringify({status:'completed',challenger_final:as,opponent_final:bs,result,completed_at:new Date().toISOString()})})}
- return true
-}
-const _v35FetchSquad=fetchSquadChallenges;
-fetchSquadChallenges=async function(ids){let rows=await _v35FetchSquad(ids);if(!rows.length)return rows;try{const [net,c]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);if(net&&c&&await finalizeExpiredSquadChallenges(rows,c.members,net.profiles))rows=await _v35FetchSquad(ids)}catch(e){}return rows};
-
-// Result alerts are local/account-specific and emitted once when completed results are observed.
-function competitiveResultAlerts(duels=[],squads=[]){
- const u=socialCloudUser();if(!u?.id)return;const seenKey='competitiveResultsSeen:'+u.id,seen=new Set(JSON.parse(localStorage.getItem(seenKey)||'[]'));
- for(const x of duels.filter(x=>x.status==='completed'&&!seen.has('d:'+x.id))){const mine=x.challenger_id===u.id,win=x.result==='draw'?'DRAW':(x.result==='challenger')===mine?'VICTORY':'DEFEAT';systemAlert('duel','DUEL '+win,challengeLabel(x.type)+' // FINAL '+Number(mine?x.challenger_final:x.opponent_final||0)+' - '+Number(mine?x.opponent_final:x.challenger_final||0),x.id,'social');seen.add('d:'+x.id)}
- for(const x of squads.filter(x=>x.status==='completed'&&!seen.has('s:'+x.id))){systemAlert('squad','SQUAD OPERATION COMPLETE',escapeHtml(x.challenger_name)+' '+Number(x.challenger_final||0)+' - '+Number(x.opponent_final||0)+' '+escapeHtml(x.opponent_name),x.id,'social');seen.add('s:'+x.id)}
- localStorage.setItem(seenKey,JSON.stringify([...seen].slice(-200)))
-}
-
-
-/* ===== V36 COMBAT RECORD // COMPETITIVE HISTORY ===== */
-function combatDate(x){const d=x.completed_at||x.created_at;try{return new Date(d).toLocaleDateString(undefined,{month:'short',day:'numeric',year:'numeric'})}catch(e){return 'ARCHIVED'}}
-function duelHistoryRow(x,u){
- const mine=x.challenger_id===u.id,other=mine?x.opponent_name:x.challenger_name,my=Number(mine?x.challenger_final:x.opponent_final)||0,their=Number(mine?x.opponent_final:x.challenger_final)||0,result=my===their?'DRAW':my>their?'VICTORY':'DEFEAT';
- return '<article class="combat-record-row '+result.toLowerCase()+'"><i>⚔</i><span><strong>'+escapeHtml(other)+'</strong><small>'+challengeLabel(x.type)+' • '+combatDate(x)+'</small></span><b>'+result+'</b><em>'+my.toLocaleString()+' - '+their.toLocaleString()+'</em></article>'
-}
-function squadHistoryRow(x,myIds){
- const mineA=myIds.includes(x.challenger_squad_id),mineB=myIds.includes(x.opponent_squad_id),my=Number(mineA?x.challenger_final:x.opponent_final)||0,their=Number(mineA?x.opponent_final:x.challenger_final)||0,other=mineA?x.opponent_name:x.challenger_name,result=my===their?'DRAW':my>their?'VICTORY':'DEFEAT';
- return '<article class="combat-record-row squad '+result.toLowerCase()+'"><i>◆</i><span><strong>'+escapeHtml(other)+'</strong><small>SQUAD '+challengeLabel(x.type)+' • '+combatDate(x)+'</small></span><b>'+result+'</b><em>'+my.toLocaleString()+' - '+their.toLocaleString()+'</em></article>'
-}
-async function renderCombatRecordV36(){
- const root=document.getElementById('osSocialCommand'),u=socialCloudUser();if(!root||!u?.id)return;
- const [net,c]=await Promise.all([fetchSocialNetwork(),fetchCommunityNetwork()]);if(!net||!c)return;
- const myIds=c.members.filter(m=>m.user_id===u.id).map(m=>m.squad_id),squadRows=await fetchSquadChallenges(myIds),duels=(net.challenges||[]).filter(x=>x.status==='completed'&&x.challenger_final!=null&&x.opponent_final!=null),squads=(squadRows||[]).filter(x=>x.status==='completed'&&x.challenger_final!=null&&x.opponent_final!=null);
- competitiveResultAlerts(duels,squads);
- const old=root.querySelector('.combat-record');if(old)old.remove();
- const shell=root.querySelector('.social-v25');if(!shell)return;
- const all=[...duels.map(x=>({kind:'duel',x,t:new Date(x.completed_at||x.created_at).getTime()})),...squads.map(x=>({kind:'squad',x,t:new Date(x.completed_at||x.created_at).getTime()}))].sort((a,b)=>b.t-a.t);
- const wins=all.filter(r=>{if(r.kind==='duel'){const mine=r.x.challenger_id===u.id,a=Number(mine?r.x.challenger_final:r.x.opponent_final),b=Number(mine?r.x.opponent_final:r.x.challenger_final);return a>b}const mine=myIds.includes(r.x.challenger_squad_id),a=Number(mine?r.x.challenger_final:r.x.opponent_final),b=Number(mine?r.x.opponent_final:r.x.challenger_final);return a>b}).length;
- shell.insertAdjacentHTML('beforeend','<section class="combat-record social-card"><div class="social-head"><span>COMBAT RECORD // ARCHIVE</span><b>'+wins+' W // '+(all.length-wins)+' OTHER</b></div><div class="combat-record-tabs"><button class="active" data-record-filter="all">ALL</button><button data-record-filter="duel">DUELS</button><button data-record-filter="squad">SQUAD OPS</button></div><div id="combatRecordFeed" class="combat-record-feed">'+(all.length?all.map(r=>'<div data-record-kind="'+r.kind+'">'+(r.kind==='duel'?duelHistoryRow(r.x,u):squadHistoryRow(r.x,myIds))+'</div>').join(''):'<div class="social-empty">NO COMPLETED OPERATIONS // RECORD EMPTY</div>')+'</div></section>');
- root.querySelectorAll('[data-record-filter]').forEach(b=>b.onclick=()=>{root.querySelectorAll('[data-record-filter]').forEach(x=>x.classList.toggle('active',x===b));root.querySelectorAll('[data-record-kind]').forEach(x=>x.hidden=b.dataset.recordFilter!=='all'&&x.dataset.recordKind!==b.dataset.recordFilter)})
-}
-const _v36RenderSocial=renderSocialCommand;
-renderSocialCommand=async function(){await _v36RenderSocial();await renderCombatRecordV36()};
-
-
-/* ===== V37 HEALTH CONNECT TELEMETRY ===== */
-const HEALTH_TELEMETRY_KEY='systemHealthTelemetryV37';
-function healthTelemetry(){try{return JSON.parse(localStorage.getItem(HEALTH_TELEMETRY_KEY)||'{}')}catch(e){return{}}}
-function saveHealthTelemetry(v){const x={...healthTelemetry(),...v,syncedAt:new Date().toISOString()};localStorage.setItem(HEALTH_TELEMETRY_KEY,JSON.stringify(x));return x}
-function renderHealthTelemetry(v=healthTelemetry()){
- const linked=v.status==='connected',steps=Number(v.steps||0),hs=document.getElementById('hudSteps'),ha=document.getElementById('hudActive'),hl=document.getElementById('hudHealthLink');if(hs)hs.textContent=linked?steps.toLocaleString():'--';if(ha)ha.textContent=linked&&v.activeMinutes!=null?Number(v.activeMinutes)+' MIN':'--';if(hl)hl.textContent=linked?'ONLINE':(v.status==='error'?'ERROR':'READY');
- const host=document.getElementById('exerciseTracker');if(!host)return;let root=document.getElementById('healthConnectPanel');if(!root){root=document.createElement('section');root.id='healthConnectPanel';root.className='health-connect-panel';host.prepend(root)}
- const native=!!window.AndroidHealthConnect;root.innerHTML='<div class="health-connect-head"><span>HEALTH CONNECT // ANDROID</span><b class="'+(linked?'online':'standby')+'">'+(linked?'LINK ONLINE':native?'LINK READY':'NATIVE LINK REQUIRED')+'</b></div><div class="health-connect-grid"><article><small>STEPS TODAY</small><strong>'+steps.toLocaleString()+'</strong></article><article><small>ACTIVE TIME</small><strong>'+(v.activeMinutes==null?'--':Number(v.activeMinutes)+' MIN')+'</strong></article><article><small>LAST SYNC</small><strong>'+(v.syncedAt?new Date(v.syncedAt).toLocaleTimeString():'--')+'</strong></article></div><button id="healthConnectAction" '+(!native?'disabled':'')+'>'+(linked?'SYNC HEALTH DATA':'CONNECT HEALTH CONNECT')+'</button>';
- document.getElementById('healthConnectAction')?.addEventListener('click',syncHealthConnect)
-}
-async function syncHealthConnect(){
- const h=window.AndroidHealthConnect;if(!h){renderHealthTelemetry({status:'native-required'});return}
- try{let v=healthTelemetry();if(v.status!=='connected'){const ok=await h.requestStepPermission();if(!ok){renderHealthTelemetry(saveHealthTelemetry({status:'permission-denied'}));return}}
- const r=typeof h.getTodayMetrics==='function'?await h.getTodayMetrics():await h.getTodaySteps(),steps=Number(r?.steps??r?.value??r??0),activeMinutes=r?.activeMinutes==null?null:Number(r.activeMinutes);renderHealthTelemetry(saveHealthTelemetry({status:'connected',steps,activeMinutes}))}catch(e){renderHealthTelemetry(saveHealthTelemetry({status:'error'}))}
-}
-document.addEventListener('DOMContentLoaded',()=>{renderHealthTelemetry();if(window.AndroidHealthConnect&&healthTelemetry().status==='connected')syncHealthConnect()});
-window.addEventListener('focus',()=>{if(window.AndroidHealthConnect&&healthTelemetry().status==='connected')syncHealthConnect()});
-
-
-/* ===== V40 TRUE 3D PLANETARY ORBIT CONTROLLER ===== */
-function initPlanetaryCommandOrbit(){
- const core=document.querySelector('.system-core'),menu=core?.querySelector('.core-orbit-menu');
- if(!core||!menu||menu.dataset.planetaryReady==='1')return;
- menu.dataset.planetaryReady='1';
- const nodes=[...menu.querySelectorAll('button[data-holo]')];
- if(!nodes.length)return;
- // Separate stacking planes let modules genuinely pass behind AND in front of the core.
- const backPlane=menu;
- let frontPlane=core.querySelector('.core-orbit-front');
- if(!frontPlane){frontPlane=document.createElement('div');frontPlane.className='core-orbit-menu core-orbit-front';frontPlane.setAttribute('aria-hidden','true');core.appendChild(frontPlane)}
- const reduce=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
- let phase=-Math.PI/2,last=performance.now(),raf=0,paused=false;
- let dragging=false,dragPointer=null,dragLastX=0,dragLastT=0,dragDirection=-1,velocity=0,resumeTimer=0;
- const speed=(Math.PI*2)/18;
- const dragSensitivity=.0105;
- function render(){
-  const rect=core.getBoundingClientRect();
-  const rx=Math.max(rect.width*.50,145),ry=Math.max(rect.height*.20,50);
-  nodes.forEach((node,i)=>{
-   const a=phase+i*(Math.PI*2/nodes.length);
-   const x=Math.cos(a)*rx;
-   const depth=Math.sin(a);
-   const y=depth*ry;
-   const t=(depth+1)/2;
-   const scale=.54+t*.68;
-   const opacity=.28+t*.72;
-   node.style.setProperty('--orbit-x',x.toFixed(1)+'px');
-   node.style.setProperty('--orbit-y',y.toFixed(1)+'px');
-   node.style.setProperty('--orbit-depth',(depth*190).toFixed(1)+'px');
-   node.style.setProperty('--orbit-scale',scale.toFixed(3));
-   node.style.setProperty('--orbit-opacity',opacity.toFixed(3));
-   node.style.setProperty('--orbit-glow',(.04+t*.38).toFixed(3));
-   const isFront=depth>=0;
-   node.style.setProperty('--orbit-z',String(10+Math.round(t*20)));
-   node.classList.toggle('orbit-front',isFront);
-   node.classList.toggle('orbit-back',!isFront);
-   const plane=isFront?frontPlane:backPlane;
-   if(node.parentElement!==plane)plane.appendChild(node);
-  });
- }
- function frame(now){
-  const dt=Math.min(.05,(now-last)/1000);last=now;
-  if(!dragging&&!paused&&!reduce){
-   if(Math.abs(velocity)>.0001){phase=(phase+velocity*dt)%(Math.PI*2);velocity*=Math.pow(.045,dt)}
-   else phase=(phase+speed*dt)%(Math.PI*2);
-  }
-  render();raf=requestAnimationFrame(frame);
- }
- function setPaused(v){paused=v;core.classList.toggle('orbit-paused',v)}
- function dragStart(e){
-  if(e.pointerType==='mouse'&&e.button!==0)return;
-  const grabbed=e.target.closest?.('button[data-holo]');
-  const index=nodes.indexOf(grabbed);
-  // Front and back icons travel in opposite screen directions on a 3D orbit.
-  dragDirection=index>=0&&Math.sin(phase+index*(Math.PI*2/nodes.length))<0?1:-1;
-  dragging=true;dragPointer=e.pointerId;dragLastX=e.clientX;dragLastT=performance.now();velocity=0;
-  clearTimeout(resumeTimer);core.classList.add('orbit-dragging');
-  try{core.setPointerCapture(e.pointerId)}catch(_){}
- }
- function dragMove(e){
-  if(!dragging||e.pointerId!==dragPointer)return;
-  const now=performance.now(),dx=e.clientX-dragLastX,dt=Math.max(8,now-dragLastT);
-  phase=(phase+dx*dragSensitivity*dragDirection)%(Math.PI*2);
-  velocity=(dx*dragSensitivity*dragDirection)/(dt/1000);
-  dragLastX=e.clientX;dragLastT=now;render();
- }
- function dragEnd(e){
-  if(!dragging||e.pointerId!==dragPointer)return;
-  dragging=false;dragPointer=null;core.classList.remove('orbit-dragging');
-  try{core.releasePointerCapture(e.pointerId)}catch(_){}
-  // Keep a little momentum, then return to automatic orbit.
-  resumeTimer=setTimeout(()=>{velocity=0},1200);
- }
- core.addEventListener('pointerdown',dragStart);
- core.addEventListener('pointermove',dragMove);
- core.addEventListener('pointerup',dragEnd);
- core.addEventListener('pointercancel',dragEnd);
- nodes.forEach(node=>node.addEventListener('click',()=>{if(Math.abs(velocity)<.15)setPaused(true)}));
- document.getElementById('holoClose')?.addEventListener('click',()=>setPaused(false));
- document.getElementById('osModuleClose')?.addEventListener('click',()=>setPaused(false));
- window.addEventListener('resize',render,{passive:true});
- render();
- if(reduce){setPaused(true);return}
- raf=requestAnimationFrame(frame);
-}
-if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',initPlanetaryCommandOrbit);
-else initPlanetaryCommandOrbit();
-
-
-/* ===== V42 ORBIT RUNTIME PROBE ===== */
-(function installOrbitRuntimeProbe(){
- function probe(){
-  const core=document.querySelector('.system-core');
-  if(!core)return;
-  const deck=core.closest('.command-deck');
-  if(!deck)return;
-  let badge=document.getElementById('orbitRuntimeProbe');
-  if(!badge){
-   badge=document.createElement('div');
-   badge.id='orbitRuntimeProbe';
-   badge.textContent='ORBIT V42 // BOOT';
-   deck.appendChild(badge);
-  }
-  const menu=core.querySelector('.core-orbit-menu');
-  const ready=menu&&menu.dataset.planetaryReady==='1';
-  badge.textContent=ready?'ORBIT V42 // LIVE':'ORBIT V42 // RETRY';
-  if(!ready){
-   try{initPlanetaryCommandOrbit()}catch(e){}
-   setTimeout(probe,350);
-  }
- }
- if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',()=>setTimeout(probe,150));
- else setTimeout(probe,150);
-})();
-
-/* V40 // SOCIAL IDENTITY SYNC */
-document.addEventListener('DOMContentLoaded',()=>{try{syncLocalSocialIdentity()}catch(e){}});
-window.SystemSocialIdentity={get:buildSocialIdentity,sync:syncLocalSocialIdentity,push:pushSocialIdentity};
-
-/* V41 // REAL SOCIAL IDENTITY NETWORK */
-window.SystemSocialNetwork={search:searchSocialPlayers,sync:syncSocialProfile,refresh:renderSocialCloud};
+/* V41 // SOCIAL PLAYER SEARCH */
+.social-player-search{grid-column:1/-1}.player-search-results{margin-top:10px}.player-search-row{display:grid;grid-template-columns:1fr auto auto;align-items:center;gap:14px;padding:10px;border-top:1px solid rgba(98,228,255,.1)}.player-search-row strong,.player-search-row small{display:block}.player-search-row small{margin-top:3px;font-size:7px;opacity:.55}.player-search-row>div:nth-child(2){text-align:right}.player-search-row button{padding:7px 10px;border:1px solid rgba(98,228,255,.3);background:rgba(60,210,255,.06);color:inherit;font:700 8px 'JetBrains Mono',monospace}@media(max-width:760px){.player-search-row{grid-template-columns:1fr auto}.player-search-row>div:nth-child(2){display:none}}
 
 /* V42 // FRIEND NETWORK CONTROL */
-window.SystemFriends={request:sendFriendRequest,respond:respondFriend,remove:removeFriend,refresh:renderSocialCommand};
+.friend-pending>div,.friend-actions{display:flex;align-items:center;gap:7px}.friend-pending>div{justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(98,228,255,.08)}.friend-pending strong,.friend-pending small{display:block}.friend-pending small{font-size:7px;opacity:.5}.friend-pending button,.friend-actions button{padding:5px 7px;border:1px solid rgba(98,228,255,.22);background:rgba(60,210,255,.04);color:inherit;font:700 7px 'JetBrains Mono',monospace}.friend-actions{margin-left:auto}.friend-actions button:last-child{opacity:.55}.friend-leaderboard>div{gap:9px}
 
 /* V43 // SQUAD IDENTITY + ROSTER */
-window.SystemSquads={community:fetchCommunityNetwork,identity:getIdentityCard,identityUnlocks:identityUnlockState,rewardVault:openRewardVault,rewardDetail:openVaultDetail,trophies:trophyCollection,hunterLegacy:hunterLegacyState,legacyTrialRewards,legacyArtifact,legacyAscension,ascensionModifiers,ascensionRecord,ascensionMarks,ascendLegacy,legacyMissions,legacyCampaign,legacyTrialHistory,legacyTrialRecord,attachPerformanceToLatestTrial,activeLegacyTrial,legacyTrialCombatState,legacyTrialCombo,legacyTrialAttackRating,legacyTrialSpecial,resolveActiveLegacyTrial,legacyTrialRecord,legacyTrialAchievements,formatTrialTime,currentHunterLegacy,refreshLegacyContext,ascensionTrialProfile,runLegacyTrial,refreshIdentityUnlocks,openPlayer:openPlayerDossier,openSquad:openSquadDossier,legacy:squadLegacyMap,create:createSquad,join:joinSquad,leave:leaveSquad,challenge:squadChallenge,progress:squadProgress,achievements:squadAchievementState,gate:fetchSquadGateIntel,victories:fetchSquadVictories,attack:applySquadGateDamage,refresh:renderSocialCommand};
+.squad-identity{margin-top:12px}.squad-identity__head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;padding-bottom:12px;border-bottom:1px solid rgba(98,228,255,.12)}.squad-identity__head small,.squad-identity__head span{display:block;font:700 7px 'JetBrains Mono',monospace;letter-spacing:.12em;opacity:.55}.squad-identity__head h3{margin:3px 0;font-size:17px;letter-spacing:.08em}.squad-identity__head>div:last-child{text-align:right}.squad-identity__head>div:last-child b{display:block;font-size:18px}.squad-roster article{display:grid;grid-template-columns:30px 1fr auto;align-items:center;gap:10px;padding:9px 2px;border-bottom:1px solid rgba(98,228,255,.08)}.squad-roster article>b{font:800 9px 'JetBrains Mono',monospace;opacity:.55}.squad-roster strong,.squad-roster small{display:block}.squad-roster small{margin-top:3px;font-size:7px;opacity:.55}.squad-roster em{font-style:normal;font:700 8px 'JetBrains Mono',monospace}@media(max-width:760px){.squad-identity__head{gap:8px}.squad-roster article{grid-template-columns:24px 1fr}.squad-roster em{display:none}}
 
-// V81 SYSTEM ENTRY FLOW // LIVE
+/* V44 // SQUAD PROGRESSION */
+.squad-progression{margin-top:12px}.squad-level-track{display:grid;grid-template-columns:1fr 1.4fr;align-items:center;gap:16px;padding:10px 0 14px}.squad-level-track strong,.squad-level-track small{display:block}.squad-level-track small{margin-top:4px;font-size:7px;opacity:.55}.squad-level-track>span,.squad-missions article>span{height:5px;overflow:hidden;background:rgba(98,228,255,.08);border:1px solid rgba(98,228,255,.1)}.squad-level-track i,.squad-missions article>span i{display:block;height:100%;background:currentColor;box-shadow:0 0 10px currentColor}.squad-missions{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.squad-missions article{display:grid;grid-template-columns:1fr auto;gap:8px;padding:9px;border:1px solid rgba(98,228,255,.12);background:rgba(0,14,22,.4)}.squad-missions strong,.squad-missions small{display:block}.squad-missions strong{font-size:8px;letter-spacing:.06em}.squad-missions small{margin-top:4px;font-size:7px;opacity:.5}.squad-missions article>b{font:700 8px 'JetBrains Mono',monospace}.squad-missions article>span{grid-column:1/-1}.squad-missions article.complete{border-color:rgba(98,228,255,.38);box-shadow:inset 0 0 16px rgba(70,220,255,.05)}@media(max-width:760px){.squad-level-track{grid-template-columns:1fr}.squad-missions{grid-template-columns:1fr}}
 
-// V83 WORKFLOW REBUILD TRIGGER //
+/* V45 // SQUAD GATE OPERATIONS */
+.squad-gate{margin-top:12px}.squad-gate-head{display:flex;justify-content:space-between;gap:16px;align-items:flex-end}.squad-gate-head small,.squad-gate-head span{display:block;font:700 7px 'JetBrains Mono',monospace;opacity:.55}.squad-gate-head h3{margin:3px 0;font-size:18px;letter-spacing:.08em}.squad-gate-head>div:last-child{text-align:right}.squad-gate-head>div:last-child b{font-size:18px}.squad-gate-hp{height:8px;margin:12px 0 7px;background:rgba(98,228,255,.07);border:1px solid rgba(98,228,255,.15);overflow:hidden}.squad-gate-hp i{display:block;height:100%;background:currentColor;box-shadow:0 0 14px currentColor;transition:width .6s ease}.squad-gate-meta{display:flex;justify-content:space-between;gap:8px;font:700 7px 'JetBrains Mono',monospace;opacity:.65}.squad-contributors{margin-top:10px}.squad-contributors>div{display:grid;grid-template-columns:28px 1fr auto;gap:8px;padding:6px 0;border-top:1px solid rgba(98,228,255,.08);font-size:8px}.squad-contributors em{font-style:normal;font-family:'JetBrains Mono',monospace}@media(max-width:760px){.squad-gate-meta{display:grid;grid-template-columns:1fr 1fr}.squad-gate-meta span:last-child{grid-column:1/-1}}
 
+/* V46 // SQUAD VICTORY RECORD */
+.squad-victory-history{margin-top:12px;padding-top:10px;border-top:1px solid rgba(98,228,255,.12)}.squad-victory-history>strong{display:block;margin-bottom:6px;font:700 8px 'JetBrains Mono',monospace}.squad-victory-history>span{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-top:1px solid rgba(98,228,255,.06)}.squad-victory-history small{font-size:7px;opacity:.55}.squad-victory-fx{position:fixed;inset:0;z-index:9999;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(30,190,225,.12),rgba(0,5,10,.88));opacity:0;visibility:hidden;transition:.25s}.squad-victory-fx.active{opacity:1;visibility:visible}.squad-victory-fx>div{text-align:center;padding:30px 48px;border:1px solid rgba(110,235,255,.45);background:rgba(0,12,20,.9);box-shadow:0 0 45px rgba(70,220,255,.16)}.squad-victory-fx small,.squad-victory-fx span,.squad-victory-fx b{display:block;font-family:'JetBrains Mono',monospace}.squad-victory-fx h2{margin:8px 0;font-size:28px;letter-spacing:.14em}.squad-victory-fx strong{display:block;font-size:16px}.squad-victory-fx span{margin:10px 0;font-size:9px}@media(prefers-reduced-motion:reduce){.squad-victory-fx{transition:none}}
+
+/* V47 // SQUAD RAID LEGACY */
+.squad-achievements{margin-top:12px;padding-top:10px;border-top:1px solid rgba(98,228,255,.12)}.squad-achievements__head{display:flex;align-items:end;justify-content:space-between;gap:12px}.squad-achievements__head small,.squad-achievements__head strong{display:block}.squad-achievements__head small{font:700 7px 'JetBrains Mono',monospace;opacity:.5}.squad-achievements__head strong{margin-top:3px;font-size:11px;letter-spacing:.1em}.squad-achievements__head em{font:700 7px 'JetBrains Mono',monospace;font-style:normal;opacity:.6}.squad-achievement-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;margin-top:9px}.squad-achievement-grid article{padding:8px;border:1px solid rgba(98,228,255,.12);background:rgba(0,12,20,.35)}.squad-achievement-grid b,.squad-achievement-grid small,.squad-achievement-grid span{display:block}.squad-achievement-grid b{font-size:8px}.squad-achievement-grid small{min-height:28px;margin:4px 0;font-size:7px;line-height:1.35;opacity:.5}.squad-achievement-grid span{font:700 7px 'JetBrains Mono',monospace;opacity:.45}.squad-achievement-grid article.unlocked{border-color:rgba(98,228,255,.38);box-shadow:inset 0 0 15px rgba(70,220,255,.05)}.squad-achievement-grid article.unlocked span{opacity:1}@media(max-width:760px){.squad-achievement-grid{grid-template-columns:repeat(2,1fr)}.squad-achievements__head{align-items:start;flex-direction:column}}
+
+/* V48 // SQUAD IDENTITY INTEGRATION */
+.squad-legacy-badge{display:inline-block;margin:2px 0 5px;padding:3px 7px;border:1px solid rgba(98,228,255,.28);background:rgba(70,220,255,.05);font:800 7px 'JetBrains Mono',monospace;letter-spacing:.12em;text-transform:uppercase;box-shadow:inset 0 0 10px rgba(70,220,255,.04)}.squad-rankings article small,.squad-battle small,.squad-row small{line-height:1.45}
+
+/* V49 // SOCIAL DOSSIERS */
+.social-dossier{position:fixed;top:4vh;right:3vw;bottom:4vh;z-index:9500;width:min(430px,92vw);padding:22px;overflow:auto;border:1px solid rgba(98,228,255,.35);background:rgba(0,10,18,.96);box-shadow:0 0 50px rgba(30,200,240,.15);transform:translateX(115%);transition:transform .28s ease}.social-dossier.active{transform:translateX(0)}.social-dossier__close{position:absolute;right:12px;top:10px;border:0;background:none;font-size:24px}.social-dossier h2{margin:5px 0;font-size:24px;letter-spacing:.08em}.social-dossier>div>small,.dossier-squad>small{font:700 7px 'JetBrains Mono',monospace;opacity:.5}.dossier-rank{font:800 9px 'JetBrains Mono',monospace}.dossier-title{display:inline-block;margin:8px 0;padding:4px 8px;border:1px solid rgba(98,228,255,.3);font:800 8px 'JetBrains Mono',monospace;letter-spacing:.1em}.dossier-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin:14px 0}.dossier-grid span{padding:10px;border:1px solid rgba(98,228,255,.12);text-align:center}.dossier-grid b,.dossier-grid small{display:block}.dossier-grid small{margin-top:3px;font-size:6px;opacity:.5}.dossier-squad{padding:11px;border-top:1px solid rgba(98,228,255,.12);border-bottom:1px solid rgba(98,228,255,.12)}.dossier-squad strong,.dossier-squad span{display:block}.dossier-squad span{font:700 7px 'JetBrains Mono',monospace;opacity:.65}.dossier-actions{margin-top:12px}.dossier-roster button{display:grid;width:100%;grid-template-columns:28px 1fr auto;gap:8px;padding:9px;border:0;border-top:1px solid rgba(98,228,255,.1);background:transparent;text-align:left}.social-dossier__loading{padding:40px 10px;text-align:center;font:700 9px 'JetBrains Mono',monospace}.squad-row[data-dossier-squad],.player-search-row[data-dossier-player]{cursor:pointer}@media(prefers-reduced-motion:reduce){.social-dossier{transition:none}}
+
+/* V50 // HUNTER SOCIAL IDENTITY CARD */
+.hunter-id-card{display:grid;grid-template-columns:74px 1fr;gap:14px;margin:4px 0 18px;padding:15px;border:1px solid rgba(98,228,255,.34);background:linear-gradient(135deg,rgba(10,35,48,.9),rgba(0,10,18,.92));box-shadow:inset 0 0 28px rgba(70,220,255,.04)}.hunter-id-card__emblem{display:grid;place-items:center;min-height:74px;border:1px solid currentColor;font-size:30px;font-weight:900}.hunter-id-card small,.hunter-id-card strong,.hunter-id-card span,.hunter-id-card em{display:block}.hunter-id-card small{font:700 6px 'JetBrains Mono',monospace;opacity:.5}.hunter-id-card h3{margin:3px 0;font-size:20px;letter-spacing:.08em}.hunter-id-card strong,.hunter-id-card span,.hunter-id-card em{font:700 7px 'JetBrains Mono',monospace}.hunter-id-card span{margin-top:5px}.hunter-id-card em{margin-top:4px;font-style:normal;opacity:.65}.hunter-id-card p{margin:8px 0 0;font-size:8px;opacity:.65}.hunter-id-card.frame-raid{box-shadow:inset 0 0 35px rgba(255,255,255,.07)}.hunter-id-card.frame-shadow{background:linear-gradient(135deg,rgba(22,15,35,.96),rgba(0,8,16,.95))}.identity-editor{margin-bottom:12px}.identity-editor form{display:grid;grid-template-columns:1fr 1.5fr .7fr auto;gap:7px;align-items:end}.identity-editor label{font:700 6px 'JetBrains Mono',monospace}.identity-editor input,.identity-editor select{display:block;width:100%;margin-top:3px}.identity-editor>small{display:block;margin-top:7px;font:700 6px 'JetBrains Mono',monospace;opacity:.45}@media(max-width:760px){.identity-editor form{grid-template-columns:1fr 1fr}.hunter-id-card{grid-template-columns:58px 1fr}.hunter-id-card__emblem{min-height:58px;font-size:24px}}
+
+/* V51 // IDENTITY ACCOMPLISHMENT UNLOCKS */
+.identity-editor form{grid-template-columns:1fr 1.35fr .65fr .65fr auto}.identity-unlocks{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-top:9px}.identity-unlocks span{padding:6px;border:1px solid rgba(98,228,255,.1)}.identity-unlocks b,.identity-unlocks small{display:block}.identity-unlocks b{font-size:7px}.identity-unlocks small{margin-top:2px;font-size:6px;line-height:1.3;opacity:.48}.identity-unlocks .locked{opacity:.35}.identity-unlocks .unlocked{border-color:rgba(98,228,255,.34);box-shadow:inset 0 0 12px rgba(70,220,255,.04)}.hunter-id-card.frame-vanguard{background:linear-gradient(135deg,rgba(10,32,25,.96),rgba(0,10,18,.95))}.hunter-id-card.frame-elite{box-shadow:inset 0 0 32px rgba(255,255,255,.1),0 0 20px rgba(70,220,255,.08)}.hunter-id-card.frame-mvp{border-style:double;border-width:3px}.hunter-id-card.frame-ascendant{box-shadow:inset 0 0 28px rgba(70,220,255,.08)}.hunter-id-card.frame-veteran{border-style:double;border-width:3px}.hunter-id-card.frame-mythic{box-shadow:inset 0 0 38px rgba(255,255,255,.1),0 0 24px rgba(70,220,255,.12)}.hunter-id-card.frame-sovereign{border-style:double;border-width:3px;box-shadow:inset 0 0 45px rgba(70,220,255,.14),0 0 32px rgba(70,220,255,.14)}.hunter-id-card.frame-archive{border-style:double;box-shadow:inset 0 0 34px rgba(70,220,255,.12),0 0 24px rgba(70,220,255,.09)}@media(max-width:760px){.identity-editor form{grid-template-columns:1fr 1fr}.identity-unlocks{grid-template-columns:repeat(2,1fr)}}
+
+/* V52 // IDENTITY UNLOCK PRESENTATION */
+.identity-unlock-fx{position:fixed;inset:0;z-index:10020;display:grid;place-items:center;pointer-events:none;background:radial-gradient(circle,rgba(40,215,255,.13),rgba(0,6,12,.9));opacity:0;visibility:hidden;transition:.22s}.identity-unlock-fx.active{opacity:1;visibility:visible}.identity-unlock-fx>div{min-width:300px;padding:28px 42px;text-align:center;border:1px solid rgba(105,235,255,.48);background:rgba(0,13,22,.95);box-shadow:0 0 55px rgba(60,220,255,.18),inset 0 0 30px rgba(60,220,255,.05)}.identity-unlock-fx small,.identity-unlock-fx span{display:block;font:700 7px 'JetBrains Mono',monospace;letter-spacing:.14em}.identity-unlock-fx h2{margin:7px 0 13px;font-size:22px;letter-spacing:.12em}.identity-unlock-fx #iuIcon{width:64px;height:64px;display:grid;place-items:center;margin:0 auto 10px;border:1px solid currentColor;font-size:30px;box-shadow:0 0 20px rgba(80,225,255,.12)}.identity-unlock-fx strong{display:block;font-size:17px;letter-spacing:.12em}.identity-unlock-fx span{margin-top:5px;opacity:.7}.identity-unlock-fx p{margin:9px 0 0;font-size:8px;opacity:.55}@media(prefers-reduced-motion:reduce){.identity-unlock-fx{transition:none}}
+
+/* V53 // SYSTEM REWARD VAULT */
+.reward-vault-launch{display:grid;width:100%;grid-template-columns:32px 1fr auto;align-items:center;gap:10px;margin-bottom:10px;padding:10px 13px;border:1px solid rgba(98,228,255,.25);background:rgba(5,25,35,.75);text-align:left}.reward-vault-launch>span{font-size:20px}.reward-vault-launch b,.reward-vault-launch small{display:block}.reward-vault-launch small{font-size:6px;opacity:.5}.reward-vault-launch em{font:700 7px 'JetBrains Mono',monospace;font-style:normal}.reward-vault{position:fixed;inset:3vh 3vw;z-index:9600;overflow:auto;padding:20px;border:1px solid rgba(98,228,255,.32);background:rgba(0,9,16,.98);box-shadow:0 0 70px rgba(30,200,240,.13);opacity:0;visibility:hidden;transform:scale(.985);transition:.2s}.reward-vault.active{opacity:1;visibility:visible;transform:scale(1)}.reward-vault header{display:flex;justify-content:space-between;align-items:start;position:sticky;top:-20px;z-index:2;padding:18px 0 10px;background:rgba(0,9,16,.96)}.reward-vault header small{font:700 7px 'JetBrains Mono',monospace;opacity:.5}.reward-vault header h2{margin:3px 0;font-size:25px}.reward-vault header button{border:0;background:none;font-size:25px}.reward-vault section{margin:14px 0 20px}.vault-head{display:flex;justify-content:space-between;margin-bottom:7px;font:700 8px 'JetBrains Mono',monospace}.vault-head b{opacity:.55}.vault-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}.vault-grid article{display:grid;grid-template-columns:24px 1fr auto;gap:7px;align-items:center;padding:9px;border:1px solid rgba(98,228,255,.11)}.vault-grid article.locked{opacity:.38}.vault-grid article.unlocked{border-color:rgba(98,228,255,.32);background:rgba(70,220,255,.035)}.vault-grid b,.vault-grid small{display:block}.vault-grid b{font-size:8px}.vault-grid small{margin-top:2px;font-size:6px;line-height:1.3;opacity:.55}.vault-grid em{font:700 6px 'JetBrains Mono',monospace;font-style:normal}.vault-trophies{display:grid;grid-template-columns:repeat(3,1fr);gap:6px}.vault-trophies article{display:grid;grid-template-columns:30px 1fr;gap:8px;padding:10px;border:1px solid rgba(98,228,255,.18)}.vault-trophies b,.vault-trophies small{display:block}.vault-trophies small{font-size:6px;opacity:.5}.vault-empty,.vault-loading{padding:24px;text-align:center;font:700 8px 'JetBrains Mono',monospace;opacity:.5}@media(max-width:900px){.vault-grid{grid-template-columns:repeat(2,1fr)}.vault-trophies{grid-template-columns:repeat(2,1fr)}}@media(prefers-reduced-motion:reduce){.reward-vault{transition:none}}
+
+/* V54 // REWARD DETAIL INSPECTION */
+.vault-grid article[data-vault-item],.vault-trophies article[data-vault-item]{cursor:pointer}.vault-grid article[data-vault-item]:focus,.vault-trophies article[data-vault-item]:focus{outline:1px solid currentColor;outline-offset:2px}.vault-detail{position:fixed;inset:0;z-index:10040;display:grid;place-items:center;padding:20px;background:rgba(0,5,10,.78);opacity:0;visibility:hidden;transition:.18s}.vault-detail.active{opacity:1;visibility:visible}.vault-detail__panel{position:relative;width:min(440px,92vw);padding:28px;border:1px solid rgba(98,228,255,.4);background:rgba(0,12,20,.98);box-shadow:0 0 60px rgba(50,220,255,.16)}.vault-detail__close{position:absolute;right:10px;top:8px;border:0;background:none;font-size:23px}.vault-detail__panel>small{font:700 7px 'JetBrains Mono',monospace;opacity:.5}.vault-detail__icon{display:grid;place-items:center;width:76px;height:76px;margin:18px auto 10px;border:1px solid currentColor;font-size:34px;box-shadow:0 0 25px rgba(70,220,255,.1)}.vault-detail h2{text-align:center;margin:7px 0;font-size:23px;letter-spacing:.1em}.vault-detail__panel>strong{display:block;text-align:center;font:800 8px 'JetBrains Mono',monospace}.vault-detail__panel>p{text-align:center;font-size:9px;opacity:.65}.vault-detail__meta{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin:16px 0}.vault-detail__meta span{padding:9px;border:1px solid rgba(98,228,255,.12)}.vault-detail__meta small,.vault-detail__meta b{display:block}.vault-detail__meta small{font-size:6px;opacity:.45}.vault-detail__meta b{margin-top:3px;font-size:8px}.vault-detail #vaultEquipReward{width:100%;padding:10px}@media(prefers-reduced-motion:reduce){.vault-detail{transition:none}}
+
+/* V55 // BOSS TROPHY COLLECTION */
+.vault-grid article:has(b:first-child){position:relative}.vault-grid article.unlocked span:first-child{filter:drop-shadow(0 0 5px currentColor)}.vault-head strong{letter-spacing:.08em}.vault-trophies article span{display:grid;place-items:center;border:1px solid rgba(98,228,255,.24);min-height:32px}.vault-trophies article:hover,.vault-grid article[data-vault-item]:hover{border-color:rgba(98,228,255,.38);background:rgba(70,220,255,.04)}
+
+/* V56 // HUNTER LEGACY PROGRESSION */
+.hunter-legacy{display:grid;grid-template-columns:1fr auto;gap:8px;margin:10px 0 18px;padding:13px;border:1px solid rgba(98,228,255,.2);background:rgba(7,24,34,.68)}.hunter-legacy>div small{display:block;font:700 6px 'JetBrains Mono',monospace;opacity:.45}.hunter-legacy h3{margin:3px 0;font-size:14px;letter-spacing:.1em}.hunter-legacy>div strong,.hunter-legacy>b,.hunter-legacy>span{font:800 7px 'JetBrains Mono',monospace}.hunter-legacy>b{align-self:center;font-size:10px}.hunter-legacy__track{grid-column:1/-1;height:5px;background:rgba(98,228,255,.08)}.hunter-legacy__track i{display:block;height:100%;background:currentColor;box-shadow:0 0 9px currentColor}.hunter-legacy>span{grid-column:1/-1;opacity:.5}.hunter-legacy.dormant{opacity:.5}.hunter-legacy.active{border-color:rgba(98,228,255,.38);box-shadow:inset 0 0 20px rgba(70,220,255,.035)}
+
+/* V57 // CENTRAL COMMAND LEGACY IDENTITY */
+.central-legacy{display:flex;align-items:center;gap:7px;margin-top:5px;font:800 6px 'JetBrains Mono',monospace;letter-spacing:.08em}.central-legacy span{padding:3px 6px;border:1px solid rgba(98,228,255,.2)}.central-legacy b{font-size:7px}.central-legacy small{opacity:.5}.central-legacy.dormant{opacity:.4}.central-legacy.active span{border-color:rgba(98,228,255,.45);box-shadow:0 0 10px rgba(70,220,255,.08)}#playerCard[data-legacy-tier="ascendant"]{box-shadow:inset 0 0 30px rgba(70,220,255,.035)}#playerCard[data-legacy-tier="veteran"] .hud-label{border-bottom-color:rgba(98,228,255,.35)}#playerCard[data-legacy-tier="mythic"]{box-shadow:inset 0 0 42px rgba(70,220,255,.06),0 0 18px rgba(70,220,255,.04)}#playerCard[data-legacy-tier="sovereign"]{box-shadow:inset 0 0 52px rgba(70,220,255,.09),0 0 26px rgba(70,220,255,.07)}#playerCard[data-legacy-tier="sovereign"] .hud-label span:after{content:" // SOVEREIGN";opacity:.7}.central-legacy.frame-sovereign span,.central-legacy.frame-mythic span{border-style:double;border-width:3px}
+
+/* V58 // LEGACY MISSIONS */
+.legacy-missions-panel{border-color:rgba(98,228,255,.25)}.legacy-missions-panel[hidden]{display:none}.legacy-mission-list{display:grid;grid-template-columns:repeat(2,1fr);gap:7px;margin-top:12px}.legacy-mission-list article{display:grid;grid-template-columns:1fr auto;gap:6px;padding:11px;border:1px solid rgba(98,228,255,.12);background:rgba(5,22,31,.55)}.legacy-mission-list small,.legacy-mission-list b,.legacy-mission-list span{display:block}.legacy-mission-list small{font:700 6px 'JetBrains Mono',monospace;opacity:.45}.legacy-mission-list b{margin:3px 0;font-size:9px}.legacy-mission-list span{font-size:7px;opacity:.6}.legacy-mission-list strong{font:800 8px 'JetBrains Mono',monospace}.legacy-mission-track{grid-column:1/-1;height:4px;background:rgba(98,228,255,.08)}.legacy-mission-track i{display:block;height:100%;background:currentColor}.legacy-mission-list em{grid-column:1/-1;font:700 6px 'JetBrains Mono',monospace;font-style:normal;opacity:.5}.legacy-mission-list article.complete{border-color:rgba(98,228,255,.38)}.legacy-mission-list article.claimed em{opacity:.8}@media(max-width:760px){.legacy-mission-list{grid-template-columns:1fr}}
+
+/* V59 // LEGACY CAMPAIGN CHAPTERS */
+.legacy-campaign-map{display:grid;gap:10px}.legacy-chapter{padding:9px;border:1px solid rgba(98,228,255,.12);background:rgba(4,17,25,.45)}.legacy-chapter>header{display:grid;grid-template-columns:auto 1fr auto;gap:5px 9px;align-items:center}.legacy-chapter>header span,.legacy-chapter>header small,.legacy-chapter>header em{font:700 6px 'JetBrains Mono',monospace;font-style:normal}.legacy-chapter>header span{opacity:.55}.legacy-chapter>header b{font-size:10px;letter-spacing:.1em}.legacy-chapter>header small{grid-column:1/3;opacity:.45}.legacy-chapter>header em{grid-row:1/3;grid-column:3;align-self:center}.legacy-chapter-track{height:3px;margin:7px 0;background:rgba(98,228,255,.07)}.legacy-chapter-track i{display:block;height:100%;background:currentColor}.legacy-chapter.locked{opacity:.36;filter:saturate(.35)}.legacy-chapter.active{border-color:rgba(98,228,255,.28)}.legacy-chapter.complete{border-color:rgba(98,228,255,.42);box-shadow:inset 0 0 18px rgba(70,220,255,.035)}.legacy-chapter article{margin-top:6px}.legacy-chapter article.chapter-locked{pointer-events:none}
+
+/* V60 // LEGACY CHAPTER TRIALS */
+.legacy-trial-btn,.legacy-trial-lock{width:100%;margin-top:8px;padding:9px;border:1px solid rgba(98,228,255,.25);background:rgba(5,25,35,.72);font:800 7px 'JetBrains Mono',monospace;letter-spacing:.08em;color:inherit;text-align:left}.legacy-trial-btn{cursor:pointer;box-shadow:inset 0 0 14px rgba(70,220,255,.035)}.legacy-trial-btn small{display:block;margin-top:3px;font-size:6px;opacity:.5}.legacy-trial-btn:hover{border-color:rgba(98,228,255,.55);box-shadow:inset 0 0 22px rgba(70,220,255,.07)}.legacy-trial-btn:disabled{opacity:.55;cursor:default}.legacy-trial-lock{opacity:.35}.legacy-chapter.complete .legacy-trial-btn{border-color:rgba(98,228,255,.48)}
+
+/* V61 // LEGACY TRIAL RELICS */
+.hunter-id-card.frame-trialborn{border-style:double;border-width:3px;box-shadow:inset 0 0 34px rgba(70,220,255,.1)}.hunter-id-card.frame-overlord{border-style:double;border-width:4px;box-shadow:inset 0 0 54px rgba(255,255,255,.09),0 0 32px rgba(70,220,255,.13)}.vault-grid article.unlocked:has(b:first-child){text-shadow:0 0 7px rgba(98,228,255,.15)}
+
+/* V62 // LEGACY NEXUS ARTIFACT */
+.hunter-id-card.frame-nexus{border:3px double rgba(160,240,255,.75);box-shadow:inset 0 0 60px rgba(70,220,255,.14),0 0 38px rgba(70,220,255,.16)}#playerCard:has(.central-legacy.frame-nexus),#playerCard[data-legacy-tier="sovereign"]:has(.central-legacy.frame-nexus){box-shadow:inset 0 0 65px rgba(70,220,255,.13),0 0 32px rgba(70,220,255,.12)}.central-legacy.frame-nexus span{border:3px double rgba(160,240,255,.72);box-shadow:0 0 16px rgba(70,220,255,.14)}.central-legacy.frame-nexus:after{content:"◆ NEXUS ONLINE";font:800 6px 'JetBrains Mono',monospace;letter-spacing:.12em;opacity:.72}
+
+/* V63 // LEGACY ASCENSION */
+.legacy-ascend-btn{width:100%;padding:12px;margin-top:12px;border:3px double rgba(160,240,255,.6);background:rgba(5,26,37,.8);color:inherit;font:900 8px 'JetBrains Mono',monospace;letter-spacing:.12em;text-align:left;box-shadow:inset 0 0 28px rgba(70,220,255,.08),0 0 20px rgba(70,220,255,.06);cursor:pointer}.legacy-ascend-btn small{display:block;margin-top:4px;font-size:6px;opacity:.55}.legacy-ascend-btn:hover{box-shadow:inset 0 0 38px rgba(70,220,255,.13),0 0 28px rgba(70,220,255,.1)}
+
+/* V64 // ASCENSION RECORDS */
+.hunter-id-card__ascension{display:block;margin-top:4px;font:800 6px 'JetBrains Mono',monospace;font-style:normal;letter-spacing:.1em;opacity:.7}.hunter-id-card.frame-ascended{box-shadow:inset 0 0 38px rgba(70,220,255,.1)}.hunter-id-card.frame-exalted{border:3px double rgba(160,240,255,.62);box-shadow:inset 0 0 50px rgba(70,220,255,.12)}.hunter-id-card.frame-eternal{border:4px double rgba(210,250,255,.8);box-shadow:inset 0 0 70px rgba(255,255,255,.1),0 0 38px rgba(70,220,255,.16)}.central-legacy.frame-eternal:after{content:"∞ ETERNAL ASCENSION";font:900 6px 'JetBrains Mono',monospace;letter-spacing:.12em;opacity:.8}
+
+/* V65 // ASCENSION DIFFICULTY MODIFIERS */
+.ascension-modifiers{display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:10px;padding:9px;border:1px solid rgba(98,228,255,.2);background:rgba(4,18,27,.6)}.ascension-modifiers>strong{grid-column:1/-1;font:900 7px 'JetBrains Mono',monospace;letter-spacing:.12em}.ascension-modifiers span{padding:7px;border-left:2px solid rgba(98,228,255,.32);background:rgba(70,220,255,.025)}.ascension-modifiers b,.ascension-modifiers small{display:block}.ascension-modifiers b{font:800 7px 'JetBrains Mono',monospace}.ascension-modifiers small{margin-top:3px;font-size:6px;opacity:.5}@media(max-width:760px){.ascension-modifiers{grid-template-columns:1fr}}
+
+/* V66 // ASCENSION TRIAL PROFILES */
+.legacy-trial-btn small{letter-spacing:.05em}.legacy-chapter.active .legacy-trial-btn:not(:disabled){background:linear-gradient(90deg,rgba(70,220,255,.07),rgba(5,25,35,.72));animation:trial-ready-pulse 2.6s ease-in-out infinite}@keyframes trial-ready-pulse{50%{box-shadow:inset 0 0 28px rgba(70,220,255,.11),0 0 13px rgba(70,220,255,.07)}}@media(prefers-reduced-motion:reduce){.legacy-chapter.active .legacy-trial-btn:not(:disabled){animation:none}}
+
+/* V67 // LEGACY TRIAL RECORDS */
+.legacy-trial-record{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:9px}.legacy-trial-record span{padding:8px;border:1px solid rgba(98,228,255,.16);background:rgba(5,22,31,.5)}.legacy-trial-record small,.legacy-trial-record b{display:block;font-family:'JetBrains Mono',monospace}.legacy-trial-record small{font-size:6px;opacity:.45}.legacy-trial-record b{margin-top:3px;font-size:11px}@media(max-width:640px){.legacy-trial-record{grid-template-columns:1fr}}
+
+/* V68 // TRIAL PERFORMANCE RECORDS */
+.legacy-trial-record span:last-child b{font-size:13px}.vault-grid article.unlocked small{line-height:1.35}
+
+/* V69 // ARMED LEGACY TRIALS */
+.legacy-trial-btn:has(small){position:relative}.legacy-trial-btn:not(:disabled){transition:box-shadow .2s ease}.legacy-trial-btn[data-legacy-trial]{text-transform:uppercase}.legacy-trial-btn[data-legacy-trial]:focus-visible{outline:2px solid currentColor;outline-offset:2px}
+
+/* V70 // PERSISTENT TRIAL DAMAGE */
+.legacy-trial-btn small{margin-top:4px}.legacy-trial-btn[data-legacy-trial]{overflow:hidden}.legacy-trial-btn[data-legacy-trial] small{opacity:.68}
+
+/* V71 // LEGACY TRIAL PHASES */
+.legacy-trial-btn small{display:block}.legacy-trial-btn:not(:disabled) small{font-variant-numeric:tabular-nums}.boss-combat-fx.active .bcf-phase{letter-spacing:.1em}
+
+/* V72 // ACTIVE LEGACY COMBAT BRIEFING */
+.legacy-combat-brief{margin-bottom:10px;padding:11px;border:1px solid rgba(98,228,255,.32);background:linear-gradient(135deg,rgba(5,27,39,.88),rgba(3,14,22,.76));box-shadow:inset 0 0 30px rgba(70,220,255,.05)}.legacy-combat-brief>div:first-child small,.legacy-combat-brief__stats small{display:block;font:700 6px 'JetBrains Mono',monospace;letter-spacing:.1em;opacity:.48}.legacy-combat-brief h3{margin:3px 0 1px;font-size:12px}.legacy-combat-brief>div:first-child>b{font:800 7px 'JetBrains Mono',monospace;opacity:.7}.legacy-combat-brief__stats{display:grid;grid-template-columns:repeat(4,1fr);gap:5px;margin-top:9px}.legacy-combat-brief__stats span{padding:6px;background:rgba(70,220,255,.035);border:1px solid rgba(98,228,255,.1)}.legacy-combat-brief__stats strong{display:block;margin-top:2px;font:800 8px 'JetBrains Mono',monospace}.legacy-combat-brief__hp{height:4px;margin-top:8px;background:rgba(255,255,255,.07);overflow:hidden}.legacy-combat-brief__hp i{display:block;height:100%;background:currentColor;box-shadow:0 0 8px currentColor}.legacy-combat-brief p{margin:7px 0 0;font:600 7px 'JetBrains Mono',monospace;opacity:.7}@media(max-width:720px){.legacy-combat-brief__stats{grid-template-columns:repeat(2,1fr)}}
+
+/* V73 // LEGACY COMBAT COMBOS */
+.legacy-combat-brief__stats{grid-template-columns:repeat(3,1fr)}.legacy-combat-brief__stats span:nth-last-child(-n+2) strong{font-size:7px}.boss-combat-fx.critical .bcf-impact b{transform:scale(1.08)}@media(max-width:720px){.legacy-combat-brief__stats{grid-template-columns:repeat(2,1fr)}}
+
+/* V74 // LEGACY SPECIAL ATTACKS */
+.boss-combat-fx.critical .bcf-attack{text-shadow:0 0 12px currentColor}.legacy-combat-brief__stats strong{overflow-wrap:anywhere}
+
+/* V77 // LEGACY TRIAL PERFORMANCE RECORDS */
+.legacy-trial-record{grid-template-columns:repeat(7,minmax(0,1fr))}.legacy-trial-record span b{font-variant-numeric:tabular-nums}@media(max-width:900px){.legacy-trial-record{grid-template-columns:repeat(4,minmax(0,1fr))}}
+
+
+/* V78 // ASCENSION PRESTIGE REWARDS */
+.ascension-rewards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;margin:10px 0;padding:10px;border:3px double rgba(160,240,255,.42);background:linear-gradient(135deg,rgba(6,29,41,.76),rgba(4,14,23,.72));box-shadow:inset 0 0 30px rgba(70,220,255,.06)}.ascension-rewards>strong{grid-column:1/-1;font:900 7px 'JetBrains Mono',monospace;letter-spacing:.14em}.ascension-rewards span{padding:8px;border:1px solid rgba(98,228,255,.13);background:rgba(70,220,255,.025)}.ascension-rewards small,.ascension-rewards b{display:block;font-family:'JetBrains Mono',monospace}.ascension-rewards small{font-size:6px;opacity:.48}.ascension-rewards b{margin-top:3px;font-size:9px}.ascension-rewards p{grid-column:1/-1;margin:2px 0 0;padding:8px;border-left:2px solid rgba(160,240,255,.45);font:800 7px 'JetBrains Mono',monospace;letter-spacing:.05em}@media(max-width:760px){.ascension-rewards{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.ascension-reward-track{display:block;height:4px;margin:7px 0 4px;border:1px solid rgba(160,240,255,.22);background:rgba(0,0,0,.3);overflow:hidden}.ascension-reward-track u{display:block;height:100%;background:linear-gradient(90deg,rgba(70,220,255,.45),rgba(190,250,255,.95));box-shadow:0 0 10px rgba(90,230,255,.55);text-decoration:none;transition:width .45s ease}
+
+/* OPENING HERO // SYSTEM */
+.system-boot__hero{position:relative;width:min(38vw,360px);height:min(30vh,250px);margin:2px auto 10px;display:grid;place-items:center;filter:drop-shadow(0 0 24px rgba(22,216,255,.32))}.system-boot__portal{position:absolute;width:82%;aspect-ratio:1;border-radius:50%;border:5px solid rgba(73,224,255,.92);box-shadow:0 0 14px #16d8ff,0 0 42px rgba(22,216,255,.75),inset 0 0 35px rgba(22,216,255,.35);background:radial-gradient(circle,rgba(28,151,255,.24),rgba(3,17,35,.05) 56%,transparent 58%);animation:bootPortal 3.2s ease-in-out infinite}.system-boot__hunter{position:absolute;bottom:0;width:46%;height:88%;filter:drop-shadow(0 0 8px rgba(19,171,255,.8))}.system-boot__hunter i{position:absolute;left:38%;top:7%;width:24%;height:25%;border-radius:48% 48% 42% 42%;background:#02050a;box-shadow:0 -6px 0 #07121e}.system-boot__hunter b{position:absolute;left:31%;top:28%;width:38%;height:63%;border-radius:42% 42% 18% 18%;background:linear-gradient(90deg,#010308,#07111d 48%,#010308)}.system-boot__hunter:before,.system-boot__hunter:after{content:"";position:absolute;top:31%;width:48%;height:22%;border:15px solid #02050a;border-bottom:0;border-radius:70% 70% 0 0}.system-boot__hunter:before{left:-2%;transform:rotate(-27deg)}.system-boot__hunter:after{right:-2%;transform:rotate(27deg)}.system-boot__brandmark{position:absolute;bottom:4%;width:28%;border-radius:22%;box-shadow:0 0 22px rgba(22,216,255,.55)}@keyframes bootPortal{50%{transform:scale(1.035);box-shadow:0 0 20px #16d8ff,0 0 60px rgba(22,216,255,.9),inset 0 0 45px rgba(22,216,255,.45)}}
+
+
+/* V79 // MOBILE AUTH GATE FIT */
+@media (max-width: 600px), (max-height: 760px) {
+  .auth-gate{padding:max(10px,env(safe-area-inset-top)) 12px max(10px,env(safe-area-inset-bottom));overflow:hidden;align-items:center}
+  .auth-card{width:min(420px,100%);max-height:calc(100dvh - 20px);padding:16px 18px;border-radius:14px;overflow:auto}
+  .auth-mark{width:44px;height:44px;border-radius:11px;font-size:16px}
+  .auth-kicker{margin:9px 0 3px;font-size:9px}
+  .auth-card h1{font-size:clamp(24px,7vw,32px);line-height:1;margin-bottom:7px}
+  .auth-copy{font-size:12px;line-height:1.3}
+  .auth-tabs{margin:12px 0 9px;gap:6px}
+  .auth-tabs button{min-height:38px;font-size:13px}
+  .auth-form{gap:7px}
+  .auth-form .form-input{padding-top:9px;padding-bottom:9px;min-height:42px;font-size:14px}
+  .auth-form .btn-primary{min-height:42px;padding-top:9px;padding-bottom:9px}
+  .auth-link{margin-top:7px;font-size:12px}
+  .auth-gate .backup-status{min-height:12px;margin-top:6px;font-size:11px}
+}
+@media (max-height: 600px) {
+  .auth-card{padding:10px 16px}
+  .auth-mark{width:34px;height:34px;font-size:13px}
+  .auth-kicker{margin:5px 0 2px}
+  .auth-card h1{font-size:22px;margin-bottom:4px}
+  .auth-copy{font-size:10px}
+  .auth-tabs{margin:7px 0 6px}
+  .auth-tabs button,.auth-form .form-input,.auth-form .btn-primary{min-height:36px}
+}
+
+
+/* V80 // AUTH REMEMBER + STARTUP PROGRESS HUD */
+.auth-remember{display:flex;align-items:center;gap:8px;margin:2px 0 1px;font:600 11px 'JetBrains Mono',monospace;letter-spacing:.03em;opacity:.78;cursor:pointer}.auth-remember input{width:15px;height:15px;accent-color:var(--color-cyan)}
+.auth-progress{display:grid;justify-items:center;gap:8px;padding:12px 8px 4px;text-align:center}.auth-progress[hidden]{display:none!important}.auth-progress__core{position:relative;width:54px;height:54px;display:grid;place-items:center}.auth-progress__core span{position:absolute;inset:0;border:1px solid rgba(98,228,255,.3);border-top-color:var(--color-cyan);border-radius:50%;box-shadow:0 0 18px rgba(70,220,255,.12);animation:authSpin 1s linear infinite}.auth-progress__core b{font:900 12px 'JetBrains Mono',monospace;letter-spacing:.08em;color:var(--color-cyan);text-shadow:0 0 10px rgba(70,220,255,.45)}.auth-progress p{margin:0;font:900 11px 'JetBrains Mono',monospace;letter-spacing:.16em;color:var(--color-cyan)}.auth-progress small{font:600 9px 'JetBrains Mono',monospace;opacity:.58}.auth-progress__track{width:100%;height:4px;background:rgba(98,228,255,.08);overflow:hidden}.auth-progress__track i{display:block;width:0;height:100%;background:linear-gradient(90deg,var(--color-cyan),var(--color-violet));box-shadow:0 0 10px rgba(70,220,255,.45);transition:width .35s ease}.auth-progress__steps{width:100%;display:grid;grid-template-columns:repeat(3,1fr);gap:5px}.auth-progress__steps span{padding-top:5px;border-top:1px solid rgba(98,228,255,.1);font:700 7px 'JetBrains Mono',monospace;letter-spacing:.08em;opacity:.28;transition:.2s}.auth-progress__steps span.active{opacity:1;color:var(--color-cyan);border-top-color:var(--color-cyan);text-shadow:0 0 8px rgba(70,220,255,.3)}.auth-progress__steps span.done{opacity:.7;color:var(--color-success);border-top-color:var(--color-success)}.auth-card.auth-processing .auth-tabs,.auth-card.auth-processing #authGateForm,.auth-card.auth-processing #authForgot,.auth-card.auth-processing .auth-copy{display:none}.auth-card.auth-processing h1{font-size:clamp(24px,6vw,34px);margin-bottom:8px}.auth-card.auth-processing .auth-kicker{margin-bottom:5px}@keyframes authSpin{to{transform:rotate(360deg)}}
+@media(max-width:600px),(max-height:760px){.auth-progress{padding:8px 4px 0;gap:6px}.auth-progress__core{width:44px;height:44px}.auth-progress p{font-size:9px}.auth-progress small{font-size:8px}.auth-remember{font-size:9px}}
+@media(prefers-reduced-motion:reduce){.auth-progress__core span{animation:none}.auth-progress__track i,.auth-progress__steps span{transition:none}}
+
+
+/* V81 // PRE-AUTH SYSTEM ENTRY SCREEN */
+.system-entry-screen{position:fixed;inset:0;z-index:12000;display:grid;place-items:center;background:#02060d;overflow:hidden}.system-entry-screen[hidden]{display:none!important}.system-entry-screen__art{position:absolute;inset:0;background:#02060d url('system-entry-hero.jpg') center center/contain no-repeat;filter:saturate(1.05) contrast(1.04)}.system-entry-screen:before{content:"";position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,transparent 45%,rgba(0,0,0,.26) 100%);pointer-events:none}.system-entry-screen__enter{position:absolute;left:50%;top:82%;transform:translate(-50%,-50%);width:min(48vh,420px);min-width:260px;padding:14px 24px;border:2px solid rgba(94,225,255,.9);clip-path:polygon(6% 0,94% 0,100% 50%,94% 100%,6% 100%,0 50%);background:linear-gradient(180deg,rgba(15,66,139,.88),rgba(0,20,57,.94));box-shadow:0 0 10px rgba(45,195,255,.9),inset 0 0 22px rgba(45,195,255,.24),0 0 34px rgba(0,118,255,.35);color:#f3fdff;font:900 17px 'JetBrains Mono',monospace;letter-spacing:.08em;text-shadow:0 0 10px rgba(73,224,255,.75);cursor:pointer;animation:systemEntryPulse 2.2s ease-in-out infinite}.system-entry-screen__enter:active{transform:translate(-50%,-50%) scale(.985)}.system-entry-screen__status{position:absolute;right:18px;bottom:12px;font:700 8px 'JetBrains Mono',monospace;letter-spacing:.12em;color:rgba(122,234,255,.65)}body.system-entry-open{overflow:hidden}.auth-gate{z-index:13000;background:rgba(2,7,14,.86);backdrop-filter:blur(9px)}@keyframes systemEntryPulse{50%{box-shadow:0 0 18px rgba(45,195,255,1),inset 0 0 30px rgba(45,195,255,.34),0 0 50px rgba(0,118,255,.5)}}
+@media(max-height:650px){.system-entry-screen__enter{top:80%;width:min(43vh,390px);padding:10px 20px;font-size:14px}.system-entry-screen__status{font-size:7px}}
+@media(prefers-reduced-motion:reduce){.system-entry-screen__enter{animation:none}}
+
+
+/* V82 // FINAL LANDSCAPE ENTRY HERO */
+.system-entry-screen{position:fixed;inset:0;z-index:12000;display:block;background:#01040a;overflow:hidden}
+.system-entry-screen[hidden]{display:none!important}
+.system-entry-screen__art{position:absolute;inset:0;background:#01040a url('enter_the_system_landscape.jpg') center center/cover no-repeat;filter:none}
+.system-entry-screen:before{display:none}
+.system-entry-screen__status{display:none!important}
+.system-entry-screen__enter{position:absolute;left:50%;top:84.2%;transform:translate(-50%,-50%);width:min(38vw,620px);height:min(9vw,118px);min-width:260px;z-index:4;border:0;clip-path:none;background:transparent!important;box-shadow:none!important;color:transparent!important;text-shadow:none!important;padding:0;cursor:pointer;animation:none!important}
+.system-entry-screen__enter span{opacity:0!important;pointer-events:none}
+.system-entry-screen__enter:active{transform:translate(-50%,-50%) scale(.985)}
+.system-entry-screen__enter:focus-visible{outline:2px solid rgba(116,223,255,.95);outline-offset:4px;border-radius:18px}
+@media(max-height:650px){.system-entry-screen__enter{top:84.2%;width:min(39vw,560px);height:min(9vw,100px);padding:0;font-size:0}}
+
+/* V83 // ENTRY SCREEN CACHE KILL */
+.system-entry-screen__art{background-image:url('enter_the_system_landscape.jpg?v=83')!important;background-position:center center!important;background-size:cover!important;background-repeat:no-repeat!important}
+.system-entry-screen__status{display:none!important}
+
+
+/* V84 // ROBUST ENTRY IMAGE RENDER */
+.system-entry-screen__image{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:cover;
+  object-position:center center;
+  display:block;
+  z-index:0;
+}
+.system-entry-screen__art{
+  background:none!important;
+  z-index:1;
+  pointer-events:none;
+}
+.system-entry-screen__enter{z-index:3!important}
+
+/* Use the button painted into the full-resolution entry artwork as the tap target. */
+.system-entry-screen__enter{
+  top:87%!important;
+  width:40%!important;
+  height:14%!important;
+  min-width:0!important;
+  padding:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  clip-path:none!important;
+  animation:none!important;
+  color:transparent!important;
+  text-shadow:none!important;
+}
+.system-entry-screen__enter:focus-visible{outline:2px solid #d5f8ff;outline-offset:3px}
+
+.timed-set{display:grid;grid-template-columns:auto minmax(0,1fr);gap:4px 14px;align-items:center;margin:10px 0 0;padding:10px 14px;border:1px solid rgba(0,229,255,.35);border-radius:10px;background:rgba(0,229,255,.06)}
+.timed-set[hidden]{display:none!important}
+.timed-set>div:first-child{display:grid;gap:2px}
+.timed-set small{font:700 10px var(--font-mono);letter-spacing:.08em;color:#8ddfee}
+.timed-set strong{font:800 clamp(26px,4vw,46px) var(--font-mono);line-height:1;color:#e8fcff;font-variant-numeric:tabular-nums}
+.timed-set__actions{display:flex;gap:8px;justify-content:flex-end}
+.timed-set__actions button{min-height:38px;padding:7px 12px;border:1px solid rgba(0,229,255,.5);border-radius:7px;background:rgba(0,229,255,.12);color:#e8fcff;font:700 10px var(--font-mono);cursor:pointer}
+.timed-set__actions button:disabled{opacity:.5;cursor:default}
+.timed-set>small{grid-column:1/-1;letter-spacing:0}
+
+/* Landscape workout: keep the timer and current set visible together. */
+@media (orientation:landscape) and (min-width:700px) and (max-height:620px){
+ body.workout-open #workoutMode.workout-mode.active{
+  display:grid;grid-template-columns:minmax(230px,32%) minmax(0,1fr);
+  grid-template-rows:auto minmax(0,1fr) auto;gap:10px 16px;
+  align-items:stretch;overflow:hidden;box-sizing:border-box;
+  padding:34px 18px max(12px,env(safe-area-inset-bottom));
+ }
+ body.workout-open .workout-mode__top{grid-column:1;grid-row:1;max-width:none;margin:0;padding:0 0 8px;min-width:0}
+ body.workout-open .workout-mode__top h2{font-size:clamp(18px,2.7vw,28px);line-height:1.1}
+ body.workout-open .workout-exit{position:fixed;right:16px;top:16px;z-index:5;width:38px;height:38px}
+ body.workout-open .workout-clock{grid-column:1;grid-row:2;display:grid;place-items:center;min-width:0;margin:0;font-size:clamp(36px,6vw,72px)}
+ body.workout-open .workout-progress{grid-column:1;grid-row:3;width:100%;max-width:none;margin:0;box-sizing:border-box}
+ body.workout-open .workout-stage{grid-column:2;grid-row:1 / span 2;min-width:0;max-width:none;min-height:0;margin:0;padding:14px 18px;overflow-y:auto;display:flex;flex-direction:column;justify-content:center}
+ body.workout-open .workout-stage h1{font-size:clamp(24px,4vw,44px);line-height:1.08;margin:4px 0}
+ body.workout-open .workout-stage p{margin:2px 0}
+ body.workout-open .live-set-grid{margin:12px 0;gap:8px}
+ body.workout-open .timed-set{margin:6px 0 0;padding:7px 10px}
+ body.workout-open .timed-set strong{font-size:clamp(24px,3vw,34px)}
+ body.workout-open .timed-set__actions button{min-height:34px}
+ body.workout-open #timedSet:not([hidden])+.live-set-grid{margin:7px 0}
+ body.workout-open .live-set-grid input{padding:9px 11px;margin-top:4px;font-size:18px}
+ body.workout-open .workout-main-btn{padding:11px;min-height:44px}
+ body.workout-open .workout-live-stats{grid-column:2;grid-row:3;width:100%;max-width:none;margin:0;font-size:10px}
+ body.system-os-ready .os-module-stage:not(.minimized){width:min(94vw,1200px);height:90dvh}
+ body.system-os-ready .os-module-body{padding:8px 12px 10px}
+ body.system-os-ready .os-module-body #daily-mission{padding:10px 14px!important}
+ body.system-os-ready #daily-mission .section-header{margin-bottom:4px}
+ body.system-os-ready #daily-mission .home-mission-summary{margin:5px 0;padding:7px 10px}
+ body.system-os-ready #daily-mission .mission-mode-choices{margin:7px 0}
+ body.system-os-ready #daily-mission .mission-mode-choices button{padding:7px 5px}
+ body.system-os-ready #daily-mission #start-mission-btn{min-height:44px}
+ .mlc-card{width:min(94vw,1100px);max-height:94dvh;padding:12px 16px}
+ .mlc-objectives{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:6px 10px}
+ .mlc-objectives>div{min-width:0;margin:0}
+}
+
+/* Keep achievement badges in columns when their grid is moved into the OS window. */
+body.system-os-ready .os-module-body > #achievementGrid{
+ display:grid!important;
+ grid-template-columns:repeat(3,minmax(0,1fr));
+ gap:10px;
+ align-content:start;
+}
+body.system-os-ready .os-module-body > #achievementGrid .achievement-card{
+ min-width:0;
+ min-height:112px;
+ padding:12px 8px;
+ box-sizing:border-box;
+ justify-content:center;
+}
+body.system-os-ready .os-module-body > #achievementGrid .achievement-card--locked{opacity:.55}
+@media(max-width:700px){
+ body.system-os-ready .os-module-body > #achievementGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
+}
+
+.account-danger{border:1px solid #f87171;padding:1rem;margin-top:1rem}.account-delete-dialog{background:#101923;color:#fff;border:1px solid #f87171;border-radius:12px;max-width:480px;max-height:85vh;overflow:auto}.account-delete-dialog::backdrop{background:#000b}
+
+
+/* Account dialogs must remain visible above the OS while showModal blocks background taps. */
+.account-delete-dialog[open]{display:block;position:fixed;inset:0;margin:auto;height:fit-content;box-sizing:border-box;width:min(480px,calc(100vw - 32px));padding:20px;max-height:calc(100dvh - 32px)}
+.account-delete-dialog:not([open]){display:none}
+.account-danger .danger-btn,.account-delete-dialog button{min-height:44px;padding:10px 14px;border:1px solid #f87171;border-radius:8px;background:rgba(248,113,113,.10);color:#fff;cursor:pointer}
+.account-danger .danger-btn:focus-visible,.account-delete-dialog button:focus-visible{outline:2px solid #67e8f9;outline-offset:3px}
+.account-delete-dialog .settings-form{min-width:0}
+
+/* Fit the complete 1672 x 941 artwork; keep its embedded button aligned. */
+.system-entry-screen{display:grid;place-items:center}
+.system-entry-screen__frame{position:relative;width:min(100vw,calc(100dvh * 1672 / 941));height:min(100dvh,calc(100vw * 941 / 1672));flex:none}
+.system-entry-screen__frame .system-entry-screen__image{object-fit:contain;object-position:center}
+
+/* Secondary cooperative launch, sized for landscape phones. */
+.tt-secondary{display:block;width:100%;margin-top:8px;padding:10px;border:1px solid #4ddfff;background:#102338;color:#aeeeff;cursor:pointer}
+#trainTogetherPanel{padding:12px;border:1px solid #4ddfff;margin-top:8px;max-height:35vh;overflow:auto}
+#trainTogetherPanel button,#trainTogetherPanel input{padding:8px;margin:4px;max-width:100%}
+#ttLive{position:relative;z-index:2;background:#102338;padding:8px;color:#aeeeff;text-align:center}
+#ttLive[hidden],#trainTogetherPanel[hidden]{display:none}
+
+
+/* V87 // CENTRAL COMMAND TOPBAR COLLISION FIX */
+body.system-os-ready .hud-module--mission{padding-top:30px!important}
+.os-topbar__right{position:absolute;right:8px;top:0;gap:14px;white-space:nowrap}
+@media(max-height:520px){body.system-os-ready .hud-module--mission{padding-top:27px!important}.os-topbar__right{font-size:8px;gap:10px}}
+
+/* ===== Progress History ===== */
+.status-progress-actions{display:flex;justify-content:flex-end;margin:10px 0 14px}.status-progress-actions button{min-height:40px;padding:0 18px;border:1px solid rgba(103,222,255,.35);background:rgba(16,51,76,.45);color:#c9f7ff;font-weight:800;letter-spacing:.08em;cursor:pointer}
+.progress-history-modal{position:fixed;inset:0;z-index:10040;display:none;align-items:center;justify-content:center;padding:18px;background:rgba(0,5,12,.86);backdrop-filter:blur(8px)}.progress-history-modal.active{display:flex}.progress-history-card{width:min(1120px,96vw);max-height:92vh;overflow:auto;padding:22px;border:1px solid rgba(103,222,255,.35);background:linear-gradient(180deg,rgba(7,18,31,.99),rgba(5,12,23,.99));box-shadow:0 0 45px rgba(49,208,255,.12)}.progress-history-head{display:flex;align-items:flex-start;justify-content:space-between;gap:20px;border-bottom:1px solid rgba(103,222,255,.15);padding-bottom:14px}.progress-history-head h2{margin:4px 0}.progress-history-head p{margin:0;opacity:.75}.progress-history-head>button{width:42px;height:42px;border:1px solid rgba(103,222,255,.3);background:transparent;color:#c9f7ff;font-size:1.1rem}.progress-history-layout{display:grid;grid-template-columns:minmax(260px,.8fr) minmax(420px,1.5fr);gap:16px;margin-top:16px}.progress-history-layout aside,.progress-history-layout main,.progress-compare{border:1px solid rgba(103,222,255,.14);background:rgba(8,21,37,.62);padding:14px}.progress-history-layout aside button{display:block;width:100%;margin-top:8px;padding:11px;text-align:left;border:1px solid rgba(103,222,255,.14);background:rgba(3,12,23,.6);color:inherit}.progress-history-layout aside button.selected{border-color:rgba(103,222,255,.55);box-shadow:inset 3px 0 0 #7cecff}.progress-history-layout aside button span,.progress-history-layout aside button small{display:block;font-size:.65rem;letter-spacing:.08em;opacity:.7}.progress-history-layout aside button strong{display:block;margin:4px 0}.progress-detail-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.progress-detail-grid article{padding:12px;border:1px solid rgba(103,222,255,.12);background:rgba(3,12,23,.55)}.progress-detail-grid span,.progress-detail-grid small{display:block;font-size:.64rem;letter-spacing:.09em;opacity:.7}.progress-detail-grid strong{display:block;margin:5px 0;font-size:1.15rem;color:#8deeff}.progress-raw{margin-top:12px;padding:12px;border:1px solid rgba(103,222,255,.12)}.progress-raw p{display:inline-block;margin:8px 18px 0 0}.progress-compare{margin-top:14px}.progress-compare>div{display:flex;align-items:center;gap:18px;margin-top:8px}.progress-compare article{display:flex;flex-direction:column}.progress-compare strong{font-size:1.2rem;color:#8deeff}.progress-focus{margin-top:14px}
+@media(max-width:760px){.progress-history-modal{padding:8px}.progress-history-card{padding:14px}.progress-history-layout{grid-template-columns:1fr}.progress-history-layout aside{max-height:180px;overflow:auto}.progress-detail-grid{grid-template-columns:repeat(2,1fr)}}
+
+.audio-settings{display:grid;grid-template-columns:1fr;gap:9px;margin:8px 0 4px;padding:12px;border:1px solid rgba(103,222,255,.18)}.audio-settings legend{padding:0 7px;color:#8deeff;font-size:.72rem;letter-spacing:.12em}.audio-settings>label:not(.settings-check){display:grid;grid-template-columns:70px 1fr;align-items:center;gap:10px;font-size:.78rem;opacity:.86}.audio-settings input[type=range]{width:100%;accent-color:#62ddff}.audio-settings button{min-height:34px;border:1px solid rgba(103,222,255,.28);background:rgba(12,45,67,.55);color:#c9f7ff;font-weight:800;letter-spacing:.08em}
+
+/* Assessment landscape containment: never allow onboarding/trial cards to exceed the viewport width. */
+.system-onboarding,.system-onboarding *{box-sizing:border-box}
+.system-onboarding{width:100vw;max-width:100vw;overflow-x:hidden}
+.system-onboarding .onboarding-card,.system-onboarding .ob-card,.system-onboarding>div{max-width:calc(100vw - 20px);min-width:0}
+.system-onboarding .ob-fields,.system-onboarding .ob-options,.system-onboarding input{min-width:0;max-width:100%}
+.system-onboarding .ob-options{grid-template-columns:repeat(2,minmax(0,1fr))}
+.aw-push-block{display:grid;gap:8px}.aw-push-label{font-size:.68rem;font-weight:800;letter-spacing:.12em;color:#8deeff}.aw-push-options{grid-template-columns:repeat(4,minmax(0,1fr))!important}.aw-push-options button{min-width:0;padding-left:8px;padding-right:8px}
+@media (max-height:520px) and (orientation:landscape){.system-onboarding .onboarding-card,.system-onboarding .ob-card{max-height:calc(100vh - 12px);overflow-y:auto}.system-onboarding h1{margin:.25rem 0}.system-onboarding p{margin:.35rem 0}.system-onboarding .ob-options{gap:6px}.system-onboarding .ob-options button{min-height:42px}}
+
+.build-info{margin-top:10px;padding:9px 11px;border:1px solid rgba(103,222,255,.16);display:flex;justify-content:space-between;gap:12px;align-items:center;font-size:.68rem;letter-spacing:.09em}.build-info span{opacity:.58}.build-info strong{color:#9befff}
+
+
+/* Assessment baseline // Progress analytics */
+.assessment-baseline-card{margin:0 0 14px;padding:18px;border:1px solid rgba(34,211,238,.28);border-radius:12px;background:linear-gradient(135deg,rgba(34,211,238,.055),rgba(255,255,255,.018))}
+.assessment-baseline-card .analytics-card__head{margin-bottom:12px}.assessment-baseline-card .analytics-card__head h3{margin:2px 0 0;font-size:16px;text-transform:uppercase;letter-spacing:.08em}
+.assessment-baseline-summary{display:flex;align-items:center;gap:16px;margin-bottom:14px;padding:10px 12px;border-left:2px solid currentColor;background:rgba(255,255,255,.025)}
+.assessment-baseline-summary strong{font-size:20px;white-space:nowrap}.assessment-baseline-summary span{font-size:12px;opacity:.62}
+.assessment-baseline-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:9px}.assessment-baseline-grid>div{padding:12px;border:1px solid rgba(255,255,255,.07);border-radius:9px;background:rgba(255,255,255,.025)}
+.assessment-baseline-grid span{display:block;font:9px var(--font-mono);letter-spacing:.1em;opacity:.58}.assessment-baseline-grid strong{display:block;margin:5px 0 8px;font-size:18px}.assessment-baseline-grid i{display:block;height:5px;border-radius:99px;background:rgba(255,255,255,.07);overflow:hidden}.assessment-baseline-grid i b{display:block;height:100%;width:0;background:currentColor;transition:width .35s}
+.assessment-baseline-empty .assessment-baseline-grid{opacity:.35}
+@media(max-width:700px){.assessment-baseline-grid{grid-template-columns:repeat(2,1fr)}}
+
+/* Expanded watch telemetry */
+#healthConnectPanel .health-connect-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px}
+#healthConnectPanel .health-connect-grid strong{font-size:clamp(18px,2vw,30px)}
+.health-actions{display:flex;gap:10px;flex-wrap:wrap;margin:12px 0 20px}
+.health-sync-note{color:#aebec8;font-size:13px;line-height:1.5;margin:10px 0}
+.health-history-scroll{overflow-x:auto;margin-bottom:20px}
+.health-history{width:100%;border-collapse:collapse;font-size:13px;white-space:nowrap}
+.health-history th,.health-history td{padding:10px;text-align:left;border-bottom:1px solid #29434f}
+.health-history thead{color:#79dcf3}.health-workouts{display:grid;gap:8px}
+.health-workouts article{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:12px;border:1px solid #29434f;border-radius:8px}
+.health-workouts span{color:#aebec8}
