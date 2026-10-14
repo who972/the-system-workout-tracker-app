@@ -109,7 +109,7 @@ class MainActivity : ComponentActivity() {
                     else { val bpms=samples.map{it.beatsPerMinute.toInt()}; val latest=samples.maxByOrNull{it.time}; JSONObject().put("latest",latest?.beatsPerMinute?.toInt()?:0).put("average",bpms.average().toInt()).put("minimum",bpms.minOrNull()?:0).put("maximum",bpms.maxOrNull()?:0).put("sampledAt",latest?.time?.toString()) }
                 reply.postMessage(JSONObject().put("id", id).put("result", result).toString())
             }
-            "getTodaySteps" -> lifecycleScope.launch {
+            "getTodaySteps", "getTodayMetrics" -> lifecycleScope.launch {
                 val zone = ZoneId.systemDefault()
                 val start = LocalDate.now(zone).atStartOfDay(zone).toInstant()
                 val end = java.time.Instant.now()
