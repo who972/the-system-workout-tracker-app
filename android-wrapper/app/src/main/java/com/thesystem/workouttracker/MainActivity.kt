@@ -190,11 +190,25 @@ class MainActivity : ComponentActivity() {
                         val response = health.readRecords(ReadRecordsRequest(TotalCaloriesBurnedRecord::class, TimeRangeFilter.between(start, end), pageToken = page))
                         records.addAll(response.records); page = response.pageToken
                     } while (page != null)
-                    val provider = chooseHealthSource(records.map { SourceInterval(it.metadata.dataOrigin.packageName, it.startTime, it.endTime) }, start, end)
-                    if (provider != null) {
+                    val summary = health.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), TimeRangeFilter.between(start, end)))
+                    val preferred = chooseHealthSource(records.map { SourceInterval(it.metadata.dataOrigin.packageName, it.startTime, it.endTime) }, start, end)
+                    val candidates = (listOfNotNull(preferred) + summary.dataOrigins.map { it.packageName }.sorted()).distinct()
+                    var selected = false
+                    for (provider in candidates) {
                         val calories = health.aggregate(AggregateRequest(setOf(TotalCaloriesBurnedRecord.ENERGY_TOTAL), TimeRangeFilter.between(start, end), dataOriginFilter = setOf(DataOrigin(provider))))
-                        row.put("calories", calories[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: JSONObject.NULL)
-                        row.put("caloriesSource", healthSourceName(provider))
+                        val value = calories[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
+                        if (value != null) {
+                            row.put("calories", value).put("caloriesSource", healthSourceName(provider))
+                            selected = true
+                            break
+                        }
+                    }
+                    // Health Connect can provide a platform-derived total without
+                    // raw calorie records. Only use that total when no multi-source
+                    // combination is reported; never fall back to a mixed total.
+                    if (!selected && summary.dataOrigins.size <= 1) {
+                        val value = summary[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories
+                        if (value != null) row.put("calories", value).put("caloriesSource", summary.dataOrigins.firstOrNull()?.let { healthSourceName(it.packageName) } ?: "Health Connect estimate")
                     }
                 }
                 row.put("distanceMeters", result?.get(DistanceRecord.DISTANCE_TOTAL)?.inMeters ?: JSONObject.NULL)
