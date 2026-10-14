@@ -18,4 +18,11 @@ class HealthSourceSelectionTest {
         assertEquals("a", chooseHealthSource(rows.reversed(), t(0), t(24)))
     }
     @Test fun missingDataReturnsNoProvider() { assertNull(chooseHealthSource(emptyList(), t(0), t(24))) }
+    @Test fun watchProviderWinsOverLongerPhoneCoverage() {
+        val rows = listOf(SourceInterval("phone", t(0), t(24)), SourceInterval("watchApp", t(8), t(12), true))
+        assertEquals("watchApp", chooseStepSource(rows, t(0), t(24)))
+    }
+    @Test fun stepSelectionFallsBackToCoverageWithoutWatchMetadata() {
+        assertEquals("fuller", chooseStepSource(listOf(SourceInterval("short", t(0), t(1)), SourceInterval("fuller", t(0), t(2))), t(0), t(24)))
+    }
 }

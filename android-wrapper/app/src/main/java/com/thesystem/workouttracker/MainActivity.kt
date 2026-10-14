@@ -31,6 +31,7 @@ import androidx.health.connect.client.records.*
 import androidx.health.connect.client.aggregate.AggregateMetric
 import java.time.Instant
 import androidx.health.connect.client.records.metadata.DataOrigin
+import androidx.health.connect.client.records.metadata.Device
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -161,7 +162,7 @@ class MainActivity : ComponentActivity() {
         fun add(key: String, permission: String, metric: AggregateMetric<*>) {
             val ok = allowed(permission)
             available.put(key, ok)
-            if (ok && key != "calories" && key != "heartRate") metrics.add(metric)
+            if (ok && key != "calories" && key != "heartRate" && key != "steps") metrics.add(metric)
         }
         add("steps", HealthPermission.getReadPermission(StepsRecord::class), StepsRecord.COUNT_TOTAL)
         add("activeMinutes", HealthPermission.getReadPermission(ExerciseSessionRecord::class), ExerciseSessionRecord.EXERCISE_DURATION_TOTAL)
@@ -181,7 +182,19 @@ class MainActivity : ComponentActivity() {
             val row = JSONObject().put("date", date.toString())
             if (available.keys().asSequence().any { available.optBoolean(it) }) {
                 val result = if (metrics.isEmpty()) null else health.aggregate(AggregateRequest(metrics, TimeRangeFilter.between(start, end), dataOriginFilter = origins))
-                row.put("steps", result?.get(StepsRecord.COUNT_TOTAL) ?: JSONObject.NULL)
+                if (available.optBoolean("steps")) {
+                    val records = mutableListOf<StepsRecord>()
+                    var page: String? = null
+                    do {
+                        val response = health.readRecords(ReadRecordsRequest(StepsRecord::class, TimeRangeFilter.between(start, end), pageToken = page))
+                        records.addAll(response.records); page = response.pageToken
+                    } while (page != null)
+                    val preferred = chooseStepSource(records.map { SourceInterval(it.metadata.dataOrigin.packageName, it.startTime, it.endTime, it.metadata.device?.type == Device.TYPE_WATCH) }, start, end)
+                    if (preferred != null) {
+                        val single = health.aggregate(AggregateRequest(setOf(StepsRecord.COUNT_TOTAL), TimeRangeFilter.between(start, end), dataOriginFilter = setOf(DataOrigin(preferred))))
+                        row.put("steps", single[StepsRecord.COUNT_TOTAL] ?: JSONObject.NULL).put("stepsSource", healthSourceName(preferred))
+                    }
+                }
                 row.put("activeMinutes", result?.get(ExerciseSessionRecord.EXERCISE_DURATION_TOTAL)?.toMillis()?.div(60000.0) ?: JSONObject.NULL)
                 if (available.optBoolean("calories")) {
                     val records = mutableListOf<TotalCaloriesBurnedRecord>()

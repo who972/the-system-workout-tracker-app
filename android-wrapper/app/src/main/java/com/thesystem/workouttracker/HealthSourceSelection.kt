@@ -3,7 +3,7 @@ package com.thesystem.workouttracker
 import java.time.Instant
 import java.time.Duration
 
-data class SourceInterval(val source: String, val start: Instant, val end: Instant)
+data class SourceInterval(val source: String, val start: Instant, val end: Instant, val watch: Boolean = false)
 
 // Pick the source covering the largest part of the day, then the newest ending
 // sample, then package name for stable ties. Never sum providers together.
@@ -22,4 +22,10 @@ fun chooseHealthSource(records: List<SourceInterval>, start: Instant, end: Insta
         coverage += Duration.between(left, right).toMillis()
         Candidate(source, coverage, intervals.maxOf { it.second })
     }.sortedWith(compareByDescending<Candidate> { it.coverage }.thenByDescending { it.latest }.thenBy { it.source }).firstOrNull()?.source
+}
+
+fun chooseStepSource(records: List<SourceInterval>, start: Instant, end: Instant): String? {
+    val inDay = records.filter { it.end.isAfter(start) && it.start.isBefore(end) }
+    val watch = inDay.filter { it.watch }
+    return chooseHealthSource(watch.ifEmpty { inDay }, start, end)
 }
