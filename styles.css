@@ -2579,3 +2579,5 @@ body.system-os-ready .hud-module--mission{padding-top:30px!important}
 .health-history thead{color:#79dcf3}.health-workouts{display:grid;gap:8px}
 .health-workouts article{display:flex;justify-content:space-between;gap:15px;flex-wrap:wrap;padding:12px;border:1px solid #29434f;border-radius:8px}
 .health-workouts span{color:#aebec8}
+
+.health-source{display:flex;align-items:center;gap:16px;margin:16px 0;color:#79dcf3}.health-source select{background:#10232d;color:#e0f7ff;border:1px solid #3d8396;padding:10px;border-radius:6px;font:inherit}

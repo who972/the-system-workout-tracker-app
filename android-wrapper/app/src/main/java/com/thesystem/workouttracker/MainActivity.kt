@@ -30,6 +30,7 @@ import org.json.JSONArray
 import androidx.health.connect.client.records.*
 import androidx.health.connect.client.aggregate.AggregateMetric
 import java.time.Instant
+import androidx.health.connect.client.records.metadata.DataOrigin
 import java.time.LocalDate
 import java.time.ZoneId
 
@@ -114,7 +115,7 @@ class MainActivity : ComponentActivity() {
             }
             "getTodaySteps", "getTodayMetrics", "getHealthDashboard" -> healthTask(id, reply) {
                 try {
-                    val result = readHealthDashboard(if (json.optString("method") == "getTodaySteps") 1 else 7)
+                    val result = readHealthDashboard(if (json.optString("method") == "getTodaySteps") 1 else 7, json.optString("source", "all"))
                     reply.postMessage(JSONObject().put("id", id).put("result", result).toString())
                 } catch (e: Exception) {
                     reply.postMessage(JSONObject().put("id", id).put("result", JSONObject().put("error", "health-read-failed")).toString())
@@ -143,7 +144,8 @@ class MainActivity : ComponentActivity() {
         HealthPermission.getReadPermission(SleepSessionRecord::class)
     )
 
-    private suspend fun readHealthDashboard(days: Int): JSONObject {
+    private suspend fun readHealthDashboard(days: Int, source: String): JSONObject {
+        val origins = if (source == "samsung") setOf(DataOrigin("com.sec.android.app.shealth")) else emptySet()
         val granted = health.permissionController.getGrantedPermissions()
         fun allowed(permission: String) = granted.contains(permission)
         val metrics = mutableSetOf<AggregateMetric<*>>()
@@ -170,7 +172,7 @@ class MainActivity : ComponentActivity() {
             val end = if (offset == 0) now else date.plusDays(1).atStartOfDay(zone).toInstant()
             val row = JSONObject().put("date", date.toString())
             if (metrics.isNotEmpty()) {
-                val result = health.aggregate(AggregateRequest(metrics, TimeRangeFilter.between(start, end)))
+                val result = health.aggregate(AggregateRequest(metrics, TimeRangeFilter.between(start, end), dataOriginFilter = origins))
                 row.put("steps", result[StepsRecord.COUNT_TOTAL] ?: JSONObject.NULL)
                 row.put("activeMinutes", result[ExerciseSessionRecord.EXERCISE_DURATION_TOTAL]?.toMillis()?.div(60000.0) ?: JSONObject.NULL)
                 row.put("calories", result[TotalCaloriesBurnedRecord.ENERGY_TOTAL]?.inKilocalories ?: JSONObject.NULL)
@@ -187,13 +189,13 @@ class MainActivity : ComponentActivity() {
             val start = today.minusDays((days - 1).toLong()).atStartOfDay(zone).toInstant()
             var token: String? = null
             do {
-                val response = health.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, TimeRangeFilter.between(start, now), pageToken = token))
+                val response = health.readRecords(ReadRecordsRequest(ExerciseSessionRecord::class, TimeRangeFilter.between(start, now), dataOriginFilter = origins, pageToken = token))
                 response.records.forEach { record ->
                     workouts.put(JSONObject().put("title", record.title ?: "Recorded workout").put("startTime", record.startTime.toString()).put("endTime", record.endTime.toString()).put("minutes", java.time.Duration.between(record.startTime, record.endTime).toMillis() / 60000.0).put("source", record.metadata.dataOrigin.packageName))
                 }
                 token = response.pageToken
             } while (token != null)
         }
-        return JSONObject().put("today", daily.getJSONObject(daily.length() - 1)).put("days", daily).put("workouts", workouts).put("permissions", available).put("timeZone", zone.id).put("steps", daily.getJSONObject(daily.length() - 1).opt("steps") ?: JSONObject.NULL)
+        return JSONObject().put("source", source).put("today", daily.getJSONObject(daily.length() - 1)).put("days", daily).put("workouts", workouts).put("permissions", available).put("timeZone", zone.id).put("steps", daily.getJSONObject(daily.length() - 1).opt("steps") ?: JSONObject.NULL)
     }
 }
