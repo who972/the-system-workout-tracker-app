@@ -45,8 +45,14 @@ jobs:
       - name: Verify solo and Train Together flows
         shell: bash
         run: |
-          npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0
+          npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0 playwright@1.58.2
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/train-together.test.cjs
+
+      - name: Verify session switch on landscape phones
+        shell: bash
+        run: |
+          node "$RUNNER_TEMP/train-tests/node_modules/playwright/cli.js" install --with-deps chromium
+          PLAYWRIGHT_MODULE="$RUNNER_TEMP/train-tests/node_modules/playwright" node tests/session-equipment-layout.test.cjs
 
       - name: Package SYSTEM web app
         shell: bash
@@ -54,6 +60,7 @@ jobs:
           set -euo pipefail
           node --check train-together.js
           node --check app.js
+          node tests/session-equipment.test.cjs
           node --check account-data.js
           node tests/account-data.test.cjs
           node tests/health-connect.test.cjs

@@ -164,7 +164,7 @@
     </div>
   </aside>
   <div class="hud-bottom os-dock" aria-label="System dock">
-    <div class="os-dock__primary"><button class="core-action" type="button" data-hud-target="daily-mission">BEGIN MISSION</button></div>
+    <div class="os-dock__primary"><div class="session-equipment" role="group" aria-label="Workout equipment for this session"><div class="session-equipment__buttons"><button type="button" data-session-equipment="bodyweight" aria-pressed="true">BODYWEIGHT</button><button type="button" data-session-equipment="gym" aria-pressed="false">GYM</button></div><small data-session-equipment-note>This session only</small></div><button class="core-action" type="button" data-hud-target="daily-mission">BEGIN MISSION</button></div>
     <button data-os-module="missions"><b>◆</b><span>MISSIONS</span></button>
     <button data-os-module="exercise"><b>⌁</b><span>DATABASE</span></button>
     <button data-os-module="nutrition"><b>◫</b><span>NUTRITION</span></button>
@@ -255,7 +255,7 @@
   <p id="mission-focus">Complete today's 30-minute mission to earn XP and improve your stats.</p>
   <div id="homeMissionSummary" class="home-mission-summary">Today • Training Mission</div>
   <div id="mission-exercises" class="mission-exercises"></div>
-  <button id="start-mission-btn" class="primary-btn" type="button">START WORKOUT</button>
+  <div class="session-equipment" role="group" aria-label="Workout equipment for this session"><div class="session-equipment__buttons"><button type="button" data-session-equipment="bodyweight" aria-pressed="true">BODYWEIGHT</button><button type="button" data-session-equipment="gym" aria-pressed="false">GYM</button></div><small data-session-equipment-note>This session only</small></div><button id="start-mission-btn" class="primary-btn" type="button">START WORKOUT</button>
   <div class="home-quick-stats" aria-label="Weekly training status"><span id="homeQuickStreak">🔥 0 day streak</span><span id="homeQuickWeek">✓ 0 workouts this week</span></div>
 </section>
 
