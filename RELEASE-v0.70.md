@@ -27,13 +27,23 @@ Competition credits limit software score manipulation; they do not prove that a 
 
 1. Upload this tested source to https://github.com/who972/the-system-workout-tracker-app using the existing signing/build workflow. The workflow now runs the new regressions and verifies competitive-credits.js is packaged in the APK.
 2. Obtain the signed v0.70 APK and confirm its signing certificate matches v0.69; install over v0.69 without uninstalling.
-3. Apply supabase/migrations/20261021011417_secure_social_credits.sql to project wczmxbvdfctffhpohnne. This adds a private credit ledger, a restricted competitive view, consent/result guards and API-grant hardening. Review advisors afterwards.
+3. Apply supabase/migrations/20261021013751_secure_social_credits.sql to project wczmxbvdfctffhpohnne. This adds a private credit ledger, a restricted competitive view, consent/result guards and API-grant hardening. Review advisors afterwards.
 4. Verify with two real accounts: sign-in/out, saved progress, friendship consent, online completion credit, and real email recovery. Test startup on Android with and without Health Connect, as well as actual touch/keyboard layouts.
 
 Older APKs will no longer be allowed to push their local XP directly to the competitive profile after the migration; distribute the updated APK alongside the database change. New competitive standings begin at zero while personal XP/history remain intact. A read-only live check found no pending or active individual or squad challenges, so there is currently no in-progress competition to transition. Recheck at rollout; the migration does not silently erase challenge history.
 
 ## Still requires external/device verification
 
-The full Android Activity/SDK build and signed APK installation have not run locally; the ten native tests cover standalone Kotlin health logic. Real email delivery and a handset recovery flow were not exercised. No recovery email was sent. Leaked-password protection is still a separate live Supabase authentication setting and has not been changed; do not enable a paid feature without checking plan requirements.
+The full Android build and native unit tests passed on GitHub. Physical-device installation remains to be verified. Real email delivery and a handset recovery flow were not exercised. No recovery email was sent. Leaked-password protection is still a separate live Supabase authentication setting and has not been changed; do not enable a paid feature without checking plan requirements.
 
 
+
+## Deployment record
+
+The signed APK was built successfully from commit aef71f668e4c245c6c7dc82145fddceedf9e32f4 in GitHub Actions run 39528093751. The packaged source matches the tested files, and its signing certificate matches v0.69.
+
+APK SHA-256: 8d341e9656e8c2b92fe95c92d0a608772d4dda098be123fc262921cefd89c4ab.
+
+Database migration secure_social_credits was applied successfully as version 20261021013751. Live checks confirmed the invoker-security view, private ledger access restrictions, four installed guards, rejected arbitrary XP and pre-accepted friendships, and rejected credit requests without an existing profile. All test probes were rolled back.
+
+The advisor no longer reports publicly executable trigger functions. Remaining notices are the intentionally closed private ledger, the intentional signed-in reset RPC, and optional leaked-password protection being disabled. References: https://supabase.com/docs/guides/database/database-linter?lint=0008_rls_enabled_no_policy ; https://supabase.com/docs/guides/database/database-linter?lint=0029_authenticated_security_definer_function_executable ; https://supabase.com/docs/guides/auth/password-security#password-strength-and-leaked-password-protection .
