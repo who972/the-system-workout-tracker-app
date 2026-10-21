@@ -572,12 +572,13 @@
     <article class="dashboard-card"><h3>Sync Progress</h3><p class="quest-section__desc">Back up this device or restore your latest saved progress on another device.</p><div class="cloud-actions"><button id="cloudPush" class="btn-primary" type="button">Upload Progress</button><button id="cloudPull" type="button">Restore From Cloud</button></div><div id="lastCloudSync" class="backup-status">No cloud sync yet.</div></article>
   </div>
 </section>
-<section class="settings-section profile-secondary" id="diagnosticSettings">
+
+<section class="settings-section profile-primary" id="profileSettings">
+    <div class="quest-section__header"><h2 class="quest-section__title">Profile & Settings</h2><span class="quest-section__meta">SYSTEM SETTINGS</span></div>
+<section class="dashboard-card" id="diagnosticSettings">
 <h3>Test &amp; Diagnostics</h3><p>Start a test, use the app, then stop and export the report to share in our chat. Records action codes and error categories, never typed text, passwords, tokens, or health readings. Recording stops when the app reloads or closes; export before closing. Starting a new test replaces the previous test.</p>
 <div class="cloud-actions"><button id="diagnosticStart" type="button" class="btn-primary">Start Test</button><button id="diagnosticStop" type="button" disabled>Stop Test</button><button id="diagnosticExport" type="button" disabled>Export Report</button><button id="diagnosticClear" type="button">Clear Report</button></div><p id="diagnosticStatus" role="status" aria-live="polite"></p>
 </section>
-<section class="settings-section profile-primary" id="profileSettings">
-    <div class="quest-section__header"><h2 class="quest-section__title">Profile & Settings</h2><span class="quest-section__meta">SYSTEM SETTINGS</span></div>
     <div class="settings-grid">
       <article class="dashboard-card"><h3>Player Profile</h3><form id="profileForm" class="settings-form"><input id="profileName" class="form-input" placeholder="Player name"><select id="unitSystem" class="form-input"><option value="imperial">Imperial (lb)</option><option value="metric">Metric (kg)</option></select><select id="workoutGoal" class="form-input"><option value="balanced">Balanced</option><option value="strength">Strength</option><option value="endurance">Endurance</option><option value="weight-loss">Weight loss</option><option value="mobility">Mobility</option></select><fieldset class="audio-settings"><legend>SYSTEM AUDIO</legend><label class="settings-check"><input id="soundSetting" type="checkbox"> Enable System Audio</label><label>Master <input id="masterVolume" type="range" min="0" max="100" value="70"></label><label>Effects <input id="effectsVolume" type="range" min="0" max="100" value="80"></label><label>Music <input id="musicVolume" type="range" min="0" max="100" value="35"></label><button id="testSystemAudio" type="button">TEST AUDIO</button></fieldset><button class="btn-primary" type="submit">Save Settings</button></form></article>
       <article class="dashboard-card"><h3>Account &amp; Data</h3><p class="quest-section__desc">Device data and saved cloud data are managed separately. Export or upload a backup before clearing unsynced progress.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label></div><fieldset class="account-danger"><legend>Danger Zone</legend><p>Factory Reset clears this device and signs you out. Your account and saved cloud progress stay intact.</p><p>Reset Progress restarts your training and assessment. Delete Account permanently removes your account and server data.</p><div class="settings-actions"><button id="resetAllBtn" data-account-operation class="danger-btn" type="button">Factory Reset</button><button id="resetTrainingBtn" data-account-operation class="danger-btn" type="button">Reset Progress</button><button id="deleteAccountBtn" data-account-operation class="danger-btn" type="button">Delete Account</button></div></fieldset><div id="backupStatus" class="backup-status" role="status" aria-live="polite"></div><div class="build-info"><span>INSTALLED BUILD</span><strong id="installedBuild">Loading…</strong></div></article>
@@ -640,7 +641,7 @@
 <button data-account-operation class="danger-btn" type="submit">Permanently Delete Account</button>
 <button id="cancelDeleteAccount" type="button">Cancel</button>
 </form></dialog>
-<script src="diagnostics.js?v=71"></script>
+<script src="diagnostics.js?v=72"></script>
 <script src="account-data.js?v=70"></script>
 <script src="app.js?v=70"></script>
 <script src="health-connect.js?v=37"></script>

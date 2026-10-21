@@ -1,4 +1,4 @@
-const CACHE = "the-system-os-v71-diagnostics";
+const CACHE = "the-system-os-v72-visible-diagnostics";
 const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./train-together.js", "./competitive-credits.js", "./account-data.js", "./diagnostics.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

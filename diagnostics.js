@@ -30,7 +30,7 @@
   function start() { if (active) return; events = []; dropped = 0; started = new Date().toISOString(); active = true; record('test-start'); update(); }
   function stop() { record('test-stop'); active = false; update(); }
   function report() {
-    return {format:'the-system-diagnostics-v1', build:'0.71 / build 71', started, recording:active, dropped, online:navigator.onLine, viewport:{width:innerWidth,height:innerHeight}, events:events.map(e => ({...e}))};
+    return {format:'the-system-diagnostics-v1', build:'0.72 / build 72', started, recording:active, dropped, online:navigator.onLine, viewport:{width:innerWidth,height:innerHeight}, events:events.map(e => ({...e}))};
   }
   async function exportReport() {
     if (!started) return;

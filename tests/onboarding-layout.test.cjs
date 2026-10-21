@@ -162,6 +162,23 @@ const server = http.createServer((req, res) => {
     assert.match(calibrated,/Endurance:\s*55/); assert.match(calibrated,/Conditioning:\s*55/);
     console.log('PASS calibrated scoring: full-duration moderate effort = 55 within the initial classification cap');
     if (process.env.LAYOUT_SCREENSHOT) await page.screenshot({ path: process.env.LAYOUT_SCREENSHOT });
+    await page.setViewportSize({width:740,height:360});
+    await page.evaluate(() => { window.SystemOS.open('profile'); });
+    await page.locator('#diagnosticStart').scrollIntoViewIfNeeded();
+    assert.equal(await page.locator('#osModuleBody #diagnosticStart').count(),1);
+    await page.locator('#diagnosticStart').click();
+    assert.equal(await page.locator('#diagnosticStart').isDisabled(),true);
+    await page.locator('#diagnosticStop').click();
+    await page.evaluate(() => { window.SystemAndroid={exportBackup:(name,json)=>{window.testReport=JSON.parse(json);}}; });
+    await page.locator('#diagnosticExport').click();
+    const testReport=await page.evaluate(()=>window.testReport);
+    assert.equal(testReport.recording,false);
+    assert.ok(testReport.events.some(e=>e.code==='test-start'));
+    assert.ok(testReport.events.some(e=>e.code==='test-stop'));
+    assert.equal(testReport.build,'0.72 / build 72');
+    await page.evaluate(()=>window.SystemOS.close());
+    assert.equal(await page.locator('#profileSettings #diagnosticStart').count(),1);
+    console.log('PASS: Config window exposes diagnostics; Start, Stop and Android report export work');
   } finally {
     if (browser) await browser.close();
     server.close();
