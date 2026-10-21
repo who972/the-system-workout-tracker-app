@@ -163,7 +163,7 @@ const server = http.createServer((req, res) => {
     console.log('PASS calibrated scoring: full-duration moderate effort = 55 within the initial classification cap');
     if (process.env.LAYOUT_SCREENSHOT) await page.screenshot({ path: process.env.LAYOUT_SCREENSHOT });
     await page.setViewportSize({width:740,height:360});
-    await page.evaluate(() => { window.SystemOS.open('profile'); });
+    await page.evaluate(() => { document.getElementById('awakeningAssessment')?.classList.remove('active'); window.SystemOS.open('profile'); });
     await page.locator('#diagnosticStart').scrollIntoViewIfNeeded();
     assert.equal(await page.locator('#osModuleBody #diagnosticStart').count(),1);
     await page.locator('#diagnosticStart').click();
