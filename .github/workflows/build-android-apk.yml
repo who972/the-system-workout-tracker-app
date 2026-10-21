@@ -12,6 +12,7 @@ on:
       - "competitive-credits.js"
       - "tests/train-together.test.cjs"
       - "supabase/migrations/**"
+      - "diagnostics.js"
       - "account-data.js"
       - "tests/account-data.test.cjs"
       - "tests/account-isolation.test.cjs"
@@ -67,6 +68,8 @@ jobs:
           node --check train-together.js
           node --check app.js
           node tests/session-equipment.test.cjs
+          node --check diagnostics.js
+          node tests/diagnostics.test.cjs
           node --check account-data.js
           node tests/account-data.test.cjs
           node tests/account-isolation.test.cjs
@@ -80,7 +83,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -127,6 +130,7 @@ jobs:
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
           cmp side-system.css <(unzip -p "$APK" assets/www/side-system.css)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
+          cmp diagnostics.js <(unzip -p "$APK" assets/www/diagnostics.js)
           cmp account-data.js <(unzip -p "$APK" assets/www/account-data.js)
           cmp competitive-credits.js <(unzip -p "$APK" assets/www/competitive-credits.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)

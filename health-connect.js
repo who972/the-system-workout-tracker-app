@@ -11,14 +11,15 @@
     if (!request) return;
     pending.delete(message.id);
     clearTimeout(request.timer);
-    if (message.result?.error) request.reject(new Error(message.result.error));
-    else request.resolve(message.result);
+    if (message.result?.error) { window.SystemDiagnostics?.record("health",{service:"health",result:"failed"}); request.reject(new Error(message.result.error)); }
+    else { window.SystemDiagnostics?.record("health",{service:"health",result:"ok"}); request.resolve(message.result); }
   };
   function call(method, payload = {}) {
     return new Promise((resolve, reject) => {
       const id = String(++sequence);
       const timer = setTimeout(() => {
         pending.delete(id);
+        window.SystemDiagnostics?.record("health",{service:"health",result:"timeout"});
         reject(new Error('health-connect-timeout'));
       }, method === 'requestStepPermission' ? 120000 : method === 'getHealthDashboard' ? 60000 : 30000);
       pending.set(id, { resolve, reject, timer });

@@ -572,6 +572,10 @@
     <article class="dashboard-card"><h3>Sync Progress</h3><p class="quest-section__desc">Back up this device or restore your latest saved progress on another device.</p><div class="cloud-actions"><button id="cloudPush" class="btn-primary" type="button">Upload Progress</button><button id="cloudPull" type="button">Restore From Cloud</button></div><div id="lastCloudSync" class="backup-status">No cloud sync yet.</div></article>
   </div>
 </section>
+<section class="settings-section profile-secondary" id="diagnosticSettings">
+<h3>Test &amp; Diagnostics</h3><p>Start a test, use the app, then stop and export the report to share in our chat. Records action codes and error categories, never typed text, passwords, tokens, or health readings. Recording stops when the app reloads or closes; export before closing. Starting a new test replaces the previous test.</p>
+<div class="cloud-actions"><button id="diagnosticStart" type="button" class="btn-primary">Start Test</button><button id="diagnosticStop" type="button" disabled>Stop Test</button><button id="diagnosticExport" type="button" disabled>Export Report</button><button id="diagnosticClear" type="button">Clear Report</button></div><p id="diagnosticStatus" role="status" aria-live="polite"></p>
+</section>
 <section class="settings-section profile-primary" id="profileSettings">
     <div class="quest-section__header"><h2 class="quest-section__title">Profile & Settings</h2><span class="quest-section__meta">SYSTEM SETTINGS</span></div>
     <div class="settings-grid">
@@ -636,6 +640,7 @@
 <button data-account-operation class="danger-btn" type="submit">Permanently Delete Account</button>
 <button id="cancelDeleteAccount" type="button">Cancel</button>
 </form></dialog>
+<script src="diagnostics.js?v=71"></script>
 <script src="account-data.js?v=70"></script>
 <script src="app.js?v=70"></script>
 <script src="health-connect.js?v=37"></script>
