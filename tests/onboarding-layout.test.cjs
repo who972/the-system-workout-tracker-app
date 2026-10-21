@@ -31,7 +31,7 @@ const server = http.createServer((req, res) => {
       SystemOnboarding.show();
     });
     await page.locator('#obNext').click();
-    const sizes = [[568, 240], [568, 256], [640, 320], [667, 375], [740, 360], [812, 375], [844, 390], [915, 412], [960, 432], [1024, 500]];
+    const sizes = [[568, 240], [568, 256], [640, 320], [667, 375], [740, 360], [812, 375], [844, 390], [915, 412], [960, 432], [1024, 500]].filter(([,height])=>height>=Number(process.env.MIN_TEST_HEIGHT||0));
     for (const [width, height] of sizes) {
       await page.setViewportSize({ width, height });
       const result = await page.evaluate(() => {
@@ -77,8 +77,8 @@ const server = http.createServer((req, res) => {
         SystemOnboarding.reset(); SystemOnboarding.show();
       });
       await page.locator('#obName').fill('Landscape Tester');
-      for (let step=0;step<9;step++) {
-        const id=step<4?'systemOnboarding':'awakeningAssessment';
+      for (let step=0;step<10;step++) {
+        const id=step<5?'systemOnboarding':'awakeningAssessment';
         const report=await page.evaluate(id=>{
           const el=document.getElementById(id);
           return {overflow:el.scrollHeight-el.clientHeight, nodes:[...el.querySelectorAll('h1,p,small,strong,.side-tag,button,input')].map(n=>{
@@ -90,14 +90,14 @@ const server = http.createServer((req, res) => {
         assert.ok(report.overflow<=1,`${width}x${height} step ${step+1}: overflow ${report.overflow}`);
         for(const n of report.nodes) assert.ok(n.top>=0&&n.bottom<=height&&n.left>=0&&n.right<=width,`${width}x${height} step ${step+1}: clipped ${n.text}`);
         if(width===740 && process.env.LAYOUT_SCREENSHOT) await page.screenshot({path:process.env.LAYOUT_SCREENSHOT.replace('.png',`-${step+1}.png`)});
-        if(step>=4 && step<8) assert.equal(await page.locator('#awakeningAssessment .ob-safety').count(),1);
+        if(step>=5 && step<9) assert.equal(await page.locator('#awakeningAssessment .ob-safety').count(),1);
         if(step===2) await page.locator('[data-exp="intermediate"]').click();
         if(step===3) { await page.locator('[data-eq="Dumbbells"]').click(); await page.locator('#obDays').fill('3'); }
-        if(step===4) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5');}
-        if(step===5) { await page.locator('#awWalk').fill('4'); await page.locator('[data-walk-effort="2"]').click(); }
-        if(step===6) { await page.locator('#awMarch').fill('3'); await page.locator('[data-march-effort="2"]').click(); }
-        if(step===7) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
-        await page.locator(step<4?'#obNext':'#awNext').click();
+        if(step===5) {await page.locator('#awSit').fill('10'); await page.locator('#awPush').fill('5');}
+        if(step===6) { await page.locator('#awWalk').fill('4'); await page.locator('[data-walk-effort="2"]').click(); }
+        if(step===7) { await page.locator('#awMarch').fill('2'); await page.locator('[data-march-effort="2"]').click(); }
+        if(step===8) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
+        await page.locator(step<5?'#obNext':'#awNext').click();
       }
       assert.equal(await page.locator('#awakeningAssessment.active').count(),0);
       const saved=await page.evaluate(()=>({ob:onboardingData(),assessment:JSON.parse(localStorage.getItem(ASSESSMENT_KEY))}));
@@ -105,7 +105,9 @@ const server = http.createServer((req, res) => {
       assert.ok(saved.ob.equipment.includes('Dumbbells'));
       assert.equal(saved.ob.days,3);
       assert.equal(saved.assessment.raw.sit,10);
-      console.log(`PASS ${width}x${height}: all 9 onboarding/assessment screens fit and completion saves input`);
+      assert.equal(saved.assessment.raw.walk,4);assert.equal(saved.assessment.raw.march,2);
+      assert.equal(saved.assessment.raw.mobility,3);assert.equal(saved.assessment.scores.Mobility,65);
+      console.log(`PASS ${width}x${height}: all 10 onboarding/assessment screens fit and completion saves input`);
     }
     await page.clock.install();
     await page.setViewportSize({width:740,height:360});
@@ -129,33 +131,33 @@ const server = http.createServer((req, res) => {
     await page.locator('#awTimerReset').click();
     assert.equal(await page.locator('#awClock').innerText(),'01:00');
     await page.locator('#awNext').click();
-    assert.equal(await page.locator('#awClock').innerText(),'08:00');
+    assert.equal(await page.locator('#awClock').innerText(),'06:00');
     await page.locator('#awTimerStart').click();
     await page.clock.fastForward(10000);
     await page.locator('#awBack').click();
     await page.clock.fastForward(20000);
     assert.equal(await page.locator('#awClock').innerText(),'01:00');
     await page.locator('#awNext').click();
-    assert.equal(await page.locator('#awClock').innerText(),'07:50');
+    assert.equal(await page.locator('#awClock').innerText(),'05:50');
     await page.locator('#awTimerStart').click();
-    await page.clock.fastForward(470000);
+    await page.clock.fastForward(350000);
     assert.equal(await page.locator('#awClock').innerText(),'00:00');
     await page.locator('#awNext').click();
-    assert.equal(await page.locator('#awClock').innerText(),'05:00');
+    assert.equal(await page.locator('#awClock').innerText(),'02:00');
     await page.locator('#awTimerStart').click();
-    await page.clock.fastForward(300000);
+    await page.clock.fastForward(120000);
     assert.equal(await page.locator('#awClock').innerText(),'00:00');
     await page.locator('#awNext').click();
     assert.equal(await page.locator('#awClock').count(),0);
-    console.log('PASS countdowns: 60s / 8min / 5min, pause/resume, reset, completion, input preservation and navigation cleanup');
-    await page.evaluate(()=>{ localStorage.removeItem(ASSESSMENT_KEY); SystemOnboarding.assessment(); });
+    console.log('PASS countdowns: 60s / 6min / 2min, pause/resume, reset, completion, input preservation and navigation cleanup');
+    await page.evaluate(()=>{ localStorage.removeItem(ASSESSMENT_KEY);localStorage.removeItem('systemAwakeningAssessmentDraftV3'); SystemOnboarding.assessment(); });
     await page.locator('#awSit').fill('20'); await page.locator('#awPush').fill('10'); await page.locator('#awNext').click();
-    await page.locator('#awWalk').fill('8'); await page.locator('[data-walk-effort="2"]').click(); await page.locator('#awNext').click();
-    await page.locator('#awMarch').fill('5'); await page.locator('[data-march-effort="2"]').click(); await page.locator('#awNext').click();
+    await page.locator('#awWalk').fill('6'); await page.locator('[data-walk-effort="2"]').click(); await page.locator('#awNext').click();
+    await page.locator('#awMarch').fill('2'); await page.locator('[data-march-effort="2"]').click(); await page.locator('#awNext').click();
     await page.locator('[data-mob="2"]').click(); await page.locator('[data-energy="2"]').click(); await page.locator('#awNext').click();
     const calibrated=await page.locator('.assessment-list').innerText();
-    assert.match(calibrated,/Endurance:\s*78/); assert.match(calibrated,/Conditioning:\s*78/);
-    console.log('PASS calibrated scoring: full-duration moderate effort = 78, not an automatic 92');
+    assert.match(calibrated,/Endurance:\s*55/); assert.match(calibrated,/Conditioning:\s*55/);
+    console.log('PASS calibrated scoring: full-duration moderate effort = 55 within the initial classification cap');
     if (process.env.LAYOUT_SCREENSHOT) await page.screenshot({ path: process.env.LAYOUT_SCREENSHOT });
   } finally {
     if (browser) await browser.close();

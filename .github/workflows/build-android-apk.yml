@@ -9,10 +9,14 @@ on:
       - "index.html"
       - "app.js"
       - "train-together.js"
+      - "competitive-credits.js"
       - "tests/train-together.test.cjs"
       - "supabase/migrations/**"
       - "account-data.js"
       - "tests/account-data.test.cjs"
+      - "tests/account-isolation.test.cjs"
+      - "tests/**"
+      - "sw.js"
       - "styles.css"
       - "side-system.js"
       - "side-system.css"
@@ -53,23 +57,30 @@ jobs:
         run: |
           node "$RUNNER_TEMP/train-tests/node_modules/playwright/cli.js" install --with-deps chromium
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/train-tests/node_modules/playwright" node tests/session-equipment-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/onboarding-layout.test.cjs
 
       - name: Package SYSTEM web app
         shell: bash
         run: |
           set -euo pipefail
+          node --check competitive-credits.js
           node --check train-together.js
           node --check app.js
           node tests/session-equipment.test.cjs
           node --check account-data.js
           node tests/account-data.test.cjs
+          node tests/account-isolation.test.cjs
+          node tests/competitive-credits.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/recovery.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/render-security.test.cjs
+          PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/social-security.test.cjs
           node tests/health-connect.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/health-dashboard.test.cjs
           node --check side-system.js
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp index.html app.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -117,6 +128,7 @@ jobs:
           cmp side-system.css <(unzip -p "$APK" assets/www/side-system.css)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
           cmp account-data.js <(unzip -p "$APK" assets/www/account-data.js)
+          cmp competitive-credits.js <(unzip -p "$APK" assets/www/competitive-credits.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)
           unzip -Z1 "$APK" | grep -Fx "res/drawable-nodpi-v4/ic_system_launcher.jpg"
           cmp side-system.js <(unzip -p "$APK" assets/www/side-system.js)

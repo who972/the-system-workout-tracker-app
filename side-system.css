@@ -180,3 +180,38 @@ body.boss-mode-open{overflow:hidden}.boss-battle-mode{position:fixed;inset:0;z-i
 @media (orientation:landscape) and (max-height:280px) {
   #awakeningAssessment .ob-countdown button { height:24px; min-height:24px; line-height:1.2; }
 }
+
+/* Assessment has a stable footer; instructions/timer and controls share the width. */
+@media (orientation:landscape) and (max-height:520px) {
+ #awakeningAssessment {padding:6px 10px;overflow:hidden}
+ #awakeningAssessment .ob-card {width:min(1100px,100%);height:calc(100dvh - 12px);min-height:0;max-height:none;padding:6px 10px;display:grid;grid-template-rows:auto minmax(0,1fr) auto;gap:4px;overflow:hidden}
+ #awakeningAssessment .ob-safety {font-size:clamp(10px,2.7dvh,12px);line-height:1.1;margin:0}
+ #awakeningAssessment .ob-content {display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:12px;min-height:0;align-items:center}
+ #awakeningAssessment .ob-intro,#awakeningAssessment .ob-fields {min-width:0;min-height:0}
+ #awakeningAssessment h1 {font-size:clamp(18px,5dvh,28px);margin:3px 0;line-height:1.05}
+ #awakeningAssessment .side-tag {font-size:clamp(9px,2.5dvh,11px);line-height:1.1}
+ #awakeningAssessment .ob-intro p,#awakeningAssessment .ob-fields p,#awakeningAssessment small {font-size:clamp(10px,2.8dvh,13px);line-height:1.12;margin:3px 0}
+ #awakeningAssessment .ob-options {gap:3px;margin:3px 0;grid-template-columns:repeat(3,minmax(0,1fr))}
+ #awakeningAssessment .ob-options button {min-height:24px;padding:3px;font-size:clamp(10px,2.8dvh,13px);line-height:1.08}
+ #awakeningAssessment .ob-days {font-size:clamp(10px,2.8dvh,13px);line-height:1.1;margin:3px 0;gap:2px;grid-template-columns:minmax(0,1fr) 60px;align-items:center}
+ #awakeningAssessment .ob-days input {height:26px;padding:2px 5px;font-size:13px}
+ #awakeningAssessment .aw-push-block {gap:2px}
+ #awakeningAssessment .aw-push-label {font-size:clamp(9px,2.5dvh,11px);line-height:1.1}
+ #awakeningAssessment .ob-countdown {display:grid;grid-template-columns:1fr auto;gap:2px 4px;margin:5px 0 0;padding:4px}
+ #awakeningAssessment .ob-countdown > strong {font-size:clamp(22px,6dvh,30px);grid-column:2;grid-row:1/3;align-self:center}
+ #awakeningAssessment .ob-countdown > div {margin:0}
+ #awakeningAssessment .ob-countdown > small {grid-column:1/-1;margin:0}
+ #awakeningAssessment .ob-countdown button {min-height:24px;padding:2px 5px;font-size:11px}
+ #awakeningAssessment .ob-actions {margin:0;gap:6px}
+ #awakeningAssessment .ob-actions button {min-height:28px;padding:3px 8px;font-size:clamp(11px,3dvh,14px)}
+ #awakeningAssessment.ob-summary .ob-content {grid-template-columns:minmax(0,.7fr) minmax(0,1.5fr)}
+ #awakeningAssessment.ob-summary .ob-intro {display:block;margin:0}
+ #awakeningAssessment.ob-summary .ob-fields {display:block}
+ #awakeningAssessment.ob-summary .ob-fields > small {display:block}
+ #awakeningAssessment.ob-summary .ob-awaken {padding:4px;margin:0;gap:2px}
+ #awakeningAssessment.ob-summary .ob-awaken strong {font-size:22px}
+ #awakeningAssessment .assessment-list {display:grid;grid-template-columns:1fr 1fr;gap:0 6px}
+}
+@media (orientation:landscape) and (max-height:520px) {
+ #awakeningAssessment.ob-summary .ob-card {grid-template-rows:minmax(0,1fr) auto}
+}

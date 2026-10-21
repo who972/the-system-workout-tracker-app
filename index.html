@@ -60,9 +60,11 @@
       </div>
     </div>
     <form id="recoveryForm" class="auth-form" hidden>
+      <input id="recoveryLink" class="form-input" type="text" autocomplete="off" placeholder="Paste password-reset link from email" aria-label="Password-reset link" required>
       <div class="password-field"><input id="recoveryPassword" class="form-input" type="password" autocomplete="new-password" placeholder="New password (6+ characters)" required><button class="password-toggle" type="button" data-password-toggle="recoveryPassword" aria-label="Show new password">Show</button></div>
       <div class="password-field"><input id="recoveryPasswordConfirm" class="form-input" type="password" autocomplete="new-password" placeholder="Confirm new password" required><button class="password-toggle" type="button" data-password-toggle="recoveryPasswordConfirm" aria-label="Show confirmed password">Show</button></div>
       <button class="btn-primary" type="submit">Set New Password</button>
+      <button id="cancelRecovery" class="auth-link" type="button">Back to sign in</button>
     </form>
     <div id="authGateStatus" class="backup-status"></div>
   </div>
@@ -634,8 +636,8 @@
 <button data-account-operation class="danger-btn" type="submit">Permanently Delete Account</button>
 <button id="cancelDeleteAccount" type="button">Cancel</button>
 </form></dialog>
-<script src="account-data.js?v=1"></script>
-<script src="app.js?v=database-open3"></script>
+<script src="account-data.js?v=70"></script>
+<script src="app.js?v=70"></script>
 <script src="health-connect.js?v=37"></script>
 <script src="side-system.js?v=side57"></script>
 <script>
@@ -694,6 +696,7 @@ if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.
 })();
 </script>
 <script src="train-together.js?v=1"></script>
+<script src="competitive-credits.js?v=70"></script>
 </body>
 </html>
 

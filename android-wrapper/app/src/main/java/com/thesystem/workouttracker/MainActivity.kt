@@ -56,7 +56,11 @@ class MainActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        health = HealthConnectClient.getOrCreate(this)
+        // Health data is optional. Provider absence must never prevent app startup.
+        optionalHealthClient(
+            { HealthConnectClient.getSdkStatus(this) == HealthConnectClient.SDK_AVAILABLE },
+            { HealthConnectClient.getOrCreate(this) }
+        )?.let { health = it }
         webView = WebView(this)
         setContentView(webView)
         val loader = WebViewAssetLoader.Builder().addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(this)).build()
@@ -66,6 +70,12 @@ class MainActivity : ComponentActivity() {
         webView.settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
         webView.addJavascriptInterface(SystemAndroidBridge(), "SystemAndroid")
         webView.webViewClient = object : android.webkit.WebViewClient() {
+            override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean {
+                val uri = request.url
+                if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") return false
+                if (uri.scheme in setOf("https", "mailto")) runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
+                return true
+            }
             override fun shouldInterceptRequest(
                 view: WebView,
                 request: android.webkit.WebResourceRequest
@@ -82,7 +92,11 @@ class MainActivity : ComponentActivity() {
         }
         if (WebViewFeature.isFeatureSupported(WebViewFeature.WEB_MESSAGE_LISTENER)) {
             WebViewCompat.addWebMessageListener(webView, "SystemHealthNative", setOf("https://appassets.androidplatform.net")) { _, message, _, _, reply ->
-                handleHealthMessage(message, reply)
+                if (::health.isInitialized) handleHealthMessage(message, reply)
+                else {
+                    val id = runCatching { JSONObject(message.data ?: "{}").optString("id") }.getOrDefault("")
+                    reply.postMessage(JSONObject().put("id", id).put("result", JSONObject().put("error", "health-unavailable")).toString())
+                }
             }
         }
         webView.loadUrl("https://appassets.androidplatform.net/assets/www/index.html")
