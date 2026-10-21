@@ -100,6 +100,8 @@ const server = http.createServer((req, res) => {
         if(step===8) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
         await page.locator(step<5?'#obNext':'#awNext').click();
       }
+      console.log('Assessment completion state:', await page.evaluate(()=>({heading:document.querySelector('#awakeningAssessment h1')?.textContent, next:document.querySelector('#awNext')?.textContent,saved:!!localStorage.getItem(ASSESSMENT_KEY),ob:onboardingData()})));
+      await page.waitForTimeout(300);
       assert.equal(await page.locator('#awakeningAssessment.active').count(),0);
       const saved=await page.evaluate(()=>({ob:onboardingData(),assessment:JSON.parse(localStorage.getItem(ASSESSMENT_KEY))}));
       assert.equal(saved.ob.experience,'intermediate');
