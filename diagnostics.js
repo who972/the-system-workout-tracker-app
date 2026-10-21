@@ -54,7 +54,7 @@
       status('Report exported. Attach the JSON file in this chat.');
     } catch (_) { status('Report was not exported. Your test is still available; tap Export Report to try again.'); }
   }
-  window.SystemDiagnostics = Object.freeze({record,start,stop,report,exportReport});
+  window.SystemTestDiagnostics = Object.freeze({record,start,stop,report,exportReport});
   document.addEventListener('click', e => {
     const el = e.target.closest?.('button,[role="button"],a');
     if (!el || el.id.startsWith('diagnostic')) return;

@@ -3,7 +3,7 @@ const controls=Object.fromEntries(['diagnosticStart','diagnosticStop','diagnosti
 const listeners={},saved=[];
 const ctx={Date,Set,URL,JSON,Number,Object,Array,Promise,performance:{now:()=>10},navigator:{onLine:true},innerWidth:740,innerHeight:360,location:{href:'https://appassets.androidplatform.net/assets/www/index.html'},document:{querySelectorAll:()=>Object.values(controls),getElementById:id=>controls[id],addEventListener:(k,fn)=>listeners[k]=fn},addEventListener:(k,fn)=>listeners[k]=fn,console:{error(){}},SystemAndroid:{exportBackup:(...args)=>saved.push(args)},fetch:async()=>({ok:false,status:401})};ctx.window=ctx;vm.createContext(ctx);vm.runInContext(fs.readFileSync(__dirname+'/../diagnostics.js','utf8'),ctx);
 (async()=>{
-const d=ctx.SystemDiagnostics;
+const d=ctx.SystemTestDiagnostics;
 d.record('save',{result:'ok'});assert.equal(d.report().events.length,0);
 d.start();d.record('save',{result:'ok',password:'SECRET',token:'SECRET',health:123});d.record('SECRET',{result:'SECRET'});d.record('click',{control:'dynamic-user-SECRET',screen:'SECRET'});d.record('click',{screen:'profile'});
 listeners.error({filename:'https://host/app.js?token=SECRET',lineno:32,message:'SECRET'});listeners.unhandledrejection({reason:'SECRET'});ctx.console.error('SECRET');
