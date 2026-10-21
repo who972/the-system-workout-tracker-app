@@ -21,6 +21,7 @@ const server = http.createServer((req, res) => {
   try {
     browser = await chromium.launch({ executablePath: process.env.CHROMIUM_PATH || undefined, args: ['--no-sandbox'] });
     const page = await browser.newPage({ viewport: { width: 740, height: 360 }, serviceWorkers: 'block' });
+    page.on('pageerror', error => console.error('Browser runtime error:', error.message));
     // No real account or cloud calls: exercise the actual onboarding renderer locally.
     await page.route('**/*', route => new URL(route.request().url()).hostname === '127.0.0.1' ? route.continue() : route.abort());
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
