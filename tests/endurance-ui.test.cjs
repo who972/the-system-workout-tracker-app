@@ -1,0 +1,20 @@
+const assert=require('node:assert/strict'),fs=require('node:fs'),http=require('node:http'),path=require('node:path');
+const {chromium}=require('playwright');
+const root=path.resolve(__dirname,'..');
+const server=http.createServer((req,res)=>{const f=path.join(root,new URL(req.url,'http://localhost').pathname.replace(/^\/$/,'/index.html'));fs.readFile(f,(e,b)=>{res.setHeader('Content-Type',f.endsWith('.js')?'application/javascript':f.endsWith('.css')?'text/css':'text/html');res.statusCode=e?404:200;res.end(e?'':b)})});
+(async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;try{
+ browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:915,height:412},serviceWorkers:'block'});
+ await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
+ await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForTimeout(400);
+ await page.evaluate(()=>{localStorage.setItem('systemAwakeningAssessmentDraftV3',JSON.stringify({step:1,data:{walk:0}}));SystemOnboarding.assessment()});
+ await page.clock.install();await page.locator('#awTimerStart').click();await page.clock.fastForward(360001);
+ assert.equal(await page.locator('#awWalk').inputValue(),'6');
+ await page.locator('[data-walk-effort="1"]').click();assert.equal(await page.locator('#awWalk').inputValue(),'6');
+ await page.locator('#awNext').click();await page.locator('#awMarch').fill('2');await page.locator('#awNext').click();await page.locator('#awNext').click();await page.locator('#awNext').click();
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('systemAwakeningAssessmentV1')).scores.Endurance),62);
+ await page.evaluate(()=>showEnduranceCorrection());
+ await page.locator('#correctEnduranceMinutes').fill('6');await page.locator('#correctEnduranceEffort').selectOption('1');await page.locator('#saveEnduranceCorrection').click();
+ assert.equal(await page.locator('#enduranceCorrection').evaluate(e=>e.classList.contains('active')),false);
+ assert.equal(await page.locator('#assessmentBaselineEndurance').textContent(),'62/100');
+ console.log('Full timer → effort selection → saved baseline → correction flow passed.');
+}finally{await browser?.close();server.close()}})().catch(e=>{console.error(e);process.exitCode=1});

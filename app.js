@@ -1205,6 +1205,9 @@ function renderAssessmentBaseline(){
  const bar=(id,v)=>{const e=document.getElementById(id);if(e)e.style.width=Math.max(0,Math.min(100,Number(v)||0))+'%'};
  if(!a?.scores){card.classList.add('assessment-baseline-empty');return}
  card.classList.remove('assessment-baseline-empty');
+ let correction=card.querySelector('#correctEnduranceBaseline');
+ if(!correction){correction=document.createElement('button');correction.id='correctEnduranceBaseline';correction.type='button';correction.textContent='CORRECT ENDURANCE RESULT';card.appendChild(correction)}
+ correction.onclick=()=>showEnduranceCorrection();
  const score=k=>Math.max(0,Math.min(100,Math.round(Number(a.scores?.[k])||0)));
  const rank=a.rank||a.class||a.result?.rank||a.result?.class||'BASELINE COMPLETE';
  const when=a.completedAt||a.completed_at||a.date||a.createdAt;
