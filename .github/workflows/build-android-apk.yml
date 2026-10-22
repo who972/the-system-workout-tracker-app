@@ -79,6 +79,7 @@ jobs:
           PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/social-security.test.cjs
           node tests/health-connect.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/health-dashboard.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/debrief-layout.test.cjs
           node tests/endurance-assessment.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/endurance-ui.test.cjs
           node --check side-system.js
