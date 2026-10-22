@@ -5,7 +5,7 @@ const server=http.createServer((req,res)=>{const f=path.join(root,new URL(req.ur
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;try{
  browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:915,height:412},serviceWorkers:'block'});
  await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
- await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForTimeout(400);
+ await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForTimeout(400);await page.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important}'});
  await page.evaluate(()=>{enterMainInterface();window.SystemOS.open('profile')});
  await page.locator('#osModuleBody [data-replay-tutorial]').click();
  for(let i=0;i<8;i++){assert.match(await page.locator('#systemTutorial small').textContent(),new RegExp((i+1)+' / 8'));await page.locator('#nextSystemTutorial').click()}

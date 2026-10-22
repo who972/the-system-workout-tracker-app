@@ -5,7 +5,7 @@ const server=http.createServer((req,res)=>{const f=path.join(root,new URL(req.ur
 (async()=>{await new Promise(r=>server.listen(0,'127.0.0.1',r));let browser;try{
  browser=await chromium.launch({args:['--no-sandbox']});const page=await browser.newPage({viewport:{width:915,height:412},serviceWorkers:'block'});
  await page.route('**/*',r=>new URL(r.request().url()).hostname==='127.0.0.1'?r.continue():r.abort());
- await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForTimeout(400);
+ await page.goto('http://127.0.0.1:'+server.address().port);await page.waitForTimeout(400);await page.addStyleTag({content:'*,*::before,*::after{animation:none!important;transition:none!important}'});
  for(const [width,height] of [[568,240],[640,320],[740,360],[915,412],[1024,500]]){
  await page.setViewportSize({width,height});
  await page.evaluate(()=>{ensureMissionFx();const e=document.getElementById('missionDebrief');e.classList.add('active');document.getElementById('missionDebriefPr').textContent='CRITICAL HIT // 881 DAMAGE • NEW PR // High Knees • Mountain Climbers • Reverse Lunges • March in Place • Stretching';document.getElementById('missionDebriefGrowth').innerHTML='<span>STRENGTH 70%</span><span>CONDITIONING 62%</span>'});
