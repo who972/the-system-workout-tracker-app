@@ -2612,3 +2612,27 @@ body.system-os-ready .os-dock{grid-template-rows:44px auto}
  .mission-debrief__growth{margin:6px 0;padding:7px}
  #missionDebriefPr{margin:6px 0;font-size:12px}
 }
+/* Offline exercise guides and quick-start tutorial share a reachable footer. */
+.system-onboarding.system-help{position:fixed;inset:0;z-index:26000;padding:12px;background:rgba(0,5,12,.96);box-sizing:border-box;display:none;place-items:center;overflow:hidden}
+.system-onboarding.system-help.active{display:grid}
+.system-help__card{box-sizing:border-box;width:min(900px,100%);max-height:calc(100vh - 24px);max-height:calc(100dvh - 24px);min-height:0;padding:18px;display:flex;flex-direction:column;background:#071722;border:1px solid #3c8197;color:#e5f8ff;font-size:15px;line-height:1.5}
+.system-help__body{min-height:0;overflow:auto;overscroll-behavior:contain}
+.system-help small{color:#79dce9;font:700 10px var(--font-mono);letter-spacing:.16em}
+.system-help h2{font-size:clamp(23px,3.4vw,36px);line-height:1.1;margin:8px 0 12px}
+.system-help__card footer{flex:0 0 auto;display:flex;gap:8px;padding-top:12px}
+.system-help button{min-height:44px;flex:1;padding:8px;border:1px solid #438b9f;background:#113445;color:#e5f8ff;font:700 12px var(--font-mono)}
+.system-help button:focus-visible,#openExerciseGuide:focus-visible{outline:2px solid #fff;outline-offset:2px}
+.system-help button:disabled{opacity:.4}
+.exercise-guide-layout{display:grid;grid-template-columns:minmax(220px,42%) 1fr;gap:20px;align-items:center}
+.exercise-poses{display:flex;gap:5px;align-items:center;border:1px solid #284653;background:#03101a;padding:8px}
+.exercise-poses figure{margin:0;flex:1;min-width:0;text-align:center}
+.exercise-poses svg{width:100%;max-height:200px;display:block}
+.exercise-poses figcaption{font:700 10px var(--font-mono);color:#9defff;margin:5px 0}
+.system-help ol{padding-left:22px;margin:8px 0}.system-help li{margin:8px 0}
+.guide-note{font-size:12px;color:#a9c0cc;line-height:1.4}
+#openExerciseGuide{align-self:center;flex-shrink:0;min-height:36px;margin:5px 0;padding:7px 12px;border:1px solid #3e869d;background:#102e3e;color:#a9f6ff;font:700 11px var(--font-mono)}
+.tutorial-lead{font-size:18px;color:#a9efff}.tutorial-tiles{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin:15px 0}
+.tutorial-tiles>div{border:1px solid #294e61;background:#0b2533;padding:12px;display:flex;gap:10px;align-items:center}.tutorial-tiles b{color:#8777eb;font:700 24px var(--font-mono)}.tutorial-tiles span{font:700 11px var(--font-mono)}
+.tutorial-route{color:#97eaff;font:700 11px var(--font-mono);letter-spacing:.08em}
+@media(max-height:400px){.system-help__card{padding:12px}.system-help h2{margin:5px 0;font-size:25px}.system-help p{margin:8px 0}.tutorial-tiles{margin:8px 0}.tutorial-tiles>div{padding:8px}.exercise-poses svg{max-height:155px}.system-help li{margin:5px 0}.system-help__card footer{padding-top:7px}}
+@media(max-width:600px){.exercise-guide-layout{grid-template-columns:1fr}.exercise-poses svg{max-height:120px}.tutorial-tiles>div{display:block;padding:7px}.tutorial-tiles b{display:block}.system-help__card{font-size:14px}}

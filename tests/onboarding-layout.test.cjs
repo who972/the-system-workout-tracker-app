@@ -110,6 +110,8 @@ const server = http.createServer((req, res) => {
       assert.equal(saved.assessment.raw.sit,10);
       assert.equal(saved.assessment.raw.walk,4);assert.equal(saved.assessment.raw.march,2);
       assert.equal(saved.assessment.raw.mobility,3);assert.equal(saved.assessment.scores.Mobility,65);
+      assert.equal(await page.locator('#systemTutorial.active').count(),1);
+      await page.locator('#skipSystemTutorial').click();
       console.log(`PASS ${width}x${height}: all 10 onboarding/assessment screens fit and completion saves input`);
     }
     await page.clock.install();
