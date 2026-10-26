@@ -15,6 +15,7 @@ function interpret(input){
  if(/\b(open|show|go to)\b/.test(s)){
   for(const [word,module] of [['player','player'],['progress','progress'],['health','telemetry'],['fuel','nutrition'],['settings','profile'],['training','missions'],['mission','missions'],['social','social']])if(s.includes(word))return {type:'open',module};
  }
+ if(/\b(sleep|slept)\b/.test(s))return {type:'sleep'};
  if(/\b(health briefing|health summary|recovery briefing)\b/.test(s))return {type:'health-briefing'};
  if(/\b(mission|workout|training|next|briefing)\b/.test(s))return {type:'mission'};
  if(/\b(progress|level|leveling|rank|xp|experience|improving)\b/.test(s))return {type:'progress'};
@@ -37,11 +38,12 @@ function run(input){
  case 'water':pending=command;document.getElementById('assistantConfirm').hidden=false;answer('Log '+command.amount+' fluid ounces of water? Tap Confirm to save it.');break;
  case 'water-invalid':answer('Please give an amount, such as “log 16 ounces of water” or “log 250 ml of water.” You can log up to 64 ounces at a time.');break;
  case 'water-total':answer('You have logged '+waterTotal()+' fluid ounces of water today.');break;
+ case 'sleep':answer(root.SystemSleepTracker?.briefing(healthTelemetry())||'Sleep tracking is unavailable. Open Health and sync again.');break;
  case 'health-briefing':answer(root.SystemHealthInsights?.summarize(healthTelemetry()).text||'Health context is unavailable. Open Health to check your connection.');break;
  case 'mission':answer('Today’s mission is '+(text('dockMissionTitle')||text('mission-title')||'available in Training')+'. '+(text('dockMissionStatus')||'')+'. Open Training to review and begin your session.');break;
  case 'progress':answer('Your current level is '+text('hudPlayerLevel')+', '+text('hudPlayerRank')+'. Experience: '+text('hudXpText')+'. Missions cleared: '+text('hudWorkouts')+'. Current streak: '+text('hudStreak')+' days.');break;
  case 'open':dialog.close();root.SystemOS?.open(command.module);break;
- case 'help':answer('Ask for a health briefing, today’s mission, your level and progress, or your water total. Say “log 16 ounces of water” to prepare a log, or “open Player,” “open Health,” or “open Training” to navigate.');break;
+ case 'help':answer('Ask about your sleep, a health briefing, today’s mission, your level and progress, or your water total. Say “log 16 ounces of water” to prepare a log, or “open Player,” “open Health,” or “open Training” to navigate.');break;
  case 'unsupported':answer('That action isn’t supported by voice. Use the app’s controls to review and make that change.');break;
  default:answer('I didn’t recognize that command. Try “What’s my mission?”, “How close am I to leveling up?”, or “log 16 ounces of water.”');
  }
