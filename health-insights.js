@@ -11,8 +11,8 @@
   const t=data.today||{},permissions=data.permissions||{},sentences=[];
   if(permissions.steps===true&&valid(t.steps))sentences.push(Math.round(t.steps).toLocaleString()+' steps shared today.');
   if(permissions.activeMinutes===true&&valid(t.activeMinutes))sentences.push(Math.round(t.activeMinutes)+' recorded exercise minutes today.');
-  // Calendar-day sleep totals are not complete overnight sleep sessions.
-  if(permissions.sleepMinutes===true&&valid(t.sleepMinutes))sentences.push(Math.round(t.sleepMinutes)+' sleep minutes shared within today’s calendar day; this may be only part of your night.');
+  const sleep=root.SystemSleepTracker?.analyze(data,now);
+  if(sleep?.state==='ready')sentences.push(root.SystemSleepTracker.briefing(data,now));
   const count=sentences.length;
   sentences.push('Check how you feel before choosing your session.');
   return {state:count?'current':'partial',text:count?sentences.join(' '):'Connected, but no usable activity context is shared for today. Your normal missions remain available.'};
