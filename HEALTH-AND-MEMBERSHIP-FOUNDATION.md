@@ -1,6 +1,6 @@
 # Health and membership foundation
 
-Status: first health-context implementation; membership proposal only. Billing is disabled.
+Status: app completion and sleep tracking take priority. System Plus planning and billing are paused.
 
 ## First increment
 
@@ -8,7 +8,7 @@ Use the existing Health Connect reader and per-category permissions. Show an exp
 
 Samsung Health -> Health Connect -> existing native bridge -> local context -> briefing.
 
-Current sleep totals are split at calendar-day boundaries. They must not be described as last night's complete sleep, or used for readiness scoring. Next increment: read completed sleep sessions with end timestamps, handle overlapping sources, then validate on a physical Galaxy Watch/phone.
+The sleep tracker now reads complete sessions and shared stages, groups by wake date and resolves overlapping providers (Samsung Health preferred). Session duration and time asleep are labeled separately; incomplete stages never become an invented time-asleep total. Seven-day history excludes missing days from averages. Physical Galaxy Watch/phone validation remains required. Calendar-day sleep totals remain labeled separately in the health history.
 
 ## Proposed tiers
 
