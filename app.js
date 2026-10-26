@@ -2991,6 +2991,7 @@ window.SystemSquads={community:fetchCommunityNetwork,identity:getIdentityCard,id
 /* V77: personal Central Command panels and action shortcuts. */
 function initCommandWorkspace(){
  const key='systemCommandLayoutV1',deck=document.getElementById('commandDeck');if(!deck)return;
+ const dock=deck.querySelector('.os-dock');const fitDock=()=>deck.style.setProperty('--command-dock-height',Math.ceil(dock.getBoundingClientRect().height)+'px');if(window.ResizeObserver)new ResizeObserver(fitDock).observe(dock);window.addEventListener('resize',fitDock);requestAnimationFrame(fitDock);
  let prefs={};try{prefs=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(_){}
  const definitions=[['player','Player Status','.hud-wing--left .hud-module:nth-child(1)','player'],['campaign','Campaign Progress','.hud-wing--left .hud-module:nth-child(2)','progress'],['mission','Today’s Mission','.hud-module--mission','missions'],['health','Health Summary','.hud-wing--right .hud-module:nth-child(2)','telemetry'],['analysis','System Analysis','.hud-analysis','progress']];
  const panels=[];

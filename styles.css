@@ -2675,3 +2675,20 @@ body.system-os-ready>dialog.command-panel-chooser{display:revert!important}body.
 body.system-os-ready .os-dock{width:min(860px,calc(100vw - 32px))}body.system-os-ready .hud-wing{align-content:start;max-height:calc(100dvh - 145px);overflow:auto;scrollbar-width:thin}body.system-os-ready .os-taskbar{display:none}body.system-os-ready .command-panel-controls button{margin:0;min-height:32px}
 
 body.system-os-ready .core-orbit-menu button span{font-size:10px;letter-spacing:.04em}body.system-os-ready .command-panel-controls button{padding:2px!important}
+
+/* V78: reserve the dock footprint and anchor workspace columns. */
+body.system-os-ready>.command-deck{--command-dock-height:100px;padding:48px 20px calc(var(--command-dock-height) + 18px);grid-template-rows:minmax(0,1fr)}
+body.system-os-ready .hud-wing--left{grid-column:1;grid-row:1}
+body.system-os-ready .system-core-wrap{grid-column:2;grid-row:1;min-width:0;transform:none;padding-top:0}
+body.system-os-ready .hud-wing--right{grid-column:3;grid-row:1}
+body.system-os-ready .hud-wing{max-height:calc(100dvh - var(--command-dock-height) - 76px);min-height:0;overflow:auto;align-self:center}
+body.system-os-ready .command-panel-content>strong,body.system-os-ready .command-panel-content>small{display:block;overflow-wrap:anywhere}
+body.system-os-ready .hud-module--mission .command-panel-content>strong{font-size:clamp(14px,1.7vw,24px);line-height:1.2;margin:4px 0 10px}
+body.system-os-ready .command-panel-content>small{margin:6px 0}
+body.system-os-ready .command-panel-controls button{width:26px!important;height:30px!important;min-height:30px;margin:0!important;padding:0!important;letter-spacing:0}
+body.system-os-ready .command-panel-title{padding-right:68px}
+body.system-os-ready>dialog.command-panel-chooser{position:fixed;inset:auto;top:50%;left:50%;transform:translate(-50%,-50%);margin:0;box-sizing:border-box;width:min(420px,calc(100vw - 32px));max-width:calc(100vw - 32px);max-height:calc(100dvh - 32px);padding:18px;border-radius:12px;font-size:14px;overflow:auto}
+.command-panel-chooser h2{font-size:22px;margin:0 0 8px}.command-panel-chooser p{line-height:1.4;margin:0 0 10px}.command-panel-chooser form{margin:0}.command-panel-chooser input{width:20px;height:20px}.command-panel-chooser button{border:1px solid #32566b;background:#102938;color:#bcefff;padding:8px 12px;font:700 11px var(--font-mono)}
+@media(max-height:360px){body.system-os-ready>dialog.command-panel-chooser{padding:12px}.command-panel-chooser label{padding:5px}.command-panel-chooser h2{font-size:18px}}
+
+body.system-os-ready>.command-deck{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1fr)}
