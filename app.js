@@ -2904,6 +2904,7 @@ function initPlanetaryCommandOrbit(){
  }
  function setPaused(v){paused=v;core.classList.toggle('orbit-paused',v)}
  function dragStart(e){
+  if(e.target.closest?.('#coreIdle'))return;
   if(e.pointerType==='mouse'&&e.button!==0)return;
   const grabbed=e.target.closest?.('button[data-holo]');
   const index=nodes.indexOf(grabbed);
