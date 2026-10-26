@@ -1716,7 +1716,10 @@ async function initAuthGate(){
     return;
   }
 
-  showSystemEntry();
+  if(getCloudSession()?.access_token&&localStorage.getItem(AUTH_REMEMBER_KEY)!=='0'){
+    await startEntryAuthentication();
+    if(!getCloudSession()?.access_token)showAuthGate();
+  }else showSystemEntry();
 }
 document.addEventListener('DOMContentLoaded',initAuthGate);
 document.addEventListener('DOMContentLoaded',()=>{
@@ -1843,7 +1846,7 @@ function initSystemOS(){
  let parked=null,current=null;
  const map={
   player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen']},
-  missions:{title:'MISSION CONTROL',kicker:'SYSTEM // MISSIONS',ids:['daily-mission','workoutBuilder','sideSystem']},
+  missions:{title:'TRAINING',kicker:'SYSTEM // TRAINING',ids:['daily-mission','workoutBuilder','sideMissionSystem','bossStageSystem','exerciseLibrary']},
   side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideMissionSystem']},
   boss:{title:'BOSS STAGE',kicker:'GATE // ENCOUNTERS',ids:['bossStageSystem']},
   telemetry:{title:'HEALTH TELEMETRY',kicker:'BIOMETRIC // HEALTH LINK',ids:['exerciseTracker']},
@@ -1863,6 +1866,7 @@ function initSystemOS(){
   restore();setActive(current,false);body.innerHTML='';parked=[];current=name;
   if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand()}
   m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});
+  if(name==='missions'){body.querySelectorAll('#sideMissionSystem,#bossStageSystem,#exerciseLibrary').forEach(el=>{const group=document.createElement('details');group.className='training-group';const label=document.createElement('summary');label.textContent=el.id==='sideMissionSystem'?'Side Missions':el.id==='bossStageSystem'?'Boss Stage':'Exercise Library';el.before(group);group.append(label,el)});}
   if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // LINK READY</span><strong>'+m.title+'</strong><p>This SYSTEM module is online and ready for its connected data.</p></div></div>';
   title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');stage.setAttribute('aria-hidden','false');document.body.classList.add('os-module-open');setActive(name,true);body.scrollTop=0;
   requestAnimationFrame(()=>{try{if(name==='boss'&&typeof renderBossCommand==='function')renderBossCommand();if(name==='side'&&typeof renderSideSystem==='function')renderSideSystem()}catch(err){console.error('SYSTEM module render failed',name,err);window.SystemOS?.notify?.('MODULE OPEN // DATA RENDER ERROR','SYSTEM // DIAGNOSTIC')}})
@@ -1870,7 +1874,7 @@ function initSystemOS(){
  window.SystemOS={open,close};
  document.getElementById('osModuleClose').onclick=close;
  document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');document.body.classList.toggle('os-module-open',!stage.classList.contains('minimized'))};
- document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const name=b.dataset.holo;if(name==='boss'||name==='side')open(name);else{const holo=document.getElementById('holoWindow');if(holo&&holo.getAttribute('aria-hidden')==='false')return;open(name)}},true));
+ document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const name=b.dataset.holo;if(['boss','side','nutrition','social'].includes(name))open(name);else{const holo=document.getElementById('holoWindow');if(holo&&holo.getAttribute('aria-hidden')==='false')return;open(name)}},true));
  document.querySelectorAll('[data-hud-target]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open('missions')},true));
  document.querySelectorAll('[data-hud-view]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open(b.dataset.hudView==='progress'?'progress':'missions')},true));
  const clock=()=>{const e=document.getElementById('osClock');if(e)e.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};clock();setInterval(clock,30000);
@@ -2603,7 +2607,7 @@ async function markAlert(id,all=false){const u=socialCloudUser(),now=new Date().
 function ensureAlertCenter(){if(document.getElementById('systemAlertCenter'))return;const e=document.createElement('aside');e.id='systemAlertCenter';e.className='system-alert-center';e.setAttribute('aria-hidden','true');e.innerHTML='<header><div><small>SYSTEM // COMMUNICATIONS</small><h2>ALERT CENTER</h2></div><button id="alertCenterClose">×</button></header><div class="alert-tools"><span id="alertCount">0 UNREAD</span><button id="alertReadAll">MARK ALL READ</button></div><div id="alertFeed" class="alert-feed"></div>';document.body.appendChild(e);document.getElementById('alertCenterClose').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')};document.getElementById('alertReadAll').onclick=()=>markAlert('',true)}
 async function renderAlertCenter(){ensureAlertCenter();const a=await fetchSystemAlerts(),feed=document.getElementById('alertFeed'),unread=a.filter(x=>!x.read_at).length;document.getElementById('alertCount').textContent=unread+' UNREAD';document.querySelectorAll('.system-alert-badge').forEach(b=>{b.textContent=unread;b.hidden=!unread});feed.innerHTML=a.length?a.map(x=>'<article class="system-alert '+(!x.read_at?'unread':'')+'" data-alert-id="'+x.id+'" data-alert-module="'+escapeHtml(x.action_module||'social')+'"><i>'+({friend:'◎',duel:'⚔',squad:'◆',boss:'⚠',progress:'★',system:'◇'}[x.type]||'◇')+'</i><span><strong>'+escapeHtml(x.title)+'</strong><p>'+escapeHtml(x.body||'')+'</p><small>'+new Date(x.created_at).toLocaleString()+'</small></span><b>›</b></article>').join(''):'<div class="social-empty">NO SYSTEM ALERTS</div>';feed.querySelectorAll('[data-alert-id]').forEach(x=>x.onclick=async()=>{await markAlert(x.dataset.alertId);document.getElementById('systemAlertCenter').classList.remove('active');window.SystemOS?.open(x.dataset.alertModule||'social')})}
 function openAlertCenter(){ensureAlertCenter();const e=document.getElementById('systemAlertCenter');e.classList.add('active');e.setAttribute('aria-hidden','false');renderAlertCenter().catch(err=>{console.error('Alert Center failed to load',err);document.getElementById('alertFeed').innerHTML='<div class="social-empty">ALERTS UNAVAILABLE // TRY AGAIN</div>'})}
-function installAlertButton(){ensureAlertCenter();const deck=document.getElementById('commandDeck'),dock=deck?.querySelector('.os-dock');if(!dock||document.getElementById('systemAlertBtn'))return;const b=document.createElement('button');b.id='systemAlertBtn';b.className='system-alert-btn';b.innerHTML='<b>◉</b><span>ALERTS</span><i class="system-alert-badge" hidden>0</i>';b.onclick=openAlertCenter;dock.appendChild(b);renderAlertCenter()}
+function installAlertButton(){ensureAlertCenter();const deck=document.getElementById('commandDeck'),dock=deck?.querySelector('.os-dock');if(!dock||document.getElementById('systemAlertBtn'))return;const b=document.createElement('button');b.id='systemAlertBtn';b.className='system-alert-btn';b.innerHTML='<b>◉</b><span>ALERTS</span><i class="system-alert-badge" hidden>0</i>';b.onclick=openAlertCenter;b.setAttribute('aria-label','Notifications');b.title='Notifications';b.querySelector('span').textContent='';deck.querySelector('.os-topbar__right')?.appendChild(b);renderAlertCenter()}
 document.addEventListener('DOMContentLoaded',()=>{installAlertButton();setInterval(()=>{if(socialCloudUser())renderAlertCenter()},60000)});
 const _v30Friend=sendFriendRequest;sendFriendRequest=async function(userId,name){await _v30Friend(userId,name);await systemAlert('friend','FRIEND LINK REQUEST',socialHandle()+' wants to connect.',userId,'social',userId)};
 const _v30Challenge=squadChallenge;squadChallenge=async function(id,type,days){const c=await fetchCommunityNetwork(),target=c?.squads.find(s=>s.id===id),owner=target?.owner_id;await _v30Challenge(id,type,days);if(owner)await systemAlert('squad','SQUAD CHALLENGE INCOMING',socialHandle()+' issued a '+challengeLabel(type)+' squad challenge.',id,'social',owner)};

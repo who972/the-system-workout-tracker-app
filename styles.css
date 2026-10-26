@@ -2636,3 +2636,15 @@ body.system-os-ready .os-dock{grid-template-rows:44px auto}
 .tutorial-route{color:#97eaff;font:700 11px var(--font-mono);letter-spacing:.08em}
 @media(max-height:400px){.system-help__card{padding:12px}.system-help h2{margin:5px 0;font-size:25px}.system-help p{margin:8px 0}.tutorial-tiles{margin:8px 0}.tutorial-tiles>div{padding:8px}.exercise-poses svg{max-height:155px}.system-help li{margin:5px 0}.system-help__card footer{padding-top:7px}}
 @media(max-width:600px){.exercise-guide-layout{grid-template-columns:1fr}.exercise-poses svg{max-height:120px}.tutorial-tiles>div{display:block;padding:7px}.tutorial-tiles b{display:block}.system-help__card{font-size:14px}}
+
+/* Focused Central Command: orbit navigation and one primary workout action. */
+body.system-os-ready .os-dock{grid-template-columns:1fr;grid-template-rows:auto}
+.os-taskbar__hint{display:none!important}
+.os-topbar__right .system-alert-btn{position:relative;min-width:36px;min-height:32px;background:transparent;color:#83efff;border:1px solid #32566b;cursor:pointer}
+.training-group{margin:16px 0;border:1px solid #32566b;border-radius:10px;padding:12px}
+.training-group>summary,.account-data-options>summary{cursor:pointer;font-weight:bold;padding:10px;color:inherit}
+.live-movement-preview{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap}
+.live-movement-preview figure{margin:0;width:64px}
+.live-movement-preview svg{width:64px;height:64px}
+.live-movement-preview figcaption{font-size:10px}
+.live-movement-preview p{flex-basis:100%;margin:2px;font-size:12px}

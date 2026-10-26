@@ -144,10 +144,10 @@
       </div>
       <div class="core-orbit-menu" aria-label="Command modules">
         <button type="button" data-holo="player" style="--a:225deg"><b>◈</b><span>PLAYER</span></button>
-        <button type="button" data-holo="missions" style="--a:270deg"><b>◆</b><span>MISSIONS</span></button>
+        <button type="button" data-holo="missions" style="--a:270deg"><b>◆</b><span>TRAINING</span></button>
         <button type="button" data-holo="telemetry" style="--a:315deg"><b>⌁</b><span>TELEMETRY</span></button>
-        <button type="button" data-holo="side" style="--a:0deg"><b>✦</b><span>SIDE</span></button>
-        <button type="button" data-holo="boss" style="--a:45deg"><b>⚠</b><span>BOSS</span></button>
+        <button type="button" data-holo="nutrition" style="--a:0deg"><b>◫</b><span>NUTRITION</span></button>
+        <button type="button" data-holo="social" style="--a:45deg"><b>◎</b><span>SOCIAL</span></button>
         <button type="button" data-holo="progress" style="--a:90deg"><b>▥</b><span>PROGRESS</span></button>
         <button type="button" data-holo="achievements" style="--a:135deg"><b>★</b><span>AWARDS</span></button>
         <button type="button" data-holo="profile" style="--a:180deg"><b>⚙</b><span>PROFILE</span></button>
@@ -167,14 +167,7 @@
   </aside>
   <div class="hud-bottom os-dock" aria-label="System dock">
     <div class="os-dock__primary"><div class="session-equipment" role="group" aria-label="Workout equipment for this session"><div class="session-equipment__buttons"><button type="button" data-session-equipment="bodyweight" aria-pressed="true">BODYWEIGHT</button><button type="button" data-session-equipment="gym" aria-pressed="false">GYM</button></div><small data-session-equipment-note>This session only</small></div><button class="core-action" type="button" data-hud-target="daily-mission">BEGIN MISSION</button></div>
-    <button data-os-module="missions"><b>◆</b><span>MISSIONS</span></button>
-    <button data-os-module="exercise"><b>⌁</b><span>DATABASE</span></button>
-    <button data-os-module="nutrition"><b>◫</b><span>NUTRITION</span></button>
-    <button data-os-module="telemetry"><b>⌾</b><span>HEALTH</span></button>
-    <button data-os-module="social"><b>◎</b><span>SOCIAL</span></button>
-    <button data-os-module="progress"><b>▥</b><span>PROGRESS</span></button>
-    <button data-os-module="profile"><b>⚙</b><span>CONFIG</span></button>
-    <button id="hudBriefing" type="button"><b>◈</b><span>BRIEFING</span></button>
+
   </div>
 </section>
 
@@ -237,7 +230,7 @@
         <span class="player-stat__value" id="statVit">0</span>
       </div>
     </div>
-    <div class="hud-command-row"><button type="button" data-hud-target="daily-mission">START TRAINING</button><button type="button" data-hud-view="missions">VIEW MISSIONS</button><button type="button" data-hud-view="progress">PLAYER STATUS</button><button id="replayDailyBriefing" class="hud-briefing-replay" type="button">DAILY BRIEFING</button></div>
+
   </section>
 
 
@@ -582,7 +575,7 @@
 </section>
     <div class="settings-grid">
       <article class="dashboard-card"><h3>Player Profile</h3><form id="profileForm" class="settings-form"><input id="profileName" class="form-input" placeholder="Player name"><select id="unitSystem" class="form-input"><option value="imperial">Imperial (lb)</option><option value="metric">Metric (kg)</option></select><select id="workoutGoal" class="form-input"><option value="balanced">Balanced</option><option value="strength">Strength</option><option value="endurance">Endurance</option><option value="weight-loss">Weight loss</option><option value="mobility">Mobility</option></select><fieldset class="audio-settings"><legend>SYSTEM AUDIO</legend><label class="settings-check"><input id="soundSetting" type="checkbox"> Enable System Audio</label><label>Master <input id="masterVolume" type="range" min="0" max="100" value="70"></label><label>Effects <input id="effectsVolume" type="range" min="0" max="100" value="80"></label><label>Music <input id="musicVolume" type="range" min="0" max="100" value="35"></label><button id="testSystemAudio" type="button">TEST AUDIO</button></fieldset><button class="btn-primary" type="submit">Save Settings</button></form></article>
-      <article class="dashboard-card"><h3>Account &amp; Data</h3><p class="quest-section__desc">Device data and saved cloud data are managed separately. Export or upload a backup before clearing unsynced progress.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label></div><fieldset class="account-danger"><legend>Danger Zone</legend><p>Factory Reset clears this device and signs you out. Your account and saved cloud progress stay intact.</p><p>Reset Progress restarts your training and assessment. Delete Account permanently removes your account and server data.</p><div class="settings-actions"><button id="resetAllBtn" data-account-operation class="danger-btn" type="button">Factory Reset</button><button id="resetTrainingBtn" data-account-operation class="danger-btn" type="button">Reset Progress</button><button id="deleteAccountBtn" data-account-operation class="danger-btn" type="button">Delete Account</button></div></fieldset><div id="backupStatus" class="backup-status" role="status" aria-live="polite"></div><div class="build-info"><span>INSTALLED BUILD</span><strong id="installedBuild">Loading…</strong></div></article>
+      <article class="dashboard-card"><h3>Help</h3><div class="settings-actions"><button id="replayDailyBriefing" type="button">REPLAY BRIEFING</button></div></article><article class="dashboard-card"><h3>Account &amp; Data</h3><p class="quest-section__desc">Device data and saved cloud data are managed separately. Export or upload a backup before clearing unsynced progress.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label></div><details class="account-data-options"><summary>Reset or delete data</summary><fieldset class="account-danger"><legend>Danger Zone</legend><p>Factory Reset clears this device and signs you out. Your account and saved cloud progress stay intact.</p><p>Reset Progress restarts your training and assessment. Delete Account permanently removes your account and server data.</p><div class="settings-actions"><button id="resetAllBtn" data-account-operation class="danger-btn" type="button">Factory Reset</button><button id="resetTrainingBtn" data-account-operation class="danger-btn" type="button">Reset Progress</button><button id="deleteAccountBtn" data-account-operation class="danger-btn" type="button">Delete Account</button></div></fieldset></details><div id="backupStatus" class="backup-status" role="status" aria-live="polite"></div><div class="build-info"><span>INSTALLED BUILD</span><strong id="installedBuild">Loading…</strong></div></article>
     </div>
   </section>
 
@@ -614,7 +607,7 @@
   <div class="workout-progress"><div id="workoutProgressFill"></div></div>
   <div class="workout-stage">
     <span id="liveExerciseCount" class="eyebrow">EXERCISE 1</span><h1 id="liveExerciseName">Ready</h1><p id="liveTarget">Press start to begin.</p>
-    <button id="openExerciseGuide" type="button">VIEW MOVEMENT GUIDE</button>
+    <div id="liveMovementPreview" class="live-movement-preview" aria-live="polite"></div><button id="openExerciseGuide" type="button">VIEW MOVEMENT GUIDE</button>
     <div id="timedSet" class="timed-set" hidden><div><small>TIMED SET</small><strong id="timedSetClock">00:30</strong></div><div class="timed-set__actions"><button id="timedSetToggle" type="button">START COUNTDOWN</button><button id="timedSetReset" type="button">RESET</button></div><small id="timedSetStatus" role="status">Start when you're ready.</small></div>
     <div class="live-set-grid"><label><span id="liveRepsLabel">REPS / SEC</span><input id="liveReps" type="number" min="0" inputmode="decimal"></label><label>WEIGHT (LB)<input id="liveWeight" type="number" min="0" step="0.5" inputmode="decimal"></label></div>
     <button id="completeLiveSet" class="workout-main-btn" type="button">COMPLETE SET</button>
@@ -645,10 +638,10 @@
 </form></dialog>
 <script src="diagnostics.js?v=72"></script>
 <script src="account-data.js?v=70"></script>
-<script src="app.js?v=70"></script>
+<script src="app.js?v=76"></script>
 <script src="health-connect.js?v=37"></script>
-<script src="side-system.js?v=side57"></script>
-<script src="workout-help.js?v=75"></script>
+<script src="side-system.js?v=76"></script>
+<script src="workout-help.js?v=76"></script>
 <script>
 if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.net"){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 (function(){
