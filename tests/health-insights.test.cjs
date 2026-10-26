@@ -4,7 +4,7 @@ const now=new Date('2026-10-26T18:00:00Z');
 const data={status:'connected',syncedAt:'2026-10-26T17:00:00Z',timeZone:'America/Chicago',today:{date:'2026-10-26',steps:0,activeMinutes:25,sleepMinutes:180},permissions:{steps:true,activeMinutes:true,sleepMinutes:true}};
 assert.equal(summarize({},now).state,'unavailable');
 assert.match(summarize(data,now).text,/0 steps/);
-assert.match(summarize(data,now).text,/part of your night/);
+assert.doesNotMatch(summarize(data,now).text,/sleep minutes/);
 assert.equal(summarize({...data,syncedAt:'2026-10-25T18:00:00Z'},now).state,'stale');
 assert.equal(summarize({...data,today:{...data.today,date:'2026-10-25'}},now).state,'stale');
 assert.equal(summarize({...data,syncedAt:'2026-10-27T00:00:00Z'},now).state,'stale');
