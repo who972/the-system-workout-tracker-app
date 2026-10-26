@@ -1910,13 +1910,13 @@ function initSystemOS(){
   requestAnimationFrame(()=>{try{if(name==='boss'&&typeof renderBossCommand==='function')renderBossCommand();if(name==='side'&&typeof renderSideSystem==='function')renderSideSystem()}catch(err){console.error('SYSTEM module render failed',name,err);window.SystemOS?.notify?.('MODULE OPEN // DATA RENDER ERROR','SYSTEM // DIAGNOSTIC')}})
  }
  window.SystemOS={open,close};
- document.getElementById('osModuleClose').onclick=close;
+ document.getElementById('osModuleClose').onclick=()=>window.SystemOS.close();
  document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');document.body.classList.toggle('os-module-open',!stage.classList.contains('minimized'))};
- document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open(b.dataset.holo)},true));
+ document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();window.SystemOS.open(b.dataset.holo)},true));
  document.querySelectorAll('[data-hud-target]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open('missions')},true));
  document.querySelectorAll('[data-hud-view]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open(b.dataset.hudView==='progress'?'progress':'missions')},true));
  const clock=()=>{const e=document.getElementById('osClock');if(e)e.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};clock();setInterval(clock,30000);
- document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('active'))close()});
+ document.addEventListener('keydown',e=>{if(e.key==='Escape'&&stage.classList.contains('active')&&!document.querySelector('dialog[open]'))window.SystemOS.close()});
 }
 document.addEventListener('DOMContentLoaded',initSystemOS);
 
@@ -2996,24 +2996,47 @@ function initCommandWorkspace(){
  const definitions=[['player','Player Status','.hud-wing--left .hud-module:nth-child(1)','player'],['campaign','Campaign Progress','.hud-wing--left .hud-module:nth-child(2)','progress'],['mission','Today’s Mission','.hud-module--mission','missions'],['health','Health Summary','.hud-wing--right .hud-module:nth-child(2)','telemetry'],['analysis','System Analysis','.hud-analysis','progress']];
  const panels=[];
  const persist=()=>localStorage.setItem(key,JSON.stringify(prefs));
+ const activeMotion=new WeakMap(),versions=new WeakMap();
+ const reduced=()=>window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+ function project(el,frames,duration=220){
+  const token=(versions.get(el)||0)+1;versions.set(el,token);activeMotion.get(el)?.cancel();
+  if(reduced()||!el.animate)return Promise.resolve(true);
+  const animation=el.animate(frames,{duration,easing:'cubic-bezier(.2,.75,.25,1)',fill:'none'});activeMotion.set(el,animation);
+  return animation.finished.then(()=>versions.get(el)===token,()=>false);
+ }
+ function visibility(el,show){
+  if(show){el.hidden=false;return project(el,[{opacity:0,transform:'translateY(6px) scaleY(.85)'},{opacity:1,transform:'none'}])}
+  return project(el,[{opacity:1,transform:'none'},{opacity:0,transform:'translateY(3px) scaleY(.85)'}],160).then(current=>{if(current)el.hidden=true});
+ }
+
  definitions.forEach(([id,label,selector,module])=>{
   const panel=deck.querySelector(selector);if(!panel)return;
   const contents=document.createElement('div');contents.className='command-panel-content';while(panel.firstChild)contents.appendChild(panel.firstChild);
   const details=document.createElement('details');details.className='command-panel-details';details.open=(prefs[id]?.open??(id==='mission'));
-  const summary=document.createElement('summary');summary.className='command-panel-title';summary.textContent=label;const metric=document.createElement('small');metric.className='command-panel-metric';summary.appendChild(metric);details.append(summary,contents);
+  const summary=document.createElement('summary');summary.className='command-panel-title';summary.textContent=label.toUpperCase();const metric=document.createElement('small');metric.className='command-panel-metric';summary.appendChild(metric);details.append(summary,contents);
   const controls=document.createElement('div');controls.className='command-panel-controls';
   const expand=document.createElement('button');expand.type='button';expand.textContent='↗';expand.setAttribute('aria-label','Open '+label);expand.onclick=()=>window.SystemOS?.open(module);
-  const hide=document.createElement('button');hide.type='button';hide.textContent='×';hide.setAttribute('aria-label','Hide '+label);hide.onclick=()=>{prefs[id]={open:details.open,hidden:true};panel.hidden=true;persist()};controls.append(expand,hide);panel.append(details,controls);panel.dataset.commandPanel=id;panel.hidden=!!prefs[id]?.hidden;
-  details.addEventListener('toggle',()=>{prefs[id]={...prefs[id],open:details.open};persist()});panels.push({id,label,panel,details,metric});
+  const hide=document.createElement('button');hide.type='button';hide.textContent='×';hide.setAttribute('aria-label','Hide '+label);hide.onclick=()=>{prefs[id]={open:details.open,hidden:true};visibility(panel,false);persist()};controls.append(expand,hide);panel.append(details,controls);panel.dataset.commandPanel=id;panel.hidden=!!prefs[id]?.hidden;
+  let expanded=details.open;
+  summary.addEventListener('click',e=>{e.preventDefault();expanded=!expanded;const from=details.getBoundingClientRect().height;details.open=true;const to=expanded?summary.getBoundingClientRect().height+contents.getBoundingClientRect().height:summary.getBoundingClientRect().height;
+   details.style.overflow='hidden';project(details,[{height:from+'px',opacity:.72},{height:to+'px',opacity:1}],240).then(current=>{if(current){details.open=expanded;details.style.overflow='';prefs[id]={...prefs[id],open:expanded};persist()}});
+  });
+  details.addEventListener('toggle',()=>{if(!activeMotion.get(details)||activeMotion.get(details).playState!=='running')expanded=details.open;prefs[id]={...prefs[id],open:details.open};persist()});panels.push({id,label,panel,details,metric});
  });
  const refresh=()=>{const read=id=>document.getElementById(id)?.textContent||'';panels.forEach(p=>{p.metric.textContent=({player:read('hudPlayerLevel')+' · '+read('hudPlayerRank'),campaign:read('hudStreak')+' day streak · '+read('hudWorkouts')+' missions',mission:read('hudMissionName'),health:read('hudSteps')+' steps',analysis:read('hudPerfPriority')})[p.id]});const main=deck.querySelector('.core-action');if(main){const done=Object.values(getMissionProgress()).some(x=>x.done);main.textContent=done?'RESUME MISSION':'BEGIN MISSION'}};
- const chooser=document.createElement('dialog');chooser.id='commandPanelChooser';chooser.className='command-panel-chooser';chooser.innerHTML='<form method="dialog"><h2>Customize Command</h2><p>Choose your mini windows. Tap a title to expand or collapse it.</p><div id="commandPanelOptions"></div><button type="button" id="resetCommandPanels">RESTORE DEFAULTS</button><button type="submit">DONE</button></form>';document.body.append(chooser);
- const options=chooser.querySelector('#commandPanelOptions');panels.forEach(p=>{const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=!p.panel.hidden;check.dataset.panelChoice=p.id;check.onchange=()=>{p.panel.hidden=!check.checked;prefs[p.id]={open:p.details.open,hidden:!check.checked};persist()};label.append(check,document.createTextNode(p.label));options.append(label)});
- document.getElementById('quickPanels').onclick=()=>{panels.forEach(p=>chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=!p.panel.hidden);chooser.showModal()};
- document.getElementById('resetCommandPanels').onclick=()=>{panels.forEach(p=>{p.panel.hidden=false;p.details.open=p.id==='mission';prefs[p.id]={open:p.details.open,hidden:false};chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=true});persist()};
+ const chooser=document.createElement('dialog');chooser.id='commandPanelChooser';chooser.className='command-panel-chooser';chooser.innerHTML='<form method="dialog"><small class="command-window-kicker">SYSTEM // WORKSPACE CONFIGURATION</small><h2>Customize Command</h2><p>Choose your mini windows. Tap a title to expand or collapse it.</p><div id="commandPanelOptions"></div><button type="button" id="resetCommandPanels">RESTORE DEFAULTS</button><button type="submit">DONE</button></form>';document.body.append(chooser);
+ const options=chooser.querySelector('#commandPanelOptions');panels.forEach(p=>{const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=!p.panel.hidden;check.dataset.panelChoice=p.id;check.onchange=()=>{visibility(p.panel,check.checked);prefs[p.id]={open:p.details.open,hidden:!check.checked};persist()};label.append(check,document.createTextNode(p.label));options.append(label)});
+ document.getElementById('quickPanels').onclick=()=>{panels.forEach(p=>chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=!p.panel.hidden);chooser.showModal();project(chooser,[{opacity:0,transform:'translate(-50%,-50%) scale(.92)',filter:'brightness(1.6)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)',filter:'brightness(1)'}],250)};
+ const closeChooser=()=>project(chooser,[{opacity:1,transform:'translate(-50%,-50%) scale(1)'},{opacity:0,transform:'translate(-50%,-50%) scale(.94)'}],170).then(current=>{if(current)chooser.close()});chooser.addEventListener('cancel',e=>{e.preventDefault();closeChooser()});chooser.querySelector('form').addEventListener('submit',e=>{e.preventDefault();closeChooser()});
+ document.getElementById('resetCommandPanels').onclick=()=>{panels.forEach(p=>{visibility(p.panel,true);p.details.open=p.id==='mission';prefs[p.id]={open:p.details.open,hidden:false};chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=true});persist()};
  document.getElementById('quickFocus').onclick=e=>{const on=deck.classList.toggle('command-focus');e.currentTarget.setAttribute('aria-pressed',String(on));e.currentTarget.textContent=on?'EXIT FOCUS':'FOCUS'};
  document.getElementById('quickTogether').onclick=()=>{window.SystemOS?.open('missions');const start=document.getElementById('start-mission-btn');if(start?.disabled){window.SystemOS?.notify?.('Today’s mission is complete. Choose another workout from Training.');return}start?.click();document.getElementById('ttOpen')?.click();document.getElementById('trainTogetherPanel')?.scrollIntoView({block:'nearest'})};
  document.getElementById('quickWater').onclick=()=>{window.SystemOS?.open('nutrition');document.querySelector('[data-fuel-water]')?.focus()};
+ const os=window.SystemOS,stage=document.querySelector('.os-module-stage');
+ if(os&&stage){const baseOpen=os.open,baseClose=os.close;let windowVersion=0;
+  os.open=name=>{windowVersion++;activeMotion.get(stage)?.cancel();baseOpen(name);if(stage.classList.contains('active'))project(stage,[{opacity:0,transform:'scale(.96)',filter:'brightness(1.4)'},{opacity:1,transform:'scale(1)',filter:'brightness(1)'}],240)};
+  os.close=()=>{const token=++windowVersion;project(stage,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.96)'}],160).then(current=>{if(current&&windowVersion===token)baseClose()})};
+ }
  refresh();setInterval(refresh,1500);
 }
 document.addEventListener('DOMContentLoaded',initCommandWorkspace);

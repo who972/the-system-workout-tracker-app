@@ -2692,3 +2692,27 @@ body.system-os-ready>dialog.command-panel-chooser{position:fixed;inset:auto;top:
 @media(max-height:360px){body.system-os-ready>dialog.command-panel-chooser{padding:12px}.command-panel-chooser label{padding:5px}.command-panel-chooser h2{font-size:18px}}
 
 body.system-os-ready>.command-deck{grid-template-columns:minmax(0,1fr) minmax(0,1.35fr) minmax(0,1fr)}
+
+/* V79: restore the angular holographic System identity. */
+body.system-os-ready .hud-module[data-command-panel]{background:linear-gradient(125deg,rgba(5,27,39,.9),rgba(2,10,18,.84));border:1px solid rgba(80,215,239,.28);box-shadow:inset 0 0 25px #26d3ee08;clip-path:polygon(0 9px,9px 0,100% 0,100% calc(100% - 9px),calc(100% - 9px) 100%,0 100%)}
+body.system-os-ready .hud-module[data-command-panel]::before{content:'';position:absolute;left:10px;top:0;width:34px;height:2px;background:#58e8ff;box-shadow:0 0 10px #38daff;pointer-events:none}
+body.system-os-ready .hud-module--mission[data-command-panel]::before{background:#9374fa;box-shadow:0 0 10px #9374fa}
+body.system-os-ready .command-panel-title{list-style:none;font:700 9px var(--font-mono);letter-spacing:.14em;padding:12px 60px 9px 13px;min-height:45px;color:#65e7fa}
+.command-panel-title::-webkit-details-marker{display:none}.command-panel-title::before{content:'+';margin-right:7px;color:#8c7cf4}.command-panel-details[open]>.command-panel-title::before{content:'−'}
+body.system-os-ready .command-panel-metric{font:500 9px var(--font-mono);letter-spacing:.08em;color:#9eb9c9;margin:6px 0 0;line-height:1.5}
+body.system-os-ready .command-panel-controls{right:7px;top:7px;gap:2px}
+body.system-os-ready .command-panel-controls button{border-color:transparent!important;background:transparent!important;width:24px!important;height:30px!important;min-height:30px;color:#75cbdc;box-shadow:none;font-size:12px;opacity:.8}
+body.system-os-ready .command-panel-controls button:hover,body.system-os-ready .command-panel-controls button:focus-visible{border-color:#4acde966!important;background:#17445555!important;opacity:1}
+body.system-os-ready .command-panel-content{padding:5px 13px 12px;border-top:1px solid #53dff31c;transform-origin:top}
+body.system-os-ready .hud-module--mission .command-panel-content>strong{font:600 clamp(14px,1.8vw,22px) var(--font-display);letter-spacing:.035em;color:#e0f6fc}
+body.system-os-ready .os-dock{padding:7px 10px 5px;background:linear-gradient(180deg,rgba(5,23,34,.68),rgba(1,8,15,.9));border-color:#54d8f433;gap:2px;clip-path:polygon(0 10px,10px 0,calc(100% - 10px) 0,100% 10px,100% 100%,0 100%)}
+body.system-os-ready .command-quick-actions{gap:4px}
+body.system-os-ready .command-quick-actions button{margin:0;min-height:32px;padding:4px 10px;background:transparent;border:1px solid transparent;border-bottom-color:#4ccce52e;color:#87bacb;font:700 9px var(--font-mono);letter-spacing:.1em;box-shadow:none;clip-path:polygon(0 0,100% 0,100% calc(100% - 5px),calc(100% - 5px) 100%,0 100%)}
+body.system-os-ready .command-quick-actions button:hover,body.system-os-ready .command-quick-actions button:focus-visible,body.system-os-ready .command-quick-actions button[aria-pressed="true"]{color:#9df4ff;border-color:#48cde377;background:#1c8bb31a;box-shadow:inset 0 0 12px #37ddf712}
+body.system-os-ready .session-equipment__buttons button{background:transparent;box-shadow:none;border-color:transparent;border-bottom-color:#4ccce52e}
+body.system-os-ready .session-equipment__buttons button[aria-pressed="true"]{background:#1a99be24;border-bottom-color:#62eaff;color:#baf6ff}
+body.system-os-ready>dialog.command-panel-chooser{border-radius:0;background:linear-gradient(135deg,#071e2bef,#020a14f7);border-color:#56d7f66b;box-shadow:inset 0 0 45px #21b6e80c,0 0 40px #00d9ff12;clip-path:polygon(0 14px,14px 0,calc(100% - 14px) 0,100% 14px,100% calc(100% - 14px),calc(100% - 14px) 100%,14px 100%,0 calc(100% - 14px));font:12px var(--font-mono);padding:20px}
+.command-window-kicker{display:block;color:#9a86ee;font:700 8px var(--font-mono);letter-spacing:.16em;margin-bottom:8px}
+.command-panel-chooser h2{font:600 25px var(--font-display);text-transform:uppercase;letter-spacing:.07em;color:#a2f1ff}.command-panel-chooser p{color:#789eaf;font-size:11px;line-height:1.6}.command-panel-chooser label{padding:10px;border-bottom:1px solid #3ebbd323;font:700 10px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:#aad2de}.command-panel-chooser input{appearance:none;width:17px;height:17px;flex:none;border:1px solid #45bed877;background:#06202d;cursor:pointer}.command-panel-chooser input:checked{background:#68e9ff;box-shadow:inset 0 0 0 4px #08202c,0 0 9px #68e9ff44}.command-panel-chooser input:focus-visible{outline:2px solid #baabff;outline-offset:3px}.command-panel-chooser button{background:#0a273488;border-color:#50bedb55;text-transform:uppercase;letter-spacing:.09em;font-size:10px;clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%)}
+.command-panel-chooser::backdrop{background:rgba(0,5,12,.73);backdrop-filter:blur(3px)}
+@media(max-height:360px){body.system-os-ready>dialog.command-panel-chooser{padding:12px 16px}.command-panel-chooser label{padding:5px}.command-panel-chooser h2{font-size:19px}.command-window-kicker{margin-bottom:4px}}
