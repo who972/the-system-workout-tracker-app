@@ -21,6 +21,7 @@ on:
       - "styles.css"
       - "workout-help.js"
       - "system-assistant.js"
+      - "health-insights.js"
       - "side-system.js"
       - "side-system.css"
       - "health-connect.js"
@@ -93,6 +94,7 @@ jobs:
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/fuel-recovery.test.cjs
           node tests/endurance-assessment.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/endurance-ui.test.cjs
+          node tests/health-insights.test.cjs
           node tests/system-assistant.test.cjs
           node --check system-assistant.js
           node --check workout-help.js
@@ -101,7 +103,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -178,4 +180,5 @@ jobs:
           path: ${{ env.APK_PATH }}
           if-no-files-found: error
           retention-days: 14
+
 
