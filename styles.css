@@ -1669,7 +1669,7 @@ html,body{background:#02070c}
 body.system-os-ready{height:100dvh;overflow:hidden}
 body.system-os-ready>.ambient-bg,body.system-os-ready>.header,body.system-os-ready>.app-nav{display:none!important}
 body.system-os-ready>.command-deck{height:100dvh;min-height:100dvh;margin:0;padding:22px 28px 62px;box-sizing:border-box;border:0}
-body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(script){display:none!important}
+body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(.command-panel-chooser):not(script){display:none!important}
 .os-topbar{position:absolute;z-index:20;left:18px;right:18px;top:10px;display:flex;justify-content:space-between;align-items:center;pointer-events:none;font:700 9px var(--font-mono);letter-spacing:.16em;color:#72dced}
 .os-topbar b{color:#dffcff}.os-topbar__right{display:flex;gap:18px}
 .os-module-stage{position:fixed;z-index:1500;inset:5vh 5vw;display:none;grid-template-rows:auto 1fr;border:1px solid rgba(103,232,249,.55);background:linear-gradient(180deg,rgba(3,20,31,.97),rgba(1,8,14,.985));box-shadow:0 0 70px rgba(34,211,238,.18),inset 0 0 45px rgba(34,211,238,.04);clip-path:polygon(0 18px,18px 0,calc(100% - 18px) 0,100% 18px,100% calc(100% - 18px),calc(100% - 18px) 100%,18px 100%,0 calc(100% - 18px))}
@@ -1777,7 +1777,7 @@ html[data-theme="dark"] .system-log__entry--warning{color:var(--system-amber);bo
 
 
 /* V18 // TRUE FLOATING HOLOGRAPHIC WINDOW SHELL */
-body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(script){display:none!important}
+body.system-os-ready>.command-deck~*:not(.boss-battle-mode):not(.path-picker):not(.system-onboarding):not(.workout-mode):not(.mission-launch-confirm):not(.mission-launch-flash):not(.mission-debrief):not(.progression-event):not(.system-alert-center):not(.account-delete-dialog):not(.command-panel-chooser):not(script){display:none!important}
 body.system-os-ready .os-module-stage{
  position:absolute;z-index:80;
  left:50%;top:50%;right:auto;bottom:auto;
@@ -2650,3 +2650,26 @@ body.system-os-ready .os-dock{grid-template-columns:1fr;grid-template-rows:auto}
 .live-movement-preview p{flex-basis:100%;margin:2px;font-size:12px}
 
 .fuel-summary{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}.fuel-summary strong{font-size:24px;color:var(--system-white)}.fuel-summary input{max-width:120px}.fuel-details>summary,#nutritionDashboard details>summary{cursor:pointer;font-weight:bold;padding:10px}.fuel-summary .meal-actions{flex-wrap:wrap}@media(max-width:600px){.fuel-summary{grid-template-columns:1fr}}
+
+/* V77 workspace */
+body.system-os-ready .os-dock{grid-template-rows:auto auto;gap:6px;bottom:8px}
+.command-quick-actions{display:flex;justify-content:center;gap:5px;flex-wrap:wrap}
+.command-quick-actions button{min-height:34px;padding:5px 9px;color:#a8efff;border:1px solid #32566b;background:#0b1c29;font:700 10px var(--font-mono);cursor:pointer}
+.command-quick-actions .system-alert-btn{position:relative!important;min-width:54px;width:auto!important;display:flex;gap:4px;align-items:center}
+.command-deck [data-command-panel]{position:relative;min-height:0;flex:none;padding:0!important}
+.command-panel-title{cursor:pointer;padding:13px 68px 12px 12px;color:#82efff;font:700 11px var(--font-mono);min-height:44px;box-sizing:border-box}
+.command-panel-metric{display:block;color:#c8dce4;font-size:10px;margin-top:7px;line-height:1.4}
+.command-panel-controls{position:absolute;right:6px;top:5px;display:flex;gap:3px}
+.command-panel-controls button{width:28px;min-height:32px;padding:2px!important;color:#a8efff;border:1px solid #32566b;background:#0b1c29;cursor:pointer}
+.command-panel-content{padding:8px 12px 12px}
+.command-panel-content>.hud-module__tag{display:none}
+.command-deck [data-command-panel][hidden]{display:none!important}
+.command-focus .hud-wing{display:none!important}
+.command-panel-chooser{color:#d7efff;background:#0b1824;border:1px solid #5ddcff;max-width:420px;width:85vw;max-height:85vh;overflow:auto;z-index:99999}
+.command-panel-chooser::backdrop{background:#000b}.command-panel-chooser label{display:flex;gap:12px;align-items:center;padding:10px}.command-panel-chooser button{min-height:36px;margin:8px}
+#orbitRuntimeProbe{display:none!important}
+.core-orbit-menu button.os-active{filter:brightness(1.4)!important;outline:2px solid #68ecff;outline-offset:3px}
+body.system-os-ready>dialog.command-panel-chooser{display:revert!important}body.system-os-ready>dialog.command-panel-chooser:not([open]){display:none!important}
+@media(max-height:400px){.command-panel-title{padding-top:8px;padding-bottom:8px}.command-panel-metric{margin-top:3px}.command-quick-actions button{font-size:9px;padding-inline:6px}.command-panel-content{max-height:36vh;overflow:auto}}
+
+body.system-os-ready .os-dock{width:min(860px,calc(100vw - 32px))}body.system-os-ready .hud-wing{align-content:start;max-height:calc(100dvh - 145px);overflow:auto;scrollbar-width:thin}body.system-os-ready .os-taskbar{display:none}body.system-os-ready .command-panel-controls button{margin:0;min-height:32px}

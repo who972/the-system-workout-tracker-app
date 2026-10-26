@@ -60,6 +60,7 @@ jobs:
           node "$RUNNER_TEMP/train-tests/node_modules/playwright/cli.js" install --with-deps chromium
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/train-tests/node_modules/playwright" node tests/session-equipment-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/onboarding-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/command-workspace-layout.test.cjs
 
       - name: Package SYSTEM web app
         shell: bash
