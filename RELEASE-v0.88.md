@@ -1,6 +1,6 @@
-# v0.88 — Personalized training (not yet built)
+# v0.88 — Personalized training
 
-Built on the v0.87 health/sleep development branch. The phone can remain on v0.85 while this update is prepared. A signed APK has not been generated or verified for upgrade installation.
+Built on the v0.87 health/sleep development branch. The phone can remain on v0.85 while this update is prepared. A signed APK has been built with the persistent signing key. Package and signature checks passed; installation over v0.85 still needs verification on the phone.
 
 ## Changes
 
@@ -13,7 +13,7 @@ Built on the v0.87 health/sleep development branch. The phone can remain on v0.8
 - Reduced volume for reported fatigue, poor sleep or soreness; recovery spacing, scheduled rest and conservative return-after-break load suggestions. Pain blocks starting training.
 - Prescriptions freeze when a session starts; normal history, XP, account separation, backup/reset and sleep behavior remain intact.
 
-## Verification completed locally
+## Verification
 
 - Personalized policy tests: equipment, exclusions, recovery spacing, readiness, unknown starting loads, progression, missing feedback, quick sessions and return after a break.
 - Actual-script DOM integration: onboarding through assessment, existing-user profile setup, mission generation, session freeze, logged set feedback, workout completion and history/XP flow.
@@ -22,9 +22,9 @@ Built on the v0.87 health/sleep development branch. The phone can remain on v0.8
 
 ## Remaining checks and limits
 
-- Landscape visual verification is pending: the local browser executable was unavailable and its download failed. DOM tests verify behavior but cannot establish layout quality.
-- Signed APK compilation, packaged-asset verification and v0.85-to-v0.88 upgrade verification remain pending.
-- The build workflow includes the new module and tests. Pushing the development branch to the public GitHub repository was blocked by automatic approval review and requires explicit user authorization.
+- Remote browser checks passed for onboarding across ten landscape sizes and new workout controls at 568×256, 740×360 and 915×412. Preview images were inspected.
+- Signed APK compilation, unit/integration tests, packaged-asset verification and signature verification passed in build 40392088043. v0.85-to-v0.88 installation needs verification on the phone.
+- The user authorized publishing the development branch; changes are on adaptive-training. The build workflow includes the new module and tests.
 - Readiness currently uses the user's check-in. Sleep tracking remains available; sleep measurements do not automatically prescribe training loads.
 - Weight entry is in pounds, with dumbbell weight per dumbbell and barbell weight including the bar. Hybrid defaults to alternating home and weighted sessions.
 - Existing general assessment remains the baseline; exercise-specific starting loads are calibrated in the lifting session. The engine does not estimate one-repetition maximums.
