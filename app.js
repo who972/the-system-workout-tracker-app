@@ -3011,7 +3011,7 @@ function initCommandWorkspace(){
  document.getElementById('quickPanels').onclick=()=>{panels.forEach(p=>chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=!p.panel.hidden);chooser.showModal()};
  document.getElementById('resetCommandPanels').onclick=()=>{panels.forEach(p=>{p.panel.hidden=false;p.details.open=p.id==='mission';prefs[p.id]={open:p.details.open,hidden:false};chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=true});persist()};
  document.getElementById('quickFocus').onclick=e=>{const on=deck.classList.toggle('command-focus');e.currentTarget.setAttribute('aria-pressed',String(on));e.currentTarget.textContent=on?'EXIT FOCUS':'FOCUS'};
- document.getElementById('quickTogether').onclick=()=>{window.SystemOS?.open('missions');document.getElementById('ttOpen')?.click();document.getElementById('trainTogetherPanel')?.scrollIntoView({block:'nearest'})};
+ document.getElementById('quickTogether').onclick=()=>{window.SystemOS?.open('missions');const start=document.getElementById('start-mission-btn');if(start?.disabled){window.SystemOS?.notify?.('Today’s mission is complete. Choose another workout from Training.');return}start?.click();document.getElementById('ttOpen')?.click();document.getElementById('trainTogetherPanel')?.scrollIntoView({block:'nearest'})};
  document.getElementById('quickWater').onclick=()=>{window.SystemOS?.open('nutrition');document.querySelector('[data-fuel-water]')?.focus()};
  refresh();setInterval(refresh,1500);
 }
