@@ -1,0 +1,17 @@
+const assert=require('node:assert/strict');const T=require('../adaptive-training.js');
+const b={path:'Strength',profile:{trainingVersion:1,trainingStyle:'hybrid',experience:'Intermediate',days:3,minutes:45,equipment:['Dumbbells'],avoid:[]}};
+const today='2026-10-26';
+let m=T.plan(b,[],today,'gym');assert(m.exercises.some(e=>e[0]==='Dumbbell Row'));assert(m.exercises.some(e=>e[0]==='Goblet Squat'));assert(!m.exercises.some(e=>/Barbell/.test(e[0])));
+assert(T.plan(b,[],today,'bodyweight').exercises.every(e=>!/Dumbbell|Barbell|Goblet/.test(e[0])));
+assert(T.plan({...b,profile:{...b.profile,avoid:['push']}},[],today,'gym').exercises.every(e=>m.movements[e[0]]!=='push'));
+assert(T.plan(b,[{date:'2026-10-25',trainingPolicy:1,workoutMode:'full',split:'full'}],today,'gym').recovery);
+assert(T.plan(b,[],today,'gym',{fatigue:'high'}).easy);
+assert.equal(T.recommendation('Dumbbell Press','8-12 reps',[],2.5,today).weight,null);
+const session=(date,rir=2)=>({date,trainingPolicy:1,workoutMode:'full',expectedSets:{'Dumbbell Press':2},sets:[1,2].map(()=>({name:'Dumbbell Press',reps:12,weight:20,rir}))});
+assert.equal(T.recommendation('Dumbbell Press','8-12 reps',[session('2026-10-20'),session('2026-10-23')],2.5,today).weight,22.5);
+assert.equal(T.recommendation('Dumbbell Press','8-12 reps',[session('2026-10-20',null),session('2026-10-23',null)],2.5,today).weight,20);
+assert.equal(T.recommendation('Dumbbell Press','8-12 reps',[session('2026-10-20'),session('2026-10-23',0)],2.5,today).weight,17.5);
+const old=session('2026-10-01');assert.equal(T.recommendation('Dumbbell Press','8-12 reps',[old],2.5,today).weight,15);
+const quick=session('2026-10-23');quick.workoutMode='light';assert.equal(T.recommendation('Dumbbell Press','8-12 reps',[session('2026-10-20'),quick],2.5,today).weight,20);
+const future=session(today);assert.equal(T.recommendation('Dumbbell Press','8-12 reps',[future],2.5,today).weight,null);
+console.log('PASS personalized training: equipment, movement exclusions, recovery spacing, readiness, calibrated starting loads, reserve-based progression, missing feedback, quick sessions and return after break');

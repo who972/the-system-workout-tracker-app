@@ -2792,3 +2792,13 @@ body.system-os-ready>dialog.system-assistant[open]{display:block!important}
 .sleep-stage{position:absolute;top:0;height:100%}
 .sleep-stage-0{background:#667487}.sleep-stage-1,.sleep-stage-3,.sleep-stage-7{background:#f8bf75}.sleep-stage-2,.sleep-stage-4{background:#7bb8ef}.sleep-stage-5{background:#6673de}.sleep-stage-6{background:#be8eea}
 .system-sleep-tracker details{margin-top:14px}.system-sleep-tracker summary{cursor:pointer;padding:8px 0;color:#b9dcff}.system-sleep-tracker details p{font-size:.9rem}
+
+/* Personalized training surfaces */
+.training-card{padding:16px;margin-block:12px;border-radius:24px;background:linear-gradient(135deg,#102738dd,#111629ee);border:1px solid #588fa355;color:#dcecf4;overflow-wrap:anywhere}
+.training-fields{display:flex;flex-wrap:wrap;gap:12px;margin-block:12px}.training-fields label{flex:1 1 130px;display:grid;gap:6px}.training-fields small{flex-basis:100%}
+.training-card select,.training-card input,.training-fields select,#trainingProfileForm select,#trainingProfileForm input{max-width:100%;min-width:0;background:#10202e;color:#e4f7ff;border:1px solid #507487;border-radius:12px;padding:10px}
+#trainingProfileForm{display:grid;gap:14px}#trainingProfileForm label{display:grid;gap:6px}#trainingProfileForm .settings-check{display:flex;align-items:center}#trainingProfileForm fieldset{border-radius:18px;border:1px solid #507487;display:flex;flex-wrap:wrap;gap:12px}#trainingProfileForm input[type=checkbox]{width:auto}
+#trainingReadiness p,.mission-exercise>p{font-size:12px;line-height:1.5}#liveTarget{overflow-wrap:anywhere}#trainingSetFeedback{font-size:12px}#systemOnboarding .ob-fields>label{display:grid;gap:6px;margin-bottom:10px}
+
+#systemOnboarding .ob-fields fieldset{border:1px solid #436275;border-radius:12px;padding:6px;display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:4px;font-size:11px}#systemOnboarding .ob-fields fieldset label{display:flex;align-items:center;gap:4px}#systemOnboarding .ob-fields fieldset input{width:auto}#systemOnboarding .ob-fields legend{font-size:11px}
+@media(orientation:landscape) and (max-height:520px){#systemOnboarding .ob-equipment{grid-template-columns:repeat(3,minmax(0,1fr))}#systemOnboarding .ob-fields>label{font-size:11px;gap:2px;margin:4px 0}#systemOnboarding .ob-fields>label input,#systemOnboarding .ob-fields>label select{height:28px;padding:3px 6px;max-width:100%;min-width:0}#systemOnboarding .ob-fields>label select{color:#e4f7ff;background:#10202e;border-radius:8px}}
