@@ -19,6 +19,7 @@ import androidx.health.connect.client.time.TimeRangeFilter
 import androidx.health.connect.client.aggregate.AggregationResult
 import androidx.health.connect.client.records.metadata.Metadata
 import androidx.lifecycle.lifecycleScope
+import androidx.lifecycle.withResumed
 import androidx.webkit.JavaScriptReplyProxy
 import androidx.webkit.WebMessageCompat
 import androidx.webkit.WebViewAssetLoader
@@ -45,7 +46,9 @@ class MainActivity : ComponentActivity() {
     } }
     private var voiceRequested = false
     private val microphoneLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        if(granted && voiceRequested && !isFinishing && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) voice.listen()
+        if(granted && voiceRequested && !isFinishing) lifecycleScope.launch {
+            lifecycle.withResumed { if(voiceRequested && !isFinishing) voice.listen() }
+        }
         else if(voiceRequested && ::webView.isInitialized) webView.evaluateJavascript("window.SystemAssistant?.nativeEvent({type:'error',text:'Microphone permission was not granted. You can type a command instead.'})",null)
     }
     inner class SystemVoiceBridge {
