@@ -20,6 +20,7 @@ on:
       - "sw.js"
       - "styles.css"
       - "workout-help.js"
+      - "system-assistant.js"
       - "side-system.js"
       - "side-system.css"
       - "health-connect.js"
@@ -61,6 +62,7 @@ jobs:
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/train-tests/node_modules/playwright" node tests/session-equipment-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/onboarding-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/command-workspace-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/system-assistant-layout.test.cjs
 
       - name: Upload UI previews
         uses: actions/upload-artifact@v4
@@ -91,13 +93,15 @@ jobs:
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/fuel-recovery.test.cjs
           node tests/endurance-assessment.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/endurance-ui.test.cjs
+          node tests/system-assistant.test.cjs
+          node --check system-assistant.js
           node --check workout-help.js
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/workout-help.test.cjs
           node --check side-system.js
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"

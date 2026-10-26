@@ -1,0 +1,13 @@
+const assert=require('node:assert/strict');const {interpret}=require('../system-assistant.js');
+assert.deepEqual(interpret('log 8.5 ounces of water'),{type:'water',amount:8.5});
+assert.deepEqual(interpret('Log 16 ounces of water'),{type:'water',amount:16});
+assert.deepEqual(interpret('I drank eight ounces of water'),{type:'water',amount:8});
+assert.deepEqual(interpret('log 250 ml of water'),{type:'water',amount:8.5});
+for(const s of ['log water','log 100 ounces of water','add 3000 ml of water','log -16 ounces of water','log 2 bottles of water'])assert.equal(interpret(s).type,'water-invalid');
+assert.equal(interpret('delete all my data').type,'unsupported');
+assert.equal(interpret('How close am I to leveling up?').type,'progress');
+assert.equal(interpret('What is my level?').type,'progress');
+assert.equal(interpret('What is my mission today?').type,'mission');
+assert.deepEqual(interpret('open Health'),{type:'open',module:'telemetry'});
+assert.equal(interpret('cancel').type,'cancel');assert.equal(interpret('<script>something</script>').type,'unknown');
+console.log('PASS local command parsing, unit conversion, invalid amounts and destructive-command rejection');

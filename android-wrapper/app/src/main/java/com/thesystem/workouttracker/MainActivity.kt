@@ -40,6 +40,26 @@ class MainActivity : ComponentActivity() {
     private var pendingBackupJson = ""
     private val backupLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let { contentResolver.openOutputStream(it)?.use { out -> out.write(pendingBackupJson.toByteArray(Charsets.UTF_8)) } } }
     inner class SystemAndroidBridge { @JavascriptInterface fun exportBackup(name: String, json: String) { runOnUiThread { pendingBackupName=name; pendingBackupJson=json; backupLauncher.launch(name) } }; @JavascriptInterface fun getAppVersion(): String { val p=packageManager.getPackageInfo(packageName,0); return p.versionName + " / build " + androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(p) } }
+    private val voice by lazy { SystemVoice(this) { type, text ->
+        if (::webView.isInitialized) webView.evaluateJavascript("window.SystemAssistant?.nativeEvent(" + JSONObject().put("type",type).put("text",text).toString() + ")", null)
+    } }
+    private var voiceRequested = false
+    private val microphoneLauncher = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
+        if(granted && voiceRequested && !isFinishing && lifecycle.currentState.isAtLeast(androidx.lifecycle.Lifecycle.State.RESUMED)) voice.listen()
+        else if(voiceRequested && ::webView.isInitialized) webView.evaluateJavascript("window.SystemAssistant?.nativeEvent({type:'error',text:'Microphone permission was not granted. You can type a command instead.'})",null)
+    }
+    inner class SystemVoiceBridge {
+        @JavascriptInterface fun available(): Boolean = voice.available()
+        @JavascriptInterface fun listen() { runOnUiThread {
+            voiceRequested=true
+            if(checkSelfPermission(android.Manifest.permission.RECORD_AUDIO)==android.content.pm.PackageManager.PERMISSION_GRANTED) voice.listen()
+            else microphoneLauncher.launch(android.Manifest.permission.RECORD_AUDIO)
+        } }
+        @JavascriptInterface fun speak(text: String) { runOnUiThread { voice.speak(text) } }
+        @JavascriptInterface fun stop() { runOnUiThread { voiceRequested=false;voice.stop() } }
+    }
+    override fun onPause() { voice.stop(); super.onPause() }
+    override fun onDestroy() { voice.close();super.onDestroy() }
     private lateinit var webView: WebView
     private lateinit var health: HealthConnectClient
     private var permissionReply: JavaScriptReplyProxy? = null
@@ -69,6 +89,7 @@ class MainActivity : ComponentActivity() {
         webView.settings.domStorageEnabled = true
         webView.settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
         webView.addJavascriptInterface(SystemAndroidBridge(), "SystemAndroid")
+        webView.addJavascriptInterface(SystemVoiceBridge(), "SystemVoiceNative")
         webView.webViewClient = object : android.webkit.WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean {
                 val uri = request.url
