@@ -3,7 +3,7 @@ name: Build Android Debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main]
+    branches: [main, health-membership-foundation]
     paths:
       - "android-wrapper/**"
       - "index.html"
@@ -22,6 +22,8 @@ on:
       - "workout-help.js"
       - "system-assistant.js"
       - "health-insights.js"
+      - "sleep-tracker.js"
+      - ".github/workflows/build-android-apk.yml"
       - "side-system.js"
       - "side-system.css"
       - "health-connect.js"
@@ -64,6 +66,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/onboarding-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/command-workspace-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/system-assistant-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/sleep-tracker-layout.test.cjs
 
       - name: Upload UI previews
         uses: actions/upload-artifact@v4
@@ -94,6 +97,8 @@ jobs:
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/fuel-recovery.test.cjs
           node tests/endurance-assessment.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/endurance-ui.test.cjs
+          node tests/sleep-tracker.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/health-dashboard.test.cjs
           node tests/health-insights.test.cjs
           node tests/system-assistant.test.cjs
           node --check system-assistant.js
@@ -103,7 +108,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp sleep-tracker.js health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -153,6 +158,8 @@ jobs:
           cmp diagnostics.js <(unzip -p "$APK" assets/www/diagnostics.js)
           cmp account-data.js <(unzip -p "$APK" assets/www/account-data.js)
           cmp competitive-credits.js <(unzip -p "$APK" assets/www/competitive-credits.js)
+          cmp sleep-tracker.js <(unzip -p "$APK" assets/www/sleep-tracker.js)
+          cmp health-insights.js <(unzip -p "$APK" assets/www/health-insights.js)
           cmp index.html <(unzip -p "$APK" assets/www/index.html)
           unzip -Z1 "$APK" | grep -Fx "res/drawable-nodpi-v4/ic_system_launcher.jpg"
           cmp workout-help.js <(unzip -p "$APK" assets/www/workout-help.js)
