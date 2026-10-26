@@ -1,0 +1,14 @@
+const assert=require('node:assert/strict');
+const {summarize}=require('../health-insights.js');
+const now=new Date('2026-10-26T18:00:00Z');
+const data={status:'connected',syncedAt:'2026-10-26T17:00:00Z',timeZone:'America/Chicago',today:{date:'2026-10-26',steps:0,activeMinutes:25,sleepMinutes:180},permissions:{steps:true,activeMinutes:true,sleepMinutes:true}};
+assert.equal(summarize({},now).state,'unavailable');
+assert.match(summarize(data,now).text,/0 steps/);
+assert.doesNotMatch(summarize(data,now).text,/sleep minutes/);
+assert.equal(summarize({...data,syncedAt:'2026-10-25T18:00:00Z'},now).state,'stale');
+assert.equal(summarize({...data,today:{...data.today,date:'2026-10-25'}},now).state,'stale');
+assert.equal(summarize({...data,syncedAt:'2026-10-27T00:00:00Z'},now).state,'stale');
+assert.equal(summarize({...data,permissions:{}},now).state,'partial');
+assert.equal(summarize({...data,today:{date:'2026-10-26',steps:null,activeMinutes:NaN,sleepMinutes:-1}},now).state,'partial');
+assert.equal(summarize({...data,status:'error'},now).state,'unavailable');
+console.log('PASS health context: stale data, midnight, revoked permissions, missing values and partial sleep');

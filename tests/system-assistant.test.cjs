@@ -11,3 +11,6 @@ assert.equal(interpret('What is my mission today?').type,'mission');
 assert.deepEqual(interpret('open Health'),{type:'open',module:'telemetry'});
 assert.equal(interpret('cancel').type,'cancel');assert.equal(interpret('<script>something</script>').type,'unknown');
 console.log('PASS local command parsing, unit conversion, invalid amounts and destructive-command rejection');
+
+assert.equal(interpret('How did I sleep?').type,'sleep');
+assert.equal(interpret('How long have I slept?').type,'sleep');
