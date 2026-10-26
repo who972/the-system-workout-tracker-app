@@ -295,6 +295,39 @@ class MainActivity : ComponentActivity() {
                 token = response.pageToken
             } while (token != null)
         }
-        return JSONObject().put("source", "automatic").put("today", daily.getJSONObject(daily.length() - 1)).put("days", daily).put("workouts", workouts).put("permissions", available).put("timeZone", zone.id).put("steps", daily.getJSONObject(daily.length() - 1).opt("steps") ?: JSONObject.NULL)
+        // Keep complete intervals across midnight. The UI groups by wake date.
+        val sleepSessions = JSONArray()
+        var sleepReadError = false
+        if (available.optBoolean("sleepMinutes")) {
+            try {
+                val sleepStart = today.minusDays(days.toLong()).atStartOfDay(zone).toInstant()
+                var sleepToken: String? = null
+                do {
+                    val response = health.readRecords(ReadRecordsRequest(
+                        SleepSessionRecord::class, TimeRangeFilter.between(sleepStart, now),
+                        pageToken = sleepToken
+                    ))
+                    response.records.filter { !it.endTime.isAfter(now) }.forEach { record ->
+                        val stages = JSONArray()
+                        record.stages.forEach { stage ->
+                            stages.put(JSONObject().put("startTime", stage.startTime.toString())
+                                .put("endTime", stage.endTime.toString()).put("stage", stage.stage))
+                        }
+                        sleepSessions.put(JSONObject().put("id", record.metadata.id)
+                            .put("source", record.metadata.dataOrigin.packageName)
+                            .put("sourceName", healthSourceName(record.metadata.dataOrigin.packageName))
+                            .put("startTime", record.startTime.toString())
+                            .put("endTime", record.endTime.toString()).put("stages", stages))
+                    }
+                    sleepToken = response.pageToken
+                } while (sleepToken != null)
+            } catch (e: kotlinx.coroutines.CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                // Do not publish an incomplete page as a complete sleep history.
+                sleepReadError = true
+            }
+        }
+        return JSONObject().put("source", "automatic").put("today", daily.getJSONObject(daily.length() - 1)).put("days", daily).put("workouts", workouts).put("permissions", available).put("timeZone", zone.id).put("sleepSessions", if (sleepReadError) JSONArray() else sleepSessions).put("sleepReadError", sleepReadError).put("steps", daily.getJSONObject(daily.length() - 1).opt("steps") ?: JSONObject.NULL)
     }
 }
