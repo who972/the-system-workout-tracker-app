@@ -1841,8 +1841,8 @@ function renderCommandHud(){
   const combatTitle=typeof getEquippedCombatTitle==='function'?getEquippedCombatTitle():null,hudTitle=document.getElementById('hudCombatTitle');if(hudTitle){hudTitle.textContent=combatTitle?.name||'';hudTitle.hidden=!combatTitle}
   const fill=document.getElementById('hudXpFill');if(fill)fill.style.width=pct+'%';
   set('hudStreak',state.currentStreak||0);set('hudWorkouts',state.totalQuestsCompleted||0);
-  const plan=typeof WORKOUT_PLAN!=='undefined'?WORKOUT_PLAN[new Date().getDay()]:null;
-  if(plan){set('hudMissionName',plan.name.toUpperCase());set('hudMissionFocus',plan.focus+' // 30 MIN');}
+  const plan=missionForMode(adaptiveSystemMission());
+  if(plan){set('hudMissionName',plan.name.toUpperCase());set('hudMissionFocus',plan.focus+' // '+plan.exercises.length+' EXERCISES');}
   const qs=state.dailyQuests||[],done=qs.filter(q=>q.completed).length,daily=qs.length?Math.round(done/qs.length*100):0;set('hudCorePercent',daily+'%');
   const pa=getPerformanceAnalysis(), rec=recommendPerformanceMission(); window.SystemPerformance={analysis:pa,recommendation:rec};
   const perfMap={str:'Str',end:'End',agi:'Agi',vit:'Vit'};
@@ -1858,7 +1858,7 @@ function initHologramCommandUnit(){
  if(!core||!win)return;
  const modules={
   player:()=>({k:'PLAYER // STATUS',t:'PLAYER PROFILE',b:'<div class="holo-data"><div>LEVEL<b>'+((state&&state.level)||1)+'</b></div><div>RANK<b>'+((typeof getRank==='function'?getRank(state.level).name:'E-Rank'))+'</b></div><div>XP<b>'+((state&&state.xp)||0)+'</b></div><div>STREAK<b>'+((state&&state.currentStreak)||0)+' DAYS</b></div></div><button class="holo-link" data-holo-view="profile">OPEN PROFILE</button>'}),
-  missions:()=>({k:'MISSION // CONTROL',t:'TODAY’S MISSION',b:'<strong>'+((typeof WORKOUT_PLAN!=="undefined"&&WORKOUT_PLAN[new Date().getDay()])?WORKOUT_PLAN[new Date().getDay()].name:'TRAINING MISSION')+'</strong><br>Objectives ready for deployment.<button class="holo-link" data-holo-target="daily-mission">ENTER MISSION</button>'}),
+  missions:()=>({k:'MISSION // CONTROL',t:'TODAY’S MISSION',b:'<strong>'+escapeHtml(missionForMode(adaptiveSystemMission()).name)+'</strong><br>Objectives ready for deployment.<button class="holo-link" data-holo-target="daily-mission">ENTER MISSION</button>'}),
   telemetry:()=>({k:'SYSTEM // TELEMETRY',t:'LIVE DATA',b:'<div class="holo-data"><div>STEPS<b>'+((document.getElementById("hudSteps")?.textContent)||"--")+'</b></div><div>ACTIVE<b>'+((document.getElementById("hudActive")?.textContent)||"--")+'</b></div><div>HEALTH LINK<b>READY</b></div><div>SYNC<b>ONLINE</b></div></div>'}),
   side:()=>({k:'OPTIONAL // OBJECTIVES',t:'SIDE MISSIONS',b:'Bonus objectives provide additional XP without replacing the primary mission.<button class="holo-link" data-holo-view="missions">VIEW SIDE MISSIONS</button>'}),
   boss:()=>({k:'GATE // DETECTED',t:'BOSS STAGE',b:'Weekly Gate encounters build combat progression. Rank Trials unlock only after promotion requirements are satisfied.<button class="holo-link" data-os-open="boss">ENTER BOSS STAGE</button>'}),
@@ -2993,7 +2993,11 @@ function initCommandWorkspace(){
  const key='systemCommandLayoutV1',deck=document.getElementById('commandDeck');if(!deck)return;
  const dock=deck.querySelector('.os-dock');const fitDock=()=>deck.style.setProperty('--command-dock-height',Math.ceil(dock.getBoundingClientRect().height)+'px');if(window.ResizeObserver)new ResizeObserver(fitDock).observe(dock);window.addEventListener('resize',fitDock);requestAnimationFrame(fitDock);
  let prefs={};try{prefs=JSON.parse(localStorage.getItem(key)||'{}')||{}}catch(_){}
- const definitions=[['player','Player Status','.hud-wing--left .hud-module:nth-child(1)','player'],['campaign','Campaign Progress','.hud-wing--left .hud-module:nth-child(2)','progress'],['mission','Today’s Mission','.hud-module--mission','missions'],['health','Health Summary','.hud-wing--right .hud-module:nth-child(2)','telemetry'],['analysis','System Analysis','.hud-analysis','progress']];
+ // Retain the hidden HUD bindings for existing data renderers; only distinct mini windows remain.
+ deck.querySelectorAll('.hud-wing--left .hud-module,.hud-module--mission').forEach(el=>{el.hidden=true;el.classList.add('command-legacy-hud')});
+ const healthPanel=deck.querySelector('.hud-wing--right .hud-module:nth-child(2)');if(healthPanel){healthPanel.id='commandHealthPanel';deck.querySelector('.hud-wing--left').appendChild(healthPanel)}
+ ['player','campaign','mission'].forEach(id=>delete prefs[id]);
+ const definitions=[['health','Health Summary','#commandHealthPanel','telemetry'],['analysis','System Analysis','.hud-analysis','progress']];
  const panels=[];
  const persist=()=>localStorage.setItem(key,JSON.stringify(prefs));
  const activeMotion=new WeakMap(),versions=new WeakMap();
@@ -3023,7 +3027,7 @@ function initCommandWorkspace(){
   });
   details.addEventListener('toggle',()=>{if(!activeMotion.get(details)||activeMotion.get(details).playState!=='running')expanded=details.open;prefs[id]={...prefs[id],open:details.open};persist()});panels.push({id,label,panel,details,metric});
  });
- const refresh=()=>{const read=id=>document.getElementById(id)?.textContent||'';panels.forEach(p=>{p.metric.textContent=({player:read('hudPlayerLevel')+' · '+read('hudPlayerRank'),campaign:read('hudStreak')+' day streak · '+read('hudWorkouts')+' missions',mission:read('hudMissionName'),health:read('hudSteps')+' steps',analysis:read('hudPerfPriority')})[p.id]});const main=deck.querySelector('.core-action');if(main){const done=Object.values(getMissionProgress()).some(x=>x.done);main.textContent=document.getElementById('start-mission-btn')?.disabled?'MISSION CLEARED':done?'RESUME MISSION':'BEGIN MISSION'}};
+ const refresh=()=>{const read=id=>document.getElementById(id)?.textContent||'';panels.forEach(p=>{p.metric.textContent=({player:read('hudPlayerLevel')+' · '+read('hudPlayerRank'),campaign:read('hudStreak')+' day streak · '+read('hudWorkouts')+' missions',mission:read('hudMissionName'),health:read('hudSteps')+' steps',analysis:read('hudPerfPriority')})[p.id]});const campaign=document.getElementById('campaignProgressSummary');if(campaign)campaign.textContent=read('hudStreak')+' DAY STREAK · '+read('hudWorkouts')+' MISSIONS CLEARED';const main=deck.querySelector('.core-action');if(main){const done=Object.values(getMissionProgress()).some(x=>x.done);main.textContent=document.getElementById('start-mission-btn')?.disabled?'MISSION CLEARED':done?'RESUME MISSION':'BEGIN MISSION'}};
  const chooser=document.createElement('dialog');chooser.id='commandPanelChooser';chooser.className='command-panel-chooser';chooser.innerHTML='<form method="dialog"><small class="command-window-kicker">SYSTEM // WORKSPACE CONFIGURATION</small><h2>Customize Command</h2><p>Choose your mini windows. Tap a title to expand or collapse it.</p><div id="commandPanelOptions"></div><button type="button" id="resetCommandPanels">RESTORE DEFAULTS</button><button type="submit">DONE</button></form>';document.body.append(chooser);
  const options=chooser.querySelector('#commandPanelOptions');panels.forEach(p=>{const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=!p.panel.hidden;check.dataset.panelChoice=p.id;check.onchange=()=>{visibility(p.panel,check.checked);prefs[p.id]={open:p.details.open,hidden:!check.checked};persist()};label.append(check,document.createTextNode(p.label));options.append(label)});
  document.getElementById('quickPanels').onclick=()=>{panels.forEach(p=>chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=!p.panel.hidden);chooser.showModal();project(chooser,[{opacity:0,transform:'translate(-50%,-50%) scale(.92)',filter:'brightness(1.6)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)',filter:'brightness(1)'}],250)};

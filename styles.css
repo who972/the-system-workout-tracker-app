@@ -2735,3 +2735,6 @@ body.system-os-ready>dialog.command-panel-chooser{border-radius:0;background:lin
  .dock-readout--mission .dock-readout-meter i{background:linear-gradient(90deg,#7562d7,#a68cff)}
 }
 @media(prefers-reduced-motion:reduce){.dock-readout-meter i{transition:none}}
+
+/* V81: the dock owns identity and mission summaries; the orbit owns navigation. */
+.command-deck .command-legacy-hud{display:none!important}
