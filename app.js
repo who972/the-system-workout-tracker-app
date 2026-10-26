@@ -1883,7 +1883,7 @@ function initSystemOS(){
  const body=document.getElementById('osModuleBody'),title=document.getElementById('osModuleTitle'),kicker=document.getElementById('osModuleKicker');
  let parked=null,current=null;
  const map={
-  player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen']},
+  player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerStatusScreen']},
   missions:{title:'TRAINING',kicker:'SYSTEM // TRAINING',ids:['daily-mission','workoutBuilder','sideMissionSystem','bossStageSystem','exerciseLibrary']},
   side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideMissionSystem']},
   boss:{title:'BOSS STAGE',kicker:'GATE // ENCOUNTERS',ids:['bossStageSystem']},
@@ -1899,7 +1899,7 @@ function initSystemOS(){
  function setActive(name,on=true){document.querySelectorAll('[data-os-module],[data-holo]').forEach(x=>x.classList.toggle('os-active',on&&(x.dataset.osModule===name||x.dataset.holo===name)))}
  function close(){restore();setActive(current,false);current=null;stage.classList.remove('active','minimized');stage.setAttribute('aria-hidden','true');document.body.classList.remove('os-module-open')}
  function open(name){
-  const m=map[name];if(!m)return;if(name==='nutrition')renderNutrition();
+  const m=map[name];if(!m)return;if(name==='nutrition')renderNutrition();if(name==='player'&&typeof renderPlayerStatus==='function')renderPlayerStatus();
   if(current===name&&stage.classList.contains('minimized')){stage.classList.remove('minimized');document.body.classList.add('os-module-open');return}
   restore();setActive(current,false);body.innerHTML='';parked=[];current=name;
   if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand()}
@@ -2894,6 +2894,7 @@ function initPlanetaryCommandOrbit(){
   });
  }
  function frame(now){
+  if(document.body.classList.contains('os-module-open')){last=now;raf=requestAnimationFrame(frame);return}
   const dt=Math.min(.05,(now-last)/1000);last=now;
   if(!dragging&&!paused&&!reduce){
    if(Math.abs(velocity)>.0001){phase=(phase+velocity*dt)%(Math.PI*2);velocity*=Math.pow(.045,dt)}
@@ -3038,8 +3039,8 @@ function initCommandWorkspace(){
  document.getElementById('quickWater').onclick=()=>{window.SystemOS?.open('nutrition');document.querySelector('[data-fuel-water]')?.focus()};
  const os=window.SystemOS,stage=document.querySelector('.os-module-stage');
  if(os&&stage){const baseOpen=os.open,baseClose=os.close;let windowVersion=0;
-  os.open=name=>{windowVersion++;activeMotion.get(stage)?.cancel();baseOpen(name);if(stage.classList.contains('active'))project(stage,[{opacity:0,transform:'scale(.96)',filter:'brightness(1.4)'},{opacity:1,transform:'scale(1)',filter:'brightness(1)'}],240)};
-  os.close=()=>{const token=++windowVersion;project(stage,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.96)'}],160).then(current=>{if(current&&windowVersion===token)baseClose()})};
+  os.open=name=>{windowVersion++;activeMotion.get(stage)?.cancel();baseOpen(name);if(stage.classList.contains('active'))project(stage,[{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'translateY(0)'}],260)};
+  os.close=()=>{const token=++windowVersion;project(stage,[{opacity:1,transform:'translateY(0)'},{opacity:0,transform:'translateY(6px)'}],180).then(current=>{if(current&&windowVersion===token)baseClose()})};
  }
  const refreshDock=()=>{
   document.getElementById('dockPlayerIdentity').textContent=(document.getElementById('hudPlayerLevel')?.textContent||'LV. 1')+' · '+(document.getElementById('hudPlayerRank')?.textContent||'E-RANK');
