@@ -3023,7 +3023,7 @@ function initCommandWorkspace(){
   });
   details.addEventListener('toggle',()=>{if(!activeMotion.get(details)||activeMotion.get(details).playState!=='running')expanded=details.open;prefs[id]={...prefs[id],open:details.open};persist()});panels.push({id,label,panel,details,metric});
  });
- const refresh=()=>{const read=id=>document.getElementById(id)?.textContent||'';panels.forEach(p=>{p.metric.textContent=({player:read('hudPlayerLevel')+' · '+read('hudPlayerRank'),campaign:read('hudStreak')+' day streak · '+read('hudWorkouts')+' missions',mission:read('hudMissionName'),health:read('hudSteps')+' steps',analysis:read('hudPerfPriority')})[p.id]});const main=deck.querySelector('.core-action');if(main){const done=Object.values(getMissionProgress()).some(x=>x.done);main.textContent=done?'RESUME MISSION':'BEGIN MISSION'}};
+ const refresh=()=>{const read=id=>document.getElementById(id)?.textContent||'';panels.forEach(p=>{p.metric.textContent=({player:read('hudPlayerLevel')+' · '+read('hudPlayerRank'),campaign:read('hudStreak')+' day streak · '+read('hudWorkouts')+' missions',mission:read('hudMissionName'),health:read('hudSteps')+' steps',analysis:read('hudPerfPriority')})[p.id]});const main=deck.querySelector('.core-action');if(main){const done=Object.values(getMissionProgress()).some(x=>x.done);main.textContent=document.getElementById('start-mission-btn')?.disabled?'MISSION CLEARED':done?'RESUME MISSION':'BEGIN MISSION'}};
  const chooser=document.createElement('dialog');chooser.id='commandPanelChooser';chooser.className='command-panel-chooser';chooser.innerHTML='<form method="dialog"><small class="command-window-kicker">SYSTEM // WORKSPACE CONFIGURATION</small><h2>Customize Command</h2><p>Choose your mini windows. Tap a title to expand or collapse it.</p><div id="commandPanelOptions"></div><button type="button" id="resetCommandPanels">RESTORE DEFAULTS</button><button type="submit">DONE</button></form>';document.body.append(chooser);
  const options=chooser.querySelector('#commandPanelOptions');panels.forEach(p=>{const label=document.createElement('label'),check=document.createElement('input');check.type='checkbox';check.checked=!p.panel.hidden;check.dataset.panelChoice=p.id;check.onchange=()=>{visibility(p.panel,check.checked);prefs[p.id]={open:p.details.open,hidden:!check.checked};persist()};label.append(check,document.createTextNode(p.label));options.append(label)});
  document.getElementById('quickPanels').onclick=()=>{panels.forEach(p=>chooser.querySelector('[data-panel-choice="'+p.id+'"]').checked=!p.panel.hidden);chooser.showModal();project(chooser,[{opacity:0,transform:'translate(-50%,-50%) scale(.92)',filter:'brightness(1.6)'},{opacity:1,transform:'translate(-50%,-50%) scale(1)',filter:'brightness(1)'}],250)};
@@ -3037,6 +3037,15 @@ function initCommandWorkspace(){
   os.open=name=>{windowVersion++;activeMotion.get(stage)?.cancel();baseOpen(name);if(stage.classList.contains('active'))project(stage,[{opacity:0,transform:'scale(.96)',filter:'brightness(1.4)'},{opacity:1,transform:'scale(1)',filter:'brightness(1)'}],240)};
   os.close=()=>{const token=++windowVersion;project(stage,[{opacity:1,transform:'scale(1)'},{opacity:0,transform:'scale(.96)'}],160).then(current=>{if(current&&windowVersion===token)baseClose()})};
  }
- refresh();setInterval(refresh,1500);
+ const refreshDock=()=>{
+  document.getElementById('dockPlayerIdentity').textContent=(document.getElementById('hudPlayerLevel')?.textContent||'LV. 1')+' · '+(document.getElementById('hudPlayerRank')?.textContent||'E-RANK');
+  document.getElementById('dockPlayerXp').textContent=document.getElementById('hudXpText')?.textContent||'0 XP';
+  document.getElementById('dockPlayerXpFill').style.width=document.getElementById('hudXpFill')?.style.width||'0%';
+  const mission=missionForMode(adaptiveSystemMission()),sets=flatSets(mission),progress=getMissionProgress(),completed=sets.filter(x=>progress[x.ei+'-'+x.si]?.done).length,cleared=document.getElementById('start-mission-btn')?.disabled;
+  document.getElementById('dockMissionTitle').textContent=mission.name;
+  document.getElementById('dockMissionStatus').textContent=(cleared?'CLEARED':completed?'IN PROGRESS':'READY')+' // '+completed+' / '+sets.length+' SETS';
+  document.getElementById('dockMissionFill').style.width=(cleared?100:sets.length?completed/sets.length*100:0)+'%';
+ };
+ refresh();refreshDock();setInterval(()=>{refresh();refreshDock()},1500);
 }
 document.addEventListener('DOMContentLoaded',initCommandWorkspace);

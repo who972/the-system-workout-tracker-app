@@ -2716,3 +2716,22 @@ body.system-os-ready>dialog.command-panel-chooser{border-radius:0;background:lin
 .command-panel-chooser h2{font:600 25px var(--font-display);text-transform:uppercase;letter-spacing:.07em;color:#a2f1ff}.command-panel-chooser p{color:#789eaf;font-size:11px;line-height:1.6}.command-panel-chooser label{padding:10px;border-bottom:1px solid #3ebbd323;font:700 10px var(--font-mono);letter-spacing:.08em;text-transform:uppercase;color:#aad2de}.command-panel-chooser input{appearance:none;width:17px;height:17px;flex:none;border:1px solid #45bed877;background:#06202d;cursor:pointer}.command-panel-chooser input:checked{background:#68e9ff;box-shadow:inset 0 0 0 4px #08202c,0 0 9px #68e9ff44}.command-panel-chooser input:focus-visible{outline:2px solid #baabff;outline-offset:3px}.command-panel-chooser button{background:#0a273488;border-color:#50bedb55;text-transform:uppercase;letter-spacing:.09em;font-size:10px;clip-path:polygon(0 0,100% 0,100% calc(100% - 6px),calc(100% - 6px) 100%,0 100%)}
 .command-panel-chooser::backdrop{background:rgba(0,5,12,.73);backdrop-filter:blur(3px)}
 @media(max-height:360px){body.system-os-ready>dialog.command-panel-chooser{padding:12px 16px}.command-panel-chooser label{padding:5px}.command-panel-chooser h2{font-size:19px}.command-window-kicker{margin-bottom:4px}}
+
+/* V80: dock side bays carry live identity and mission data. */
+.dock-readout{display:none}
+@media(min-width:800px){
+ body.system-os-ready .os-dock{grid-template-columns:130px minmax(0,1fr) 145px;column-gap:10px}
+ body.system-os-ready .os-dock__primary{grid-column:2;grid-row:1}
+ body.system-os-ready .command-quick-actions{grid-column:2;grid-row:2}
+ .dock-readout{display:flex;flex-direction:column;justify-content:center;gap:6px;align-self:stretch;min-width:0;padding:4px 12px;position:relative;text-align:left}
+ .dock-readout--player{grid-column:1;grid-row:1 / 3;border-right:1px solid #54cde52b}
+ .dock-readout--mission{grid-column:3;grid-row:1 / 3;border-left:1px solid #8a79e832}
+ .dock-readout small{font:700 7px var(--font-mono);letter-spacing:.12em;color:#6aadb9}
+ .dock-readout strong{font:600 12px var(--font-display);letter-spacing:.035em;line-height:1.25;color:#b8f2fc;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+ .dock-readout span{font:500 7px var(--font-mono);letter-spacing:.04em;color:#89aab9;line-height:1.4}
+ .dock-readout--mission small{color:#a18edb}
+ .dock-readout-meter{height:2px;background:#32516466;width:100%;overflow:hidden;margin-top:2px}
+ .dock-readout-meter i{display:block;height:100%;width:0;background:linear-gradient(90deg,#277ac9,#62eaff);box-shadow:0 0 7px #62eaff55;transition:width .3s ease}
+ .dock-readout--mission .dock-readout-meter i{background:linear-gradient(90deg,#7562d7,#a68cff)}
+}
+@media(prefers-reduced-motion:reduce){.dock-readout-meter i{transition:none}}
