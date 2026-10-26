@@ -39,7 +39,7 @@
     <div class="auth-mark">TS</div>
     <p class="auth-kicker">THE SYSTEM</p>
     <h1>Build the body.<br>Build the system.</h1>
-    <p class="auth-copy">Sign in to continue your training, nutrition, missions, and progress.</p>
+    <p class="auth-copy">Sign in to continue your training, fuel, missions, and progress.</p>
     <div class="auth-tabs"><button id="authShowSignIn" class="active" type="button">Sign In</button><button id="authShowSignUp" type="button">Create Account</button></div>
     <form id="authGateForm" class="auth-form">
       <input id="authEmail" class="form-input" type="email" autocomplete="email" placeholder="Email" required>
@@ -122,7 +122,7 @@
   <button data-view="train" data-target="exerciseTracker">Train</button>
   <button data-view="progress" data-target="progressAnalytics">Progress</button>
   <button data-view="missions" data-target="workoutBuilder">Missions</button>
-  <button data-view="nutrition" data-target="nutritionDashboard">Nutrition</button>
+  <button data-view="nutrition" data-target="nutritionDashboard">Fuel &amp; Recovery</button>
   <button data-view="profile" data-target="profileSettings">Profile</button>
 </nav>
 <section id="commandDeck" class="command-deck" aria-label="System command HUD">
@@ -146,7 +146,7 @@
         <button type="button" data-holo="player" style="--a:225deg"><b>◈</b><span>PLAYER</span></button>
         <button type="button" data-holo="missions" style="--a:270deg"><b>◆</b><span>TRAINING</span></button>
         <button type="button" data-holo="telemetry" style="--a:315deg"><b>⌁</b><span>TELEMETRY</span></button>
-        <button type="button" data-holo="nutrition" style="--a:0deg"><b>◫</b><span>NUTRITION</span></button>
+        <button type="button" data-holo="nutrition" style="--a:0deg"><b>◫</b><span>FUEL</span></button>
         <button type="button" data-holo="social" style="--a:45deg"><b>◎</b><span>SOCIAL</span></button>
         <button type="button" data-holo="progress" style="--a:90deg"><b>▥</b><span>PROGRESS</span></button>
         <button type="button" data-holo="achievements" style="--a:135deg"><b>★</b><span>AWARDS</span></button>
@@ -507,7 +507,15 @@
 
 
 <section class="nutrition-section" id="nutritionDashboard">
-  <div class="quest-section__header"><div><h2 class="quest-section__title">Daily Fuel</h2><p class="quest-section__desc">Plan meals around your nutrition targets and training goals.</p></div><span class="quest-section__meta">NUTRITION</span></div>
+  <div class="quest-section__header"><div><h2 class="quest-section__title">Fuel &amp; Recovery</h2><p class="quest-section__desc">Support today’s mission with water, protein, and recovery habits.</p></div><span class="quest-section__meta">MISSION SUPPORT</span></div>
+  <article class="nutrition-card"><div class="dashboard-card__head"><span>◈</span><h3 id="fuelMission">Today’s mission</h3></div><p id="fuelGuidance" class="quest-section__desc"></p><button type="button" id="fuelOpenTraining">VIEW TRAINING</button></article>
+  <div class="fuel-summary">
+    <article class="nutrition-card"><h3>Water</h3><strong id="fuelWaterTotal">0 fl oz</strong><p id="fuelWaterGoal"></p><div class="meal-actions"><button type="button" data-fuel-water="8">+8 fl oz</button><button type="button" data-fuel-water="16">+16 fl oz</button><button type="button" id="fuelUndoWater">Undo last drink</button></div></article>
+    <article class="nutrition-card"><h3>Protein logged</h3><strong id="fuelProteinTotal">0 g</strong><p id="fuelProteinGoal"></p><form id="fuelProteinForm" class="meal-actions"><label>Protein (g)<input id="fuelProteinInput" class="form-input" type="number" min="1" max="400" step="1" required></label><button type="submit">Log protein</button><button type="button" id="fuelUndoProtein">Undo last entry</button></form><p class="quest-section__desc">Log here or mark a meal eaten below. Use one method for each meal.</p></article>
+  </div>
+  <article class="nutrition-card"><h3>Weight trend</h3><p id="fuelWeightTrend"></p><button type="button" id="fuelOpenProgress">VIEW PROGRESS</button></article>
+  <details class="nutrition-card"><summary>Personal daily goals</summary><form id="fuelGoalForm" class="nutrition-target-form"><label>Water (fl oz)<input id="fuelGoalWater" class="form-input" type="number" min="1" max="400" step="1"></label><label>Protein (g)<input id="fuelGoalProtein" class="form-input" type="number" min="1" max="400" step="1"></label><button type="submit">Save goals</button></form><p class="quest-section__desc">Choose goals that suit you. These do not change with workout difficulty or affect your rank.</p></details>
+  <details class="nutrition-card fuel-details"><summary>Optional food log &amp; meal planning</summary><p class="quest-section__desc">Macro totals below describe planned meals. Only meals marked eaten count toward protein logged above.</p>
   <div class="nutrition-targets">
     <article class="nutrition-stat"><span>Calories</span><strong id="nutritionCalories">0 / 2000</strong><div class="nutrition-bar"><i id="nutritionCaloriesBar"></i></div></article>
     <article class="nutrition-stat"><span>Protein</span><strong id="nutritionProtein">0 / 160g</strong><div class="nutrition-bar"><i id="nutritionProteinBar"></i></div></article>
@@ -529,13 +537,13 @@
     <div id="todayMeals" class="meal-plan"></div>
   </article>
   <article class="nutrition-card">
-    <div class="dashboard-card__head"><span>✦</span><h3>Recommended Meals</h3></div>
-    <p class="quest-section__desc">Built-in suggestions make meal planning useful immediately, without requiring a food-service account.</p>
+    <div class="dashboard-card__head"><span>✦</span><h3>Meal Ideas</h3></div>
+    <p class="quest-section__desc">Optional ideas you can add to your meal plan.</p>
     <div id="mealRecommendations" class="meal-recommendations"></div>
   </article>
   <article class="nutrition-card">
     <div class="dashboard-card__head"><span>▦</span><h3>7-Day Meal Plan</h3></div>
-    <p class="quest-section__desc">Build a simple week from the recommended meals, then adjust any day from Today's Meals.</p>
+    <p class="quest-section__desc">Build a simple week from the meal ideas, then adjust any day from Today's Meals.</p>
     <div class="meal-actions weekly-actions"><button id="generateWeekBtn" class="btn-primary" type="button">Generate 7-Day Plan</button><button id="clearWeekBtn" type="button">Clear Week</button></div>
     <div id="weeklyMealPlan" class="weekly-meal-plan"></div>
   </article>
@@ -556,6 +564,7 @@
       <button class="btn-primary" type="submit">Add to Today</button>
     </form>
   </article>
+  </details>
 </section>
 
 <section class="settings-section profile-secondary" id="cloudSync">

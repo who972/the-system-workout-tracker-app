@@ -81,6 +81,7 @@ jobs:
           node tests/health-connect.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/health-dashboard.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/debrief-layout.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/fuel-recovery.test.cjs
           node tests/endurance-assessment.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/endurance-ui.test.cjs
           node --check workout-help.js
