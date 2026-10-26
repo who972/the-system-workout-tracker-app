@@ -523,6 +523,7 @@ function renderDailyBriefing(){
  const analysis=d.perfReady?'<article class="briefing-analysis"><span>SYSTEM ANALYSIS</span><strong>'+performanceLabel(d.perf.strongest.stat)+' LEADING</strong><small>'+performanceLabel(d.perf.weakest.stat)+' selected for development</small></article>':'<article class="briefing-analysis"><span>SYSTEM ANALYSIS</span><strong>ESTABLISHING BASELINE</strong><small>Complete missions to calibrate player development</small></article>';
  const recommendation='<article class="briefing-recommendation"><span>RECOMMENDED SIDE OBJECTIVE</span><strong>'+(d.rec?.title||'Recovery + Mobility')+'</strong><small>'+(d.perfReady?performanceLabel(d.rec?.stat||'vit')+' development priority':'Balanced development protocol')+'</small></article>';
  document.getElementById('briefingGrid').innerHTML='<article><span>PRIMARY MISSION</span><strong>'+d.missionTitle+'</strong><small>'+d.missionSummary+'</small></article>'+analysis+recommendation+'<article><span>SIDE MISSIONS</span><strong>'+d.done+' / 5 COMPLETE</strong><small>'+Math.max(0,5-d.done)+' objectives remaining</small></article><article><span>RANK MISSION</span><strong>'+(d.rankMission?d.rankMission.title:'NO ACTIVE RANK MISSION')+'</strong><small>'+(d.rankMission?d.rankMission.desc:'Continue current progression')+'</small></article><article class="briefing-boss"><span>BOSS STATUS</span><strong>'+d.boss+'</strong><small>Promotion progression</small></article>';
+ const healthContext=window.SystemHealthInsights?.summarize(healthTelemetry());if(healthContext){const card=document.createElement('article');const label=document.createElement('span');label.textContent='HEALTH CONTEXT';const detail=document.createElement('small');detail.textContent=healthContext.text;card.append(label,detail);document.getElementById('briefingGrid').append(card)}
  document.getElementById('briefingDirective').innerHTML='<span>SYSTEM DIRECTIVE</span><strong>'+d.intel.directive+'</strong><small>'+d.intel.reason+'</small>';
  const begin=document.getElementById('systemBeginDay');begin.textContent='BEGIN MISSION →';begin.disabled=false;
  let transitionTimer;
@@ -537,3 +538,4 @@ function scheduleDailyBriefing(){let tries=0;const wait=()=>{tries++;if(typeof s
 /* ===== DAILY BRIEFING REPLAY ===== */
 function replayDailyBriefing(){localStorage.removeItem(SYSTEM_BOOT_KEY);renderDailyBriefing()}
 document.addEventListener('DOMContentLoaded',()=>document.getElementById('replayDailyBriefing')?.addEventListener('click',replayDailyBriefing));
+
