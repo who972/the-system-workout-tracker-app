@@ -2751,3 +2751,15 @@ body.system-os-ready .os-module-body #playerStatusScreen{padding:18px;border:0;b
 .character-requirements{padding:0;margin:8px 0;list-style:none;font:10px var(--font-mono)}.character-requirements li{display:flex;justify-content:space-between;gap:10px;padding:8px 0;border-bottom:1px solid #44c2e218}.character-requirements .met b{color:#6ed6bd}.character-requirements .pending b{color:#b4a0ed}.character-requirements span{color:#9bbdcc}
 .character-actions{display:flex;gap:10px;margin:18px 0;flex-wrap:wrap}.character-actions button,.character-promotion button{min-height:36px;padding:8px 12px;background:#09324388;color:#89e7f9;border:1px solid #47cce64d;font:700 9px var(--font-mono);letter-spacing:.08em}.character-titles summary{cursor:pointer;color:#b4a4ee;font:700 11px var(--font-mono);padding:10px 0}.character-titles .combat-title-grid{margin-top:10px}
 @media(max-width:680px){.character-columns{grid-template-columns:1fr}.character-header h2{font-size:22px}.character-identity{gap:8px}.character-identity b{font-size:13px}}
+/* Keep the character sheet's useful data in the first landscape viewport. */
+body.system-os-ready .os-module-body #playerStatusScreen{padding:8px!important;border:0!important;border-radius:0!important;background:transparent!important;box-shadow:none!important}
+#playerStatusScreen .character-header{padding-bottom:7px;gap:12px;min-height:0}
+#playerStatusScreen .character-header h2{font-size:22px;line-height:1.1;margin:3px 0}
+#playerStatusScreen .character-header p{font-size:10px;margin:2px 0;line-height:1.2}
+#playerStatusScreen .character-header small{font-size:8px}
+#playerStatusScreen .character-class{padding:4px 12px}#playerStatusScreen .character-class b{font-size:28px;line-height:1.1}
+#playerStatusScreen .character-identity{margin:8px 0 5px;gap:10px}#playerStatusScreen .character-identity span{gap:3px}#playerStatusScreen .character-identity b{font-size:13px;line-height:1.2}
+#playerStatusScreen .character-xp{height:3px;margin:5px 0 10px}
+#playerStatusScreen .character-columns h3{font-size:18px;margin:3px 0}#playerStatusScreen .character-columns p{margin:5px 0 8px;font-size:10px}
+#playerStatusScreen .character-columns th,#playerStatusScreen .character-columns td{padding:6px 5px}
+#playerStatusScreen .character-requirements li{padding:6px 0}
