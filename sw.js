@@ -1,4 +1,4 @@
-const CACHE = "the-system-os-v75-workout-guides";
+const CACHE = "the-system-os-v76-focused-training";
 const ASSETS = ["./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./workout-help.js", "./train-together.js", "./competitive-credits.js", "./account-data.js", "./diagnostics.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

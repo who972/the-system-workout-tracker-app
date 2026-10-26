@@ -39,7 +39,7 @@
     <div class="auth-mark">TS</div>
     <p class="auth-kicker">THE SYSTEM</p>
     <h1>Build the body.<br>Build the system.</h1>
-    <p class="auth-copy">Sign in to continue your training, nutrition, missions, and progress.</p>
+    <p class="auth-copy">Sign in to continue your training, fuel, missions, and progress.</p>
     <div class="auth-tabs"><button id="authShowSignIn" class="active" type="button">Sign In</button><button id="authShowSignUp" type="button">Create Account</button></div>
     <form id="authGateForm" class="auth-form">
       <input id="authEmail" class="form-input" type="email" autocomplete="email" placeholder="Email" required>
@@ -122,7 +122,7 @@
   <button data-view="train" data-target="exerciseTracker">Train</button>
   <button data-view="progress" data-target="progressAnalytics">Progress</button>
   <button data-view="missions" data-target="workoutBuilder">Missions</button>
-  <button data-view="nutrition" data-target="nutritionDashboard">Nutrition</button>
+  <button data-view="nutrition" data-target="nutritionDashboard">Fuel &amp; Recovery</button>
   <button data-view="profile" data-target="profileSettings">Profile</button>
 </nav>
 <section id="commandDeck" class="command-deck" aria-label="System command HUD">
@@ -144,10 +144,10 @@
       </div>
       <div class="core-orbit-menu" aria-label="Command modules">
         <button type="button" data-holo="player" style="--a:225deg"><b>◈</b><span>PLAYER</span></button>
-        <button type="button" data-holo="missions" style="--a:270deg"><b>◆</b><span>MISSIONS</span></button>
+        <button type="button" data-holo="missions" style="--a:270deg"><b>◆</b><span>TRAINING</span></button>
         <button type="button" data-holo="telemetry" style="--a:315deg"><b>⌁</b><span>TELEMETRY</span></button>
-        <button type="button" data-holo="side" style="--a:0deg"><b>✦</b><span>SIDE</span></button>
-        <button type="button" data-holo="boss" style="--a:45deg"><b>⚠</b><span>BOSS</span></button>
+        <button type="button" data-holo="nutrition" style="--a:0deg"><b>◫</b><span>FUEL</span></button>
+        <button type="button" data-holo="social" style="--a:45deg"><b>◎</b><span>SOCIAL</span></button>
         <button type="button" data-holo="progress" style="--a:90deg"><b>▥</b><span>PROGRESS</span></button>
         <button type="button" data-holo="achievements" style="--a:135deg"><b>★</b><span>AWARDS</span></button>
         <button type="button" data-holo="profile" style="--a:180deg"><b>⚙</b><span>PROFILE</span></button>
@@ -167,14 +167,7 @@
   </aside>
   <div class="hud-bottom os-dock" aria-label="System dock">
     <div class="os-dock__primary"><div class="session-equipment" role="group" aria-label="Workout equipment for this session"><div class="session-equipment__buttons"><button type="button" data-session-equipment="bodyweight" aria-pressed="true">BODYWEIGHT</button><button type="button" data-session-equipment="gym" aria-pressed="false">GYM</button></div><small data-session-equipment-note>This session only</small></div><button class="core-action" type="button" data-hud-target="daily-mission">BEGIN MISSION</button></div>
-    <button data-os-module="missions"><b>◆</b><span>MISSIONS</span></button>
-    <button data-os-module="exercise"><b>⌁</b><span>DATABASE</span></button>
-    <button data-os-module="nutrition"><b>◫</b><span>NUTRITION</span></button>
-    <button data-os-module="telemetry"><b>⌾</b><span>HEALTH</span></button>
-    <button data-os-module="social"><b>◎</b><span>SOCIAL</span></button>
-    <button data-os-module="progress"><b>▥</b><span>PROGRESS</span></button>
-    <button data-os-module="profile"><b>⚙</b><span>CONFIG</span></button>
-    <button id="hudBriefing" type="button"><b>◈</b><span>BRIEFING</span></button>
+
   </div>
 </section>
 
@@ -237,7 +230,7 @@
         <span class="player-stat__value" id="statVit">0</span>
       </div>
     </div>
-    <div class="hud-command-row"><button type="button" data-hud-target="daily-mission">START TRAINING</button><button type="button" data-hud-view="missions">VIEW MISSIONS</button><button type="button" data-hud-view="progress">PLAYER STATUS</button><button id="replayDailyBriefing" class="hud-briefing-replay" type="button">DAILY BRIEFING</button></div>
+
   </section>
 
 
@@ -514,7 +507,15 @@
 
 
 <section class="nutrition-section" id="nutritionDashboard">
-  <div class="quest-section__header"><div><h2 class="quest-section__title">Daily Fuel</h2><p class="quest-section__desc">Plan meals around your nutrition targets and training goals.</p></div><span class="quest-section__meta">NUTRITION</span></div>
+  <div class="quest-section__header"><div><h2 class="quest-section__title">Fuel &amp; Recovery</h2><p class="quest-section__desc">Support today’s mission with water, protein, and recovery habits.</p></div><span class="quest-section__meta">MISSION SUPPORT</span></div>
+  <article class="nutrition-card"><div class="dashboard-card__head"><span>◈</span><h3 id="fuelMission">Today’s mission</h3></div><p id="fuelGuidance" class="quest-section__desc"></p><button type="button" id="fuelOpenTraining">VIEW TRAINING</button></article>
+  <div class="fuel-summary">
+    <article class="nutrition-card"><h3>Water</h3><strong id="fuelWaterTotal">0 fl oz</strong><p id="fuelWaterGoal"></p><div class="meal-actions"><button type="button" data-fuel-water="8">+8 fl oz</button><button type="button" data-fuel-water="16">+16 fl oz</button><button type="button" id="fuelUndoWater">Undo last drink</button></div></article>
+    <article class="nutrition-card"><h3>Protein logged</h3><strong id="fuelProteinTotal">0 g</strong><p id="fuelProteinGoal"></p><form id="fuelProteinForm" class="meal-actions"><label>Protein (g)<input id="fuelProteinInput" class="form-input" type="number" min="1" max="400" step="1" required></label><button type="submit">Log protein</button><button type="button" id="fuelUndoProtein">Undo last entry</button></form><p class="quest-section__desc">Log here or mark a meal eaten below. Use one method for each meal.</p></article>
+  </div>
+  <article class="nutrition-card"><h3>Weight trend</h3><p id="fuelWeightTrend"></p><button type="button" id="fuelOpenProgress">VIEW PROGRESS</button></article>
+  <details class="nutrition-card"><summary>Personal daily goals</summary><form id="fuelGoalForm" class="nutrition-target-form"><label>Water (fl oz)<input id="fuelGoalWater" class="form-input" type="number" min="1" max="400" step="1"></label><label>Protein (g)<input id="fuelGoalProtein" class="form-input" type="number" min="1" max="400" step="1"></label><button type="submit">Save goals</button></form><p class="quest-section__desc">Choose goals that suit you. These do not change with workout difficulty or affect your rank.</p></details>
+  <details class="nutrition-card fuel-details"><summary>Optional food log &amp; meal planning</summary><p class="quest-section__desc">Macro totals below describe planned meals. Only meals marked eaten count toward protein logged above.</p>
   <div class="nutrition-targets">
     <article class="nutrition-stat"><span>Calories</span><strong id="nutritionCalories">0 / 2000</strong><div class="nutrition-bar"><i id="nutritionCaloriesBar"></i></div></article>
     <article class="nutrition-stat"><span>Protein</span><strong id="nutritionProtein">0 / 160g</strong><div class="nutrition-bar"><i id="nutritionProteinBar"></i></div></article>
@@ -536,13 +537,13 @@
     <div id="todayMeals" class="meal-plan"></div>
   </article>
   <article class="nutrition-card">
-    <div class="dashboard-card__head"><span>✦</span><h3>Recommended Meals</h3></div>
-    <p class="quest-section__desc">Built-in suggestions make meal planning useful immediately, without requiring a food-service account.</p>
+    <div class="dashboard-card__head"><span>✦</span><h3>Meal Ideas</h3></div>
+    <p class="quest-section__desc">Optional ideas you can add to your meal plan.</p>
     <div id="mealRecommendations" class="meal-recommendations"></div>
   </article>
   <article class="nutrition-card">
     <div class="dashboard-card__head"><span>▦</span><h3>7-Day Meal Plan</h3></div>
-    <p class="quest-section__desc">Build a simple week from the recommended meals, then adjust any day from Today's Meals.</p>
+    <p class="quest-section__desc">Build a simple week from the meal ideas, then adjust any day from Today's Meals.</p>
     <div class="meal-actions weekly-actions"><button id="generateWeekBtn" class="btn-primary" type="button">Generate 7-Day Plan</button><button id="clearWeekBtn" type="button">Clear Week</button></div>
     <div id="weeklyMealPlan" class="weekly-meal-plan"></div>
   </article>
@@ -563,6 +564,7 @@
       <button class="btn-primary" type="submit">Add to Today</button>
     </form>
   </article>
+  </details>
 </section>
 
 <section class="settings-section profile-secondary" id="cloudSync">
@@ -582,7 +584,7 @@
 </section>
     <div class="settings-grid">
       <article class="dashboard-card"><h3>Player Profile</h3><form id="profileForm" class="settings-form"><input id="profileName" class="form-input" placeholder="Player name"><select id="unitSystem" class="form-input"><option value="imperial">Imperial (lb)</option><option value="metric">Metric (kg)</option></select><select id="workoutGoal" class="form-input"><option value="balanced">Balanced</option><option value="strength">Strength</option><option value="endurance">Endurance</option><option value="weight-loss">Weight loss</option><option value="mobility">Mobility</option></select><fieldset class="audio-settings"><legend>SYSTEM AUDIO</legend><label class="settings-check"><input id="soundSetting" type="checkbox"> Enable System Audio</label><label>Master <input id="masterVolume" type="range" min="0" max="100" value="70"></label><label>Effects <input id="effectsVolume" type="range" min="0" max="100" value="80"></label><label>Music <input id="musicVolume" type="range" min="0" max="100" value="35"></label><button id="testSystemAudio" type="button">TEST AUDIO</button></fieldset><button class="btn-primary" type="submit">Save Settings</button></form></article>
-      <article class="dashboard-card"><h3>Account &amp; Data</h3><p class="quest-section__desc">Device data and saved cloud data are managed separately. Export or upload a backup before clearing unsynced progress.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label></div><fieldset class="account-danger"><legend>Danger Zone</legend><p>Factory Reset clears this device and signs you out. Your account and saved cloud progress stay intact.</p><p>Reset Progress restarts your training and assessment. Delete Account permanently removes your account and server data.</p><div class="settings-actions"><button id="resetAllBtn" data-account-operation class="danger-btn" type="button">Factory Reset</button><button id="resetTrainingBtn" data-account-operation class="danger-btn" type="button">Reset Progress</button><button id="deleteAccountBtn" data-account-operation class="danger-btn" type="button">Delete Account</button></div></fieldset><div id="backupStatus" class="backup-status" role="status" aria-live="polite"></div><div class="build-info"><span>INSTALLED BUILD</span><strong id="installedBuild">Loading…</strong></div></article>
+      <article class="dashboard-card"><h3>Help</h3><div class="settings-actions"><button id="replayDailyBriefing" type="button">REPLAY BRIEFING</button></div></article><article class="dashboard-card"><h3>Account &amp; Data</h3><p class="quest-section__desc">Device data and saved cloud data are managed separately. Export or upload a backup before clearing unsynced progress.</p><div class="settings-actions"><button id="exportDataBtn" class="btn-primary" type="button">Export Backup</button><label class="import-label">Import Backup<input id="importDataInput" type="file" accept="application/json,.json"></label></div><details class="account-data-options"><summary>Reset or delete data</summary><fieldset class="account-danger"><legend>Danger Zone</legend><p>Factory Reset clears this device and signs you out. Your account and saved cloud progress stay intact.</p><p>Reset Progress restarts your training and assessment. Delete Account permanently removes your account and server data.</p><div class="settings-actions"><button id="resetAllBtn" data-account-operation class="danger-btn" type="button">Factory Reset</button><button id="resetTrainingBtn" data-account-operation class="danger-btn" type="button">Reset Progress</button><button id="deleteAccountBtn" data-account-operation class="danger-btn" type="button">Delete Account</button></div></fieldset></details><div id="backupStatus" class="backup-status" role="status" aria-live="polite"></div><div class="build-info"><span>INSTALLED BUILD</span><strong id="installedBuild">Loading…</strong></div></article>
     </div>
   </section>
 
@@ -614,7 +616,7 @@
   <div class="workout-progress"><div id="workoutProgressFill"></div></div>
   <div class="workout-stage">
     <span id="liveExerciseCount" class="eyebrow">EXERCISE 1</span><h1 id="liveExerciseName">Ready</h1><p id="liveTarget">Press start to begin.</p>
-    <button id="openExerciseGuide" type="button">VIEW MOVEMENT GUIDE</button>
+    <div id="liveMovementPreview" class="live-movement-preview" aria-live="polite"></div><button id="openExerciseGuide" type="button">VIEW MOVEMENT GUIDE</button>
     <div id="timedSet" class="timed-set" hidden><div><small>TIMED SET</small><strong id="timedSetClock">00:30</strong></div><div class="timed-set__actions"><button id="timedSetToggle" type="button">START COUNTDOWN</button><button id="timedSetReset" type="button">RESET</button></div><small id="timedSetStatus" role="status">Start when you're ready.</small></div>
     <div class="live-set-grid"><label><span id="liveRepsLabel">REPS / SEC</span><input id="liveReps" type="number" min="0" inputmode="decimal"></label><label>WEIGHT (LB)<input id="liveWeight" type="number" min="0" step="0.5" inputmode="decimal"></label></div>
     <button id="completeLiveSet" class="workout-main-btn" type="button">COMPLETE SET</button>
@@ -645,10 +647,10 @@
 </form></dialog>
 <script src="diagnostics.js?v=72"></script>
 <script src="account-data.js?v=70"></script>
-<script src="app.js?v=70"></script>
+<script src="app.js?v=76"></script>
 <script src="health-connect.js?v=37"></script>
-<script src="side-system.js?v=side57"></script>
-<script src="workout-help.js?v=75"></script>
+<script src="side-system.js?v=76"></script>
+<script src="workout-help.js?v=76"></script>
 <script>
 if("serviceWorker" in navigator&&location.hostname!=="appassets.androidplatform.net"){window.addEventListener("load",()=>navigator.serviceWorker.register("sw.js").catch(()=>{}));}
 (function(){

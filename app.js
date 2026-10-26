@@ -1716,7 +1716,10 @@ async function initAuthGate(){
     return;
   }
 
-  showSystemEntry();
+  if(getCloudSession()?.access_token&&localStorage.getItem(AUTH_REMEMBER_KEY)!=='0'){
+    await startEntryAuthentication();
+    if(!getCloudSession()?.access_token)showAuthGate();
+  }else showSystemEntry();
 }
 document.addEventListener('DOMContentLoaded',initAuthGate);
 document.addEventListener('DOMContentLoaded',()=>{
@@ -1759,26 +1762,64 @@ const DEFAULT_MEALS=[
 ];
 function nutritionState(){try{return JSON.parse(localStorage.getItem(NUTRITION_KEY))||{}}catch(e){return {}}}
 function saveNutrition(s){localStorage.setItem(NUTRITION_KEY,JSON.stringify(s))}
-function nutritionToday(){return new Date().toISOString().slice(0,10)}
+function nutritionToday(){return nutritionDate()}
 function ensureNutrition(){const s=nutritionState();s.targets=s.targets||{calories:2000,protein:160,carbs:200,fat:65};s.days=s.days||{};s.groceryChecked=s.groceryChecked||{};s.days[nutritionToday()]=s.days[nutritionToday()]||[];return s}
-function nutritionDate(offset=0){const d=new Date();d.setDate(d.getDate()+offset);return d.toISOString().slice(0,10)}
-function generateNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++){const date=nutritionDate(d);s.days[date]=['Breakfast','Lunch','Dinner','Snack'].map((type,i)=>{const pool=DEFAULT_MEALS.filter(m=>m.type===type);return {...pool[(d+i)%pool.length],id:Date.now()+d*10+i}})}saveNutrition(s);renderNutrition()}
-function clearNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++)delete s.days[nutritionDate(d)];s.days[nutritionToday()]=[];saveNutrition(s);renderNutrition()}
+function nutritionDate(offset=0){const d=new Date();d.setDate(d.getDate()+offset);return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')}
+function generateNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++){const date=nutritionDate(d);s.days[date]=(s.days[date]||[]).filter(m=>m.eaten).concat(['Breakfast','Lunch','Dinner','Snack'].map((type,i)=>{const pool=DEFAULT_MEALS.filter(m=>m.type===type);return {...pool[(d+i)%pool.length],id:Date.now()+d*10+i}}))}saveNutrition(s);renderNutrition()}
+function clearNutritionWeek(){const s=ensureNutrition();for(let d=0;d<7;d++){const date=nutritionDate(d);s.days[date]=(s.days[date]||[]).filter(m=>m.eaten)}saveNutrition(s);renderNutrition()}
 function toggleGrocery(name,checked){const s=ensureNutrition();s.groceryChecked[name]=checked;saveNutrition(s)}
 function mealMacros(m){return (Number(m.calories)||0)+' cal • '+(Number(m.protein)||0)+'g protein • '+(Number(m.carbs)||0)+'g carbs • '+(Number(m.fat)||0)+'g fat'}
 function addNutritionMeal(m){const s=ensureNutrition();s.days[nutritionToday()].push({...m,id:Date.now()+Math.random()});saveNutrition(s);renderNutrition()}
 function removeNutritionMeal(id){const s=ensureNutrition();s.days[nutritionToday()]=s.days[nutritionToday()].filter(m=>m.id!==id);saveNutrition(s);renderNutrition()}
-function renderNutrition(){const s=ensureNutrition(),t=s.targets,meals=s.days[nutritionToday()]||[];const total=k=>meals.reduce((a,m)=>a+(Number(m[k])||0),0);
+function renderNutrition(){renderFuelRecovery();const s=ensureNutrition(),t=s.targets,meals=s.days[nutritionToday()]||[];const total=k=>meals.reduce((a,m)=>a+(Number(m[k])||0),0);
  [['Calories','calories',''],['Protein','protein','g'],['Carbs','carbs','g'],['Fat','fat','g']].forEach(([label,k,u])=>{const e=document.getElementById('nutrition'+label);if(e)e.textContent=total(k)+' / '+t[k]+u;const b=document.getElementById('nutrition'+label+'Bar');if(b)b.style.width=Math.min(100,total(k)/t[k]*100)+'%';});
  ['Calories','Protein','Carbs','Fat'].forEach(x=>{const e=document.getElementById('target'+x);if(e)e.value=t[x.toLowerCase()]});
- const plan=document.getElementById('todayMeals');if(plan)plan.innerHTML=meals.length?meals.map(m=>'<div class="meal-item"><div class="meal-item__head"><strong>'+escapeHtml(m.type)+': '+escapeHtml(m.name)+'</strong><button type="button" data-remove-meal="'+escapeHtml(m.id)+'">Remove</button></div><div class="meal-macros">'+mealMacros(m)+'</div></div>').join(''):'<div class="builder-empty">No meals planned yet. Add a recommendation below.</div>';
+ const plan=document.getElementById('todayMeals');if(plan)plan.innerHTML=meals.length?meals.map(m=>'<div class="meal-item"><div class="meal-item__head"><strong>'+escapeHtml(m.type)+': '+escapeHtml(m.name)+'</strong><button type="button" data-eat-meal="'+escapeHtml(m.id)+'">'+(m.eaten?'UNDO EATEN':'MARK EATEN')+'</button><button type="button" data-remove-meal="'+escapeHtml(m.id)+'">Remove</button></div><div class="meal-macros">'+mealMacros(m)+'</div></div>').join(''):'<div class="builder-empty">No meals planned yet. Add a recommendation below.</div>';
  const rec=document.getElementById('mealRecommendations');if(rec)rec.innerHTML=DEFAULT_MEALS.map((m,i)=>'<div class="meal-rec"><div class="meal-rec__head"><strong>'+escapeHtml(m.name)+'</strong><span>'+escapeHtml(m.type)+'</span></div><div class="meal-macros">'+mealMacros(m)+'</div><div class="meal-actions"><button class="btn-primary" type="button" data-add-rec="'+i+'">Add to Today</button></div></div>').join('');
  document.querySelectorAll('[data-add-rec]').forEach(b=>b.onclick=()=>addNutritionMeal(DEFAULT_MEALS[Number(b.dataset.addRec)]));document.querySelectorAll('[data-remove-meal]').forEach(b=>b.onclick=()=>removeNutritionMeal(Number(b.dataset.removeMeal)));
+ document.querySelectorAll('[data-eat-meal]').forEach(b=>b.onclick=()=>{const s=ensureNutrition(),m=s.days[nutritionToday()].find(x=>String(x.id)===b.dataset.eatMeal);if(m){m.eaten=!m.eaten;saveNutrition(s);renderNutrition()}});
  const weekly=document.getElementById('weeklyMealPlan');if(weekly)weekly.innerHTML=Array.from({length:7},(_,d)=>{const date=nutritionDate(d),list=s.days[date]||[],label=new Date(date+'T12:00:00').toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric'});return '<div class="week-day"><div class="week-day__head"><strong>'+label+'</strong><span>'+list.reduce((a,m)=>a+(Number(m.calories)||0),0)+' cal</span></div><div class="week-day__meals">'+(list.length?list.map(m=>'<div class="week-meal"><span>'+escapeHtml(m.type)+': '+escapeHtml(m.name)+'</span><span>'+escapeHtml(m.protein)+'g P</span></div>').join(''):'<span class="builder-empty">No meals planned</span>')+'</div></div>'}).join('');
  const groceries={};for(let d=0;d<7;d++)(s.days[nutritionDate(d)]||[]).forEach(m=>(m.ingredients||[]).forEach(x=>groceries[x]=(groceries[x]||0)+1));const gl=document.getElementById('groceryList');if(gl)gl.innerHTML=Object.keys(groceries).length?Object.keys(groceries).sort().map(x=>'<label class="grocery-item"><input type="checkbox" data-grocery="'+escapeHtml(x)+'" '+(s.groceryChecked[x]?'checked':'')+'> '+escapeHtml(x)+' <small>×'+groceries[x]+'</small></label>').join(''):'<div class="builder-empty">Generate or add meals to build your grocery list.</div>';document.querySelectorAll('[data-grocery]').forEach(x=>x.onchange=()=>toggleGrocery(x.dataset.grocery,x.checked));
 }
 function initNutrition(){renderNutrition();document.getElementById('generateWeekBtn')?.addEventListener('click',generateNutritionWeek);document.getElementById('clearWeekBtn')?.addEventListener('click',clearNutritionWeek);document.getElementById('nutritionTargetForm')?.addEventListener('submit',e=>{e.preventDefault();const s=ensureNutrition();s.targets={calories:Number(document.getElementById('targetCalories').value)||2000,protein:Number(document.getElementById('targetProtein').value)||160,carbs:Number(document.getElementById('targetCarbs').value)||200,fat:Number(document.getElementById('targetFat').value)||65};saveNutrition(s);renderNutrition()});document.getElementById('customMealForm')?.addEventListener('submit',e=>{e.preventDefault();addNutritionMeal({name:document.getElementById('mealName').value.trim(),type:document.getElementById('mealType').value,calories:Number(document.getElementById('mealCalories').value),protein:Number(document.getElementById('mealProtein').value),carbs:Number(document.getElementById('mealCarbs').value)||0,fat:Number(document.getElementById('mealFat').value)||0});e.target.reset()})}
 document.addEventListener('DOMContentLoaded',initNutrition);
+
+
+/* Fuel & Recovery shares the existing nutrition backup/account boundary. */
+function fuelDay(s){s.fuelDays=s.fuelDays||{};const day=s.fuelDays[nutritionToday()]||{water:[],protein:[]};s.fuelDays[nutritionToday()]=day;return day}
+function fuelMissionContext(){
+ const m=adaptiveSystemMission(),rest=/recovery|rest|mobility/i.test(m.name||''),done=adaptiveWeekStatus().todayDone;
+ return {name:m.name||'Today’s training',rest,tip:done?'Mission complete: make time for your next meal and recovery. Keep logging optional and focus on how you feel.':rest?'Recovery day: keep regular meals and your usual hydration routine. Rest is part of your training.':'Training day: plan a meal or snack around your session, include a protein source, and keep water available.'};
+}
+function renderFuelRecovery(){
+ const root=document.getElementById('fuelMission');if(!root)return;
+ const s=ensureNutrition(),day=fuelDay(s),m=fuelMissionContext(),sum=xs=>xs.reduce((a,n)=>a+Number(n||0),0);
+ const eaten=(s.days[nutritionToday()]||[]).filter(m=>m.eaten).reduce((a,m)=>a+(Number(m.protein)||0),0);
+ root.textContent=(m.rest?'RECOVERY // ':'TRAINING // ')+m.name;
+ document.getElementById('fuelGuidance').textContent=m.tip;
+ document.getElementById('fuelWaterTotal').textContent=sum(day.water)+' fl oz';
+ document.getElementById('fuelWaterGoal').textContent=s.waterGoal?'Personal goal: '+s.waterGoal+' fl oz':'Set an optional daily water goal below.';
+ document.getElementById('fuelProteinTotal').textContent=(sum(day.protein)+eaten)+' g';
+ document.getElementById('fuelProteinGoal').textContent='Personal goal: '+s.targets.protein+' g';
+ document.getElementById('fuelGoalWater').value=s.waterGoal||'';
+ document.getElementById('fuelGoalProtein').value=s.targets.protein;
+ document.getElementById('fuelUndoWater').disabled=!day.water.length;
+ document.getElementById('fuelUndoProtein').disabled=!day.protein.length;
+ const w=state.weight||{},history=(w.history||[]).filter(x=>Number(x.weight)>0).slice(-7),first=history[0],last=history.at(-1);
+ document.getElementById('fuelWeightTrend').textContent=last?last.weight+' lb'+(history.length>1?' • '+(Number(last.weight)-Number(first.weight)).toFixed(1)+' lb across the last '+history.length+' entries':' • Log another weight to see your trend')+(w.goal?' • Goal '+w.goal+' lb':''):'Log your weight in Progress to see a trend here.';
+}
+function initFuelRecovery(){
+ const update=fn=>{const s=ensureNutrition();fn(s,fuelDay(s));saveNutrition(s);renderNutrition()};
+ document.querySelectorAll('[data-fuel-water]').forEach(b=>b.onclick=()=>update((s,d)=>d.water.push(Number(b.dataset.fuelWater))));
+ document.getElementById('fuelUndoWater').onclick=()=>update((s,d)=>d.water.pop());
+ document.getElementById('fuelUndoProtein').onclick=()=>update((s,d)=>d.protein.pop());
+ document.getElementById('fuelProteinForm').onsubmit=e=>{e.preventDefault();const input=document.getElementById('fuelProteinInput');if(!input.checkValidity())return;update((s,d)=>d.protein.push(Number(input.value)));input.value=''};
+ document.getElementById('fuelGoalForm').onsubmit=e=>{e.preventDefault();if(!e.target.checkValidity())return;update(s=>{s.waterGoal=Number(document.getElementById('fuelGoalWater').value)||null;const protein=Number(document.getElementById('fuelGoalProtein').value);if(protein)s.targets.protein=protein})};
+ document.getElementById('fuelOpenTraining').onclick=()=>window.SystemOS?.open('missions');
+ document.getElementById('fuelOpenProgress').onclick=()=>window.SystemOS?.open('progress');
+ renderFuelRecovery();
+}
+document.addEventListener('DOMContentLoaded',initFuelRecovery);
 
 // Password visibility controls
 function initPasswordToggles(){document.querySelectorAll('[data-password-toggle]').forEach(btn=>btn.addEventListener('click',()=>{const input=document.getElementById(btn.dataset.passwordToggle);if(!input)return;const show=input.type==='password';input.type=show?'text':'password';btn.textContent=show?'Hide':'Show';btn.setAttribute('aria-label',(show?'Hide ':'Show ')+(input.placeholder||'password').toLowerCase())}))}
@@ -1843,14 +1884,14 @@ function initSystemOS(){
  let parked=null,current=null;
  const map={
   player:{title:'PLAYER STATUS',kicker:'PLAYER // IDENTITY',ids:['playerCard','statusScreen']},
-  missions:{title:'MISSION CONTROL',kicker:'SYSTEM // MISSIONS',ids:['daily-mission','workoutBuilder','sideSystem']},
+  missions:{title:'TRAINING',kicker:'SYSTEM // TRAINING',ids:['daily-mission','workoutBuilder','sideMissionSystem','bossStageSystem','exerciseLibrary']},
   side:{title:'SIDE MISSIONS',kicker:'OPTIONAL // OBJECTIVES',ids:['sideMissionSystem']},
   boss:{title:'BOSS STAGE',kicker:'GATE // ENCOUNTERS',ids:['bossStageSystem']},
   telemetry:{title:'HEALTH TELEMETRY',kicker:'BIOMETRIC // HEALTH LINK',ids:['exerciseTracker']},
   progress:{title:'CAMPAIGN PROGRESS',kicker:'SYSTEM // ANALYTICS',ids:['progressAnalytics','adaptiveProgression']},
   achievements:{title:'ACHIEVEMENTS',kicker:'SYSTEM // RECORDS',ids:['achievementGrid']},
   profile:{title:'SYSTEM CONFIGURATION',kicker:'PLAYER // SETTINGS',ids:['profileSettings']},
-  nutrition:{title:'NUTRITION MODULE',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']},
+  nutrition:{title:'FUEL & RECOVERY',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']},
   exercise:{title:'EXERCISE DATABASE',kicker:'SYSTEM // TRAINING ARCHIVE',ids:['exerciseLibrary']},
   social:{title:'SOCIAL COMMAND',kicker:'NETWORK // CHALLENGES',ids:['osSocialCommand']}
  };
@@ -1858,11 +1899,12 @@ function initSystemOS(){
  function setActive(name,on=true){document.querySelectorAll('[data-os-module],[data-holo]').forEach(x=>x.classList.toggle('os-active',on&&(x.dataset.osModule===name||x.dataset.holo===name)))}
  function close(){restore();setActive(current,false);current=null;stage.classList.remove('active','minimized');stage.setAttribute('aria-hidden','true');document.body.classList.remove('os-module-open')}
  function open(name){
-  const m=map[name];if(!m)return;
+  const m=map[name];if(!m)return;if(name==='nutrition')renderNutrition();
   if(current===name&&stage.classList.contains('minimized')){stage.classList.remove('minimized');document.body.classList.add('os-module-open');return}
   restore();setActive(current,false);body.innerHTML='';parked=[];current=name;
   if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand()}
   m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});
+  if(name==='missions'){body.querySelectorAll('#sideMissionSystem,#bossStageSystem,#exerciseLibrary').forEach(el=>{const group=document.createElement('details');group.className='training-group';const label=document.createElement('summary');label.textContent=el.id==='sideMissionSystem'?'Side Missions':el.id==='bossStageSystem'?'Boss Stage':'Exercise Library';el.before(group);group.append(label,el)});}
   if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // LINK READY</span><strong>'+m.title+'</strong><p>This SYSTEM module is online and ready for its connected data.</p></div></div>';
   title.textContent=m.title;kicker.textContent=m.kicker;stage.classList.add('active');stage.classList.remove('minimized');stage.setAttribute('aria-hidden','false');document.body.classList.add('os-module-open');setActive(name,true);body.scrollTop=0;
   requestAnimationFrame(()=>{try{if(name==='boss'&&typeof renderBossCommand==='function')renderBossCommand();if(name==='side'&&typeof renderSideSystem==='function')renderSideSystem()}catch(err){console.error('SYSTEM module render failed',name,err);window.SystemOS?.notify?.('MODULE OPEN // DATA RENDER ERROR','SYSTEM // DIAGNOSTIC')}})
@@ -1870,7 +1912,7 @@ function initSystemOS(){
  window.SystemOS={open,close};
  document.getElementById('osModuleClose').onclick=close;
  document.getElementById('osModuleMin').onclick=()=>{stage.classList.toggle('minimized');document.body.classList.toggle('os-module-open',!stage.classList.contains('minimized'))};
- document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const name=b.dataset.holo;if(name==='boss'||name==='side')open(name);else{const holo=document.getElementById('holoWindow');if(holo&&holo.getAttribute('aria-hidden')==='false')return;open(name)}},true));
+ document.querySelectorAll('[data-holo]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();const name=b.dataset.holo;if(['boss','side','nutrition','social'].includes(name))open(name);else{const holo=document.getElementById('holoWindow');if(holo&&holo.getAttribute('aria-hidden')==='false')return;open(name)}},true));
  document.querySelectorAll('[data-hud-target]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();e.stopImmediatePropagation();open('missions')},true));
  document.querySelectorAll('[data-hud-view]').forEach(b=>b.addEventListener('click',e=>{e.preventDefault();open(b.dataset.hudView==='progress'?'progress':'missions')},true));
  const clock=()=>{const e=document.getElementById('osClock');if(e)e.textContent=new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})};clock();setInterval(clock,30000);
@@ -1983,7 +2025,7 @@ document.addEventListener('DOMContentLoaded',()=>{
  const dock=deck.querySelector('.os-dock');if(!dock)return;
  const task=document.createElement('div');task.className='os-taskbar';task.innerHTML='<span class="os-taskbar__label">ACTIVE MODULE</span><button id="osTaskCurrent" type="button"><b>◇</b><span>CENTRAL COMMAND</span></button><span class="os-taskbar__hint">ALT + 1–7 // QUICK SWITCH</span>';deck.appendChild(task);
  const current=document.getElementById('osTaskCurrent');
- const names={missions:'MISSION CONTROL',exercise:'EXERCISE DATABASE',nutrition:'NUTRITION',telemetry:'HEALTH TELEMETRY',social:'SOCIAL COMMAND',progress:'CAMPAIGN PROGRESS',profile:'SYSTEM CONFIG',player:'PLAYER STATUS',side:'SIDE MISSIONS',boss:'BOSS STAGE',achievements:'ACHIEVEMENTS'};
+ const names={missions:'MISSION CONTROL',exercise:'EXERCISE DATABASE',nutrition:'FUEL & RECOVERY',telemetry:'HEALTH TELEMETRY',social:'SOCIAL COMMAND',progress:'CAMPAIGN PROGRESS',profile:'SYSTEM CONFIG',player:'PLAYER STATUS',side:'SIDE MISSIONS',boss:'BOSS STAGE',achievements:'ACHIEVEMENTS'};
  const icons={missions:'◆',exercise:'⌁',nutrition:'◫',telemetry:'⌾',social:'◎',progress:'▥',profile:'⚙',player:'◈',side:'✦',boss:'⚠',achievements:'★'};
  const baseOpen=os.open,baseClose=os.close;let active=null;
  os.open=name=>{active=name;baseOpen(name);current.innerHTML='<b>'+(icons[name]||'◇')+'</b><span>'+(names[name]||'SYSTEM MODULE')+'</span>';task.classList.add('has-task')};
@@ -2603,7 +2645,7 @@ async function markAlert(id,all=false){const u=socialCloudUser(),now=new Date().
 function ensureAlertCenter(){if(document.getElementById('systemAlertCenter'))return;const e=document.createElement('aside');e.id='systemAlertCenter';e.className='system-alert-center';e.setAttribute('aria-hidden','true');e.innerHTML='<header><div><small>SYSTEM // COMMUNICATIONS</small><h2>ALERT CENTER</h2></div><button id="alertCenterClose">×</button></header><div class="alert-tools"><span id="alertCount">0 UNREAD</span><button id="alertReadAll">MARK ALL READ</button></div><div id="alertFeed" class="alert-feed"></div>';document.body.appendChild(e);document.getElementById('alertCenterClose').onclick=()=>{e.classList.remove('active');e.setAttribute('aria-hidden','true')};document.getElementById('alertReadAll').onclick=()=>markAlert('',true)}
 async function renderAlertCenter(){ensureAlertCenter();const a=await fetchSystemAlerts(),feed=document.getElementById('alertFeed'),unread=a.filter(x=>!x.read_at).length;document.getElementById('alertCount').textContent=unread+' UNREAD';document.querySelectorAll('.system-alert-badge').forEach(b=>{b.textContent=unread;b.hidden=!unread});feed.innerHTML=a.length?a.map(x=>'<article class="system-alert '+(!x.read_at?'unread':'')+'" data-alert-id="'+x.id+'" data-alert-module="'+escapeHtml(x.action_module||'social')+'"><i>'+({friend:'◎',duel:'⚔',squad:'◆',boss:'⚠',progress:'★',system:'◇'}[x.type]||'◇')+'</i><span><strong>'+escapeHtml(x.title)+'</strong><p>'+escapeHtml(x.body||'')+'</p><small>'+new Date(x.created_at).toLocaleString()+'</small></span><b>›</b></article>').join(''):'<div class="social-empty">NO SYSTEM ALERTS</div>';feed.querySelectorAll('[data-alert-id]').forEach(x=>x.onclick=async()=>{await markAlert(x.dataset.alertId);document.getElementById('systemAlertCenter').classList.remove('active');window.SystemOS?.open(x.dataset.alertModule||'social')})}
 function openAlertCenter(){ensureAlertCenter();const e=document.getElementById('systemAlertCenter');e.classList.add('active');e.setAttribute('aria-hidden','false');renderAlertCenter().catch(err=>{console.error('Alert Center failed to load',err);document.getElementById('alertFeed').innerHTML='<div class="social-empty">ALERTS UNAVAILABLE // TRY AGAIN</div>'})}
-function installAlertButton(){ensureAlertCenter();const deck=document.getElementById('commandDeck'),dock=deck?.querySelector('.os-dock');if(!dock||document.getElementById('systemAlertBtn'))return;const b=document.createElement('button');b.id='systemAlertBtn';b.className='system-alert-btn';b.innerHTML='<b>◉</b><span>ALERTS</span><i class="system-alert-badge" hidden>0</i>';b.onclick=openAlertCenter;dock.appendChild(b);renderAlertCenter()}
+function installAlertButton(){ensureAlertCenter();const deck=document.getElementById('commandDeck'),dock=deck?.querySelector('.os-dock');if(!dock||document.getElementById('systemAlertBtn'))return;const b=document.createElement('button');b.id='systemAlertBtn';b.className='system-alert-btn';b.innerHTML='<b>◉</b><span>ALERTS</span><i class="system-alert-badge" hidden>0</i>';b.onclick=openAlertCenter;b.setAttribute('aria-label','Notifications');b.title='Notifications';b.querySelector('span').textContent='';deck.querySelector('.os-topbar__right')?.appendChild(b);renderAlertCenter()}
 document.addEventListener('DOMContentLoaded',()=>{installAlertButton();setInterval(()=>{if(socialCloudUser())renderAlertCenter()},60000)});
 const _v30Friend=sendFriendRequest;sendFriendRequest=async function(userId,name){await _v30Friend(userId,name);await systemAlert('friend','FRIEND LINK REQUEST',socialHandle()+' wants to connect.',userId,'social',userId)};
 const _v30Challenge=squadChallenge;squadChallenge=async function(id,type,days){const c=await fetchCommunityNetwork(),target=c?.squads.find(s=>s.id===id),owner=target?.owner_id;await _v30Challenge(id,type,days);if(owner)await systemAlert('squad','SQUAD CHALLENGE INCOMING',socialHandle()+' issued a '+challengeLabel(type)+' squad challenge.',id,'social',owner)};

@@ -510,7 +510,7 @@ function renderDailyBriefing(){
  begin.onclick=()=>{if(begin.disabled)return;begin.disabled=true;boot.classList.add('system-deploy');document.body.classList.add('system-entering');transitionTimer=setTimeout(()=>{closeBriefing();const deck=document.getElementById('commandDeck');deck?.classList.add('command-arrival');setTimeout(()=>deck?.classList.remove('command-arrival'),1300);if(window.SystemOS?.open)window.SystemOS.open('missions');else document.querySelector('.app-nav [data-view="missions"]')?.click();window.SystemOS?.notify?.('MISSION CONTROL READY','SYSTEM // DEPLOYMENT')},780)}
 }
 function scheduleDailyBriefing(){let tries=0;const wait=()=>{tries++;if(typeof state!=='undefined'&&document.getElementById('mission-title'))renderDailyBriefing();else if(tries<20)setTimeout(wait,150)};setTimeout(wait,250)}
-document.addEventListener('DOMContentLoaded',scheduleDailyBriefing);
+// Briefing is optional and replayed from Settings; no daily startup interruption.
 
 /* ===== DAILY BRIEFING REPLAY ===== */
 function replayDailyBriefing(){localStorage.removeItem(SYSTEM_BOOT_KEY);renderDailyBriefing()}
