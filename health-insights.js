@@ -4,7 +4,7 @@
  const valid=n=>typeof n==='number'&&Number.isFinite(n)&&n>=0;
  function summarize(data={},now=new Date()){
   const age=now.getTime()-Date.parse(data.syncedAt);
-  const parts=new Intl.DateTimeFormat('en-US',{timeZone:data.timeZone||undefined,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now);
+  let parts;try{parts=new Intl.DateTimeFormat('en-US',{timeZone:data.timeZone||undefined,year:'numeric',month:'2-digit',day:'2-digit'}).formatToParts(now)}catch(e){return {state:'unavailable',text:'Health time zone is unavailable. Sync health data again.'}};
   const p=Object.fromEntries(parts.map(x=>[x.type,x.value]));const day=p.year+'-'+p.month+'-'+p.day;
   if(data.status!=='connected')return {state:'unavailable',text:'Connect Samsung Health through Health Connect to add activity context. Your normal missions remain available.'};
   if(!Number.isFinite(age)||age<0||age>6*60*60*1000||data.today?.date!==day)return {state:'stale',text:'Health data needs an update. Sync before using it to guide today’s training.'};
