@@ -1,4 +1,4 @@
-const CACHE = "the-system-os-v88-personal-training";
+const CACHE = "the-system-os-v89-voice-requests";
 const ASSETS = ["./adaptive-training.js", "./", "./index.html", "./styles.css", "./side-system.css", "./app.js", "./workout-help.js", "./system-assistant.js", "./health-insights.js", "./sleep-tracker.js", "./train-together.js", "./competitive-credits.js", "./account-data.js", "./diagnostics.js", "./health-connect.js", "./side-system.js", "./manifest.webmanifest", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(ASSETS)).then(() => self.skipWaiting()));

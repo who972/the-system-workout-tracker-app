@@ -14,3 +14,16 @@ console.log('PASS local command parsing, unit conversion, invalid amounts and de
 
 assert.equal(interpret('How did I sleep?').type,'sleep');
 assert.equal(interpret('How long have I slept?').type,'sleep');
+const {COMMAND_GUIDE}=require('../system-assistant.js');
+for(const [group,...commands]of COMMAND_GUIDE)for(const command of commands)assert(!['unknown','unsupported'].includes(interpret(command).type),`${group}: ${command}`);
+assert.deepEqual(interpret('Can I do a custom exercise?'),{type:'route',module:'exercise',target:'libraryExerciseForm'});
+assert.deepEqual(interpret('Let me do a 15-minute walk'),{type:'activity',name:'Brisk Walk',minutes:15});
+assert.deepEqual(interpret('Fifteen minutes',{activity:'Brisk Walk'}),{type:'activity',name:'Brisk Walk',minutes:15});
+assert.equal(interpret('Use the second one',{choices:['A','B']}).index,1);
+assert.equal(interpret('Open my achievements').module,'achievements');
+assert.equal(interpret('I did 10 reps at -25 pounds').type,'set-invalid');
+assert.equal(interpret('I completed 30 seconds').unit,'seconds');
+assert.equal(interpret('I did 10 reps at 25 kg').metric,true);
+assert.equal(interpret('This movement hurts').type,'pain');
+assert.equal(interpret('Delete my account').type,'unsupported');
+console.log('PASS full command catalog, natural phrasing, contextual follow-ups, unit handling and destructive-action protection');

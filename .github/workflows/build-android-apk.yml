@@ -106,6 +106,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/health-dashboard.test.cjs
           node tests/health-insights.test.cjs
           node tests/system-assistant.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/system-assistant-integration.test.cjs
           node --check system-assistant.js
           node --check workout-help.js
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/workout-help.test.cjs
