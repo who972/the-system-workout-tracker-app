@@ -40,7 +40,7 @@ class MainActivity : ComponentActivity() {
     private var pendingBackupName = "the-system-backup.json"
     private var pendingBackupJson = ""
     private val backupLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let { contentResolver.openOutputStream(it)?.use { out -> out.write(pendingBackupJson.toByteArray(Charsets.UTF_8)) } } }
-    inner class SystemAndroidBridge { @JavascriptInterface fun exportBackup(name: String, json: String) { runOnUiThread { pendingBackupName=name; pendingBackupJson=json; backupLauncher.launch(name) } }; @JavascriptInterface fun getAppVersion(): String { val p=packageManager.getPackageInfo(packageName,0); return p.versionName + " / build " + androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(p) } }
+    inner class SystemAndroidBridge { @JavascriptInterface fun keepWorkoutScreenOn(enabled: Boolean) { runOnUiThread { webView.keepScreenOn = enabled } }; @JavascriptInterface fun exportBackup(name: String, json: String) { runOnUiThread { pendingBackupName=name; pendingBackupJson=json; backupLauncher.launch(name) } }; @JavascriptInterface fun getAppVersion(): String { val p=packageManager.getPackageInfo(packageName,0); return p.versionName + " / build " + androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(p) } }
     private val voice by lazy { SystemVoice(this) { type, text ->
         if (::webView.isInitialized) webView.evaluateJavascript("window.SystemAssistant?.nativeEvent(" + JSONObject().put("type",type).put("text",text).toString() + ")", null)
     } }
@@ -61,7 +61,7 @@ class MainActivity : ComponentActivity() {
         @JavascriptInterface fun speak(text: String) { runOnUiThread { voice.speak(text) } }
         @JavascriptInterface fun stop() { runOnUiThread { voiceRequested=false;voice.stop() } }
     }
-    override fun onPause() { voice.stop(); super.onPause() }
+    override fun onPause() { webView.keepScreenOn = false; voice.stop(); super.onPause() }
     override fun onDestroy() { voice.close();super.onDestroy() }
     private lateinit var webView: WebView
     private lateinit var health: HealthConnectClient

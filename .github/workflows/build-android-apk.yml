@@ -3,12 +3,13 @@ name: Build Android Debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, health-membership-foundation, adaptive-training]
+    branches: [main, health-membership-foundation, adaptive-training, workout-autoflow]
     paths:
       - "android-wrapper/**"
       - "index.html"
       - "app.js"
       - "adaptive-training.js"
+      - "workout-flow.js"
       - "train-together.js"
       - "competitive-credits.js"
       - "tests/train-together.test.cjs"
@@ -68,7 +69,7 @@ jobs:
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/command-workspace-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/system-assistant-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/sleep-tracker-layout.test.cjs
-          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/adaptive-training-layout.test.cjs
+          NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" node tests/workout-flow-layout.test.cjs
 
       - name: Upload UI previews
         uses: actions/upload-artifact@v4
@@ -83,6 +84,9 @@ jobs:
           node --check competitive-credits.js
           node --check train-together.js
           node --check adaptive-training.js
+          node --check workout-flow.js
+          node tests/workout-flow.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/workout-flow-integration.test.cjs
           node tests/adaptive-training.test.cjs
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/adaptive-training-integration.test.cjs
           node --check app.js
@@ -114,7 +118,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp adaptive-training.js sleep-tracker.js health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp workout-flow.js adaptive-training.js sleep-tracker.js health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
