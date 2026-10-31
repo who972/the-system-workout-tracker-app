@@ -2833,3 +2833,18 @@ body.system-os-ready>dialog.system-assistant[open]{display:block!important}
 @keyframes workout-edge-pulse{0%{opacity:.75}100%{opacity:0}}
 @media(prefers-reduced-motion:reduce){#workoutMode.flow-pulse::after{animation:none}}
 @media(orientation:landscape) and (max-height:540px){body.workout-open .auto-exercise .workout-stage{justify-content:flex-start}.auto-exercise .live-movement-preview{display:none}.auto-exercise .workout-stage h1{font-size:24px!important}.flow-clock{font-size:38px}.flow-controls{flex-wrap:nowrap}.flow-controls button{padding:8px;font-size:11px!important}}
+
+.auto-exercise #liveTarget{display:none}
+.auto-exercise #liveExerciseName{position:sticky;top:0;z-index:3;background:#06121c;padding:4px 0}
+@media(orientation:landscape) and (max-width:699px){
+ body.workout-open #workoutMode.auto-exercise.active{display:grid;grid-template-columns:minmax(150px,30%) minmax(0,1fr);grid-template-rows:auto minmax(0,1fr) auto;gap:8px 12px;overflow:hidden;box-sizing:border-box;padding:28px 12px 10px}
+ .auto-exercise .workout-mode__top{grid-column:1;grid-row:1;min-width:0;max-width:none;margin:0}
+ .auto-exercise .workout-mode__top h2{font-size:18px;line-height:1.1}
+ .auto-exercise .workout-exit{position:fixed;right:10px;top:8px;width:32px;height:32px;z-index:5}
+ .auto-exercise .workout-clock{grid-column:1;grid-row:2;min-width:0;display:grid;place-items:center;margin:0;font-size:32px}
+ .auto-exercise .workout-progress{grid-column:1;grid-row:3;margin:0;width:100%}
+ body.workout-open .auto-exercise .workout-stage{grid-column:2;grid-row:1 / span 2;min-width:0;max-width:none;min-height:0;margin:0;padding:8px 12px;overflow:auto;display:flex;flex-direction:column;justify-content:flex-start}
+ .auto-exercise .workout-live-stats{grid-column:2;grid-row:3;font-size:9px;margin:0}
+ .auto-exercise #openExerciseGuide{min-height:32px;padding:5px;font-size:10px}
+ .auto-exercise #exerciseFlow{margin-top:6px}
+}

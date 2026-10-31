@@ -83,6 +83,7 @@ function enableForCurrent(){
  byId('flowWeight').value=draft[0]?.weight||'';
  byId('flowWeightLabel').hidden=!/Dumbbell|Barbell|Goblet|Machine|Cable|Kettlebell/.test(current.name);
  clock.load(sets.map(x=>({seconds:timedTargetSeconds(x.target)||Math.max(20,parseTargetReps(x.target)*(/\/leg/i.test(x.target)?6:3)),rest:x.rest})));
+ document.querySelector('.workout-stage').scrollTop=0;byId('workoutMode').scrollTop=0;
 }
 async function confirmExercise(){
  if(saving||clock.phase!=='review')return;
