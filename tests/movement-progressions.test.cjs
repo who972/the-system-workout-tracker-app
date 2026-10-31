@@ -1,0 +1,34 @@
+const assert=require('node:assert/strict'),M=require('../movement-progressions.js'),T=require('../adaptive-training.js');
+const today='2026-10-31';
+const session=(date,name='Knee Push-Ups',over={})=>({date,trainingPolicy:1,workoutMode:'full',expectedSets:{[name]:2},sets:[0,1].map(i=>({name,reps:10,weight:0,prescribedTarget:'6-10 reps',formConfirmed:true,rir:i===1?2:null,pain:false,...over}))});
+const history=[session('2026-10-25'),session('2026-10-28')];
+assert.equal(M.next('Knee Push-Ups',[],today,99).kind,'maintain','XP alone never promotes');
+assert.equal(M.next('Knee Push-Ups',history,today,1).kind,'locked');
+assert.equal(M.next('Knee Push-Ups',history,today,10).to,'Push-Ups');
+assert.equal(M.next('Knee Push-Ups',[history[0],{...history[1],date:history[0].date}],today,99).kind,'maintain','distinct days required');
+for(const over of [{rir:null},{formConfirmed:false},{pain:true},{reps:3}])assert.equal(M.next('Knee Push-Ups',[history[0],session('2026-10-28','Knee Push-Ups',over)],today,99).kind,'maintain');
+assert.equal(M.next('Knee Push-Ups',history.map(x=>({...x,workoutMode:'light'})),today,99).kind,'maintain');
+assert.equal(M.next('Knee Push-Ups',history.map(x=>({...x,date:'2026-09-01'})),today,99).kind,'maintain');
+const base={exercises:[['Knee Push-Ups',3,'8-12 reps',75]],movements:{'Knee Push-Ups':'push'}};
+const progress={push:{name:'Push-Ups',trial:{from:'Knee Push-Ups',started:'2026-10-25'}}};
+const trial=M.apply(base,progress,history,today);assert.deepEqual(trial.exercises,[['Push-Ups',1,'6-10 reps',75]]);assert.equal(trial.movements['Push-Ups'],'push');
+let passed=M.resolve(progress,[session('2026-10-28','Push-Ups')],today);assert.equal(passed.push.name,'Push-Ups');assert.equal(passed.push.trial,null);assert.equal(passed.push.events[0].outcome,'earned');
+let failed=M.resolve(progress,[session('2026-10-28','Push-Ups',{rir:0})],today);assert.equal(failed.push.name,'Knee Push-Ups');assert.equal(failed.push.events[0].outcome,'stepped-back');
+assert.equal(M.resolve(progress,[session(today,'Push-Ups',{rir:0})],today).push.name,'Push-Ups','today’s active session stays frozen');
+assert.deepEqual(M.apply({...base,recovery:true},progress,history,today).exercises,base.exercises);
+assert.equal(M.find('Push-Up Burpees').family,'burpee');assert.equal(M.find('Push-Ups').family,'push');
+assert.equal(M.next('Dumbbell Press',history,today,99).kind,'resistance');
+for(const [family,steps] of Object.entries(M.ladders)){assert(steps.length>1,family);for(const [i,x] of steps.entries()){assert(M.maximum(x.target)>0,x.name);if(i)assert(x.level>=steps[i-1].level,family);}}
+const b={path:'Balanced',assessment:{raw:{pushType:'knee',push:10}},profile:{trainingVersion:1,experience:'Beginner',trainingStyle:'bodyweight',equipment:['No Equipment'],days:3,minutes:45}};
+let plan=T.plan(b,[],today,'bodyweight');assert(plan.exercises.some(x=>x[0]==='Knee Push-Ups'&&x[2]==='6-10 reps'));assert(!plan.exercises.some(x=>/Push/.test(x[0])&&/min/.test(x[2])));
+plan=T.plan(b,[],today,'bodyweight',{}, {},progress);assert(plan.exercises.some(x=>x[0]==='Push-Ups'&&x[1]===1));
+const timed=[session('2026-10-25','March in Place',{reps:120,prescribedTarget:'2 min'}),session('2026-10-28','March in Place',{reps:120,prescribedTarget:'2 min'})];assert.equal(M.next('March in Place',timed,today,10).to,'Brisk March in Place');assert.equal(T.recommendation('March in Place','2 min',timed,2.5,today).target,'125 sec');
+console.log('PASS movement ladders: level gates, independent skills, form/reserve evidence, separate days, reduced trials, backoff, assessment seeding, timed progression and weighted progression policy');
+
+assert.equal(T.movementAllowed('Jog in Place',{avoid:['impact']}),false);
+assert.equal(T.movementAllowed('High-Knee Intervals',{avoid:['impact']}),false);
+assert.equal(T.movementAllowed('Push-Up Burpees',{avoid:['push']}),false);
+assert.equal(T.movementAllowed('March in Place',{avoid:['impact']}),true);
+const gym=T.plan({...b,profile:{...b.profile,trainingStyle:'weights',equipment:['Dumbbells']}},[],today,'gym',{}, {},progress);assert(gym.exercises.some(x=>x[0]==='Dumbbell Press'),'earned bodyweight variation must not replace gym lifting');
+const easy=T.plan(b,[],today,'bodyweight',{fatigue:'high'}, {},progress);assert(easy.exercises.some(x=>x[0]==='Knee Push-Ups'),'trial deferred during fatigue');
+const trials=history.map(s=>({...s,variationTrials:['Knee Push-Ups']}));assert.equal(M.next('Knee Push-Ups',trials,today,99).kind,'maintain','trial exposure is not normal progression evidence');
