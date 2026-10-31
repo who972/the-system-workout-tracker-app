@@ -32,3 +32,5 @@ assert.equal(T.movementAllowed('March in Place',{avoid:['impact']}),true);
 const gym=T.plan({...b,profile:{...b.profile,trainingStyle:'weights',equipment:['Dumbbells']}},[],today,'gym',{}, {},progress);assert(gym.exercises.some(x=>x[0]==='Dumbbell Press'),'earned bodyweight variation must not replace gym lifting');
 const easy=T.plan(b,[],today,'bodyweight',{fatigue:'high'}, {},progress);assert(easy.exercises.some(x=>x[0]==='Knee Push-Ups'),'trial deferred during fatigue');
 const trials=history.map(s=>({...s,variationTrials:['Knee Push-Ups']}));assert.equal(M.next('Knee Push-Ups',trials,today,99).kind,'maintain','trial exposure is not normal progression evidence');
+const chosen={_choices:{'bodyweight:cardio':'Elevated Step-Back Burpees'}};
+const endurance={...b,path:'Endurance'};assert(T.plan(endurance,[],today,'bodyweight',{}, {},chosen).exercises.some(e=>e[0]==='Elevated Step-Back Burpees'),'chosen conditioning exercise persists');assert(!T.plan({...endurance,profile:{...b.profile,equipment:['Dumbbells']}},[],today,'gym',{}, {},chosen).exercises.some(e=>e[0]==='Elevated Step-Back Burpees'),'home preference does not override gym choice');
