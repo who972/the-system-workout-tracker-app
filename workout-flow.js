@@ -28,6 +28,7 @@ class ExerciseClock {
 if(typeof module!=='undefined'&&module.exports){module.exports={ExerciseClock};return;}
 root.SystemExerciseClock=ExerciseClock;
 const byId=id=>document.getElementById(id);
+let screenAwake=false;
 let clock,sets=[],draft=[],saving=false,active=false,pulseTimer,signalContext,signalNodes=[],interval;
 const original={render:renderLiveSet,complete:completeLiveSet,close:closeWorkout};
 const together=()=>byId('ttLive')&&!byId('ttLive').hidden;
@@ -48,6 +49,7 @@ function signal(kind){
 }
 function draw(s){
  if(!byId('exerciseFlow'))return;
+ const awake=active&&!document.hidden;if(awake!==screenAwake){screenAwake=awake;root.SystemAndroid?.keepWorkoutScreenOn?.(awake);}
  byId('flowPhase').textContent=s.paused?'PAUSED':({ready:'READY',prepare:'GET READY',work:'WORK',rest:'REST',review:'EXERCISE COMPLETE'})[s.phase];
  byId('flowClock').textContent=s.phase==='ready'?'READY':s.phase==='review'?'REVIEW':fmt(Math.ceil(s.left));
  byId('flowSet').textContent='SET '+(s.index+1)+' OF '+s.total;
