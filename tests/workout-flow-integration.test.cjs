@@ -1,0 +1,19 @@
+const fs=require('node:fs'),assert=require('node:assert/strict'),vm=require('node:vm');
+const {JSDOM}=require(process.env.JSDOM_MODULE||'jsdom');
+const d=new JSDOM(fs.readFileSync('index.html','utf8'),{url:'https://appassets.androidplatform.net/assets/www/index.html',runScripts:'outside-only',pretendToBeVisual:true});const w=d.window,errors=[],intervals=[];let now=Date.now();
+w.Date.now=()=>now;w.matchMedia=()=>({matches:false});w.alert=()=>{};w.confirm=()=>true;w.fetch=async()=>({ok:false,json:async()=>({})});w.HTMLCanvasElement.prototype.getContext=()=>null;w.setInterval=(fn,ms)=>{intervals.push({fn,ms});return intervals.length;};w.clearInterval=()=>{};w.setTimeout=(fn,ms)=>{if(ms===650)fn();return 0;};w.addEventListener('error',e=>errors.push(e.message));
+for(const f of ['account-data.js','sleep-tracker.js','health-insights.js','app.js','health-connect.js','side-system.js','workout-help.js','system-assistant.js','adaptive-training.js','train-together.js','competitive-credits.js','workout-flow.js'])vm.runInContext(fs.readFileSync(f,'utf8'),d.getInternalVMContext());
+w.document.dispatchEvent(new w.Event('DOMContentLoaded'));assert.deepEqual(errors,[]);
+const el=id=>w.document.getElementById(id);const run=s=>vm.runInContext(s,d.getInternalVMContext());
+w.localStorage.setItem('systemPlayerBuildV1',JSON.stringify({path:'Balanced',profile:{trainingVersion:1,trainingStyle:'bodyweight',experience:'Intermediate',equipment:['No Equipment'],days:3,minutes:30}}));run('systemTrainingSchedule=()=>({isTrainingDay:true,trainingDays:[0,1,2,3,4,5,6]})');w.renderSystemMission();w.startWorkoutMode();
+const tick=intervals.filter(x=>x.ms===100).at(-1).fn;const advance=ms=>{now+=ms;tick();};
+assert.equal(w.SystemWorkoutFlow.active,true);el('flowStart').click();advance(3000);assert.equal(w.SystemWorkoutFlow.state.phase,'work');el('flowPause').click();const left=w.SystemWorkoutFlow.state.left;advance(30000);assert.equal(w.SystemWorkoutFlow.state.left,left);el('flowExtend').click();assert.equal(w.SystemWorkoutFlow.state.left,left+15);el('flowPause').click();
+for(let i=0;i<100&&w.SystemWorkoutFlow.state.phase!=='review';i++)advance(1000000);
+assert.equal(w.SystemWorkoutFlow.state.phase,'review');assert.equal(Object.keys(w.getMissionProgress()).length,0);
+const expected=w.SystemWorkoutFlow.state.total;el('flowEffort').value='2';el('flowConfirm').click();assert.equal(w.SystemWorkoutFlow.state.phase,'ready');assert.equal(Object.values(w.getMissionProgress()).filter(x=>x.done).length,expected);assert.equal(Object.values(w.getMissionProgress()).filter(x=>x.rir===2).length,1);advance(1000000);assert.equal(w.SystemWorkoutFlow.state.phase,'ready');
+// An uncompleted set stays outstanding and cannot grant a mission reward.
+el('flowStart').click();for(let i=0;i<100&&w.SystemWorkoutFlow.state.phase!=='review';i++)advance(1000000);
+el('flowReviewRows').querySelector('[data-flow-field=reps]').value='0';el('flowConfirm').click();assert.equal(w.SystemWorkoutFlow.state.phase,'ready');assert.equal(w.localStorage.getItem('systemMissionResult:'+w.systemMissionKey()),null);
+// Finish the mission and ensure the existing history/rewards pipeline runs once.
+for(let n=0;n<30&&!w.localStorage.getItem('systemMissionResult:'+w.systemMissionKey());n++){el('flowStart').click();for(let i=0;i<100&&w.SystemWorkoutFlow.state.phase!=='review';i++)advance(1000000);el('flowConfirm').click();}
+assert(w.localStorage.getItem('systemMissionResult:'+w.systemMissionKey()));assert.equal(w.workoutHistory().length,1);assert.equal(w.SystemWorkoutFlow.active,false);const count=w.workoutHistory().length;el('flowConfirm').click();assert.equal(w.workoutHistory().length,count);assert.deepEqual(errors,[]);setImmediate(()=>d.window.close());console.log('PASS real-script integration: one-tap exercise, pause/extend, unverified timers, final effort, zero-rep retry, next exercise waits, history and no duplicate reward');
