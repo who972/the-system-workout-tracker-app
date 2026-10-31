@@ -2848,3 +2848,8 @@ body.system-os-ready>dialog.system-assistant[open]{display:block!important}
  .auto-exercise #openExerciseGuide{min-height:32px;padding:5px;font-size:10px}
  .auto-exercise #exerciseFlow{margin-top:6px}
 }
+
+.movement-progression{margin-top:8px;padding:10px;border:1px solid #39cfe766;border-radius:16px;background:#07313a66}.movement-progression p,.movement-progression-note{font-size:12px;line-height:1.4;color:#adf4ff}.movement-progression button{min-height:44px;margin:4px 6px 0 0;padding:8px 12px;border:1px solid #39cfe7;border-radius:14px;background:#082633;color:#e8fcff;font-size:11px}.movement-progression-note{font-weight:700}
+
+/* The Training window needs full exercise cards even when opened from Home. */
+body.system-os-ready .os-module-body #mission-exercises{display:block!important;max-height:none;overflow:visible}
