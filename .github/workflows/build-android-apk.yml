@@ -3,7 +3,7 @@ name: Build Android Debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, health-membership-foundation, adaptive-training, workout-autoflow, movement-progression-v91, device-only-v92]
+    branches: [main, health-membership-foundation, adaptive-training, workout-autoflow, movement-progression-v91, device-only-v92, central-command-v93]
     paths:
       - "android-wrapper/**"
       - "index.html"
@@ -22,6 +22,7 @@ on:
       - "tests/**"
       - "sw.js"
       - "styles.css"
+      - "command-hud.css"
       - "workout-help.js"
       - "system-assistant.js"
       - "health-insights.js"
@@ -102,7 +103,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp movement-progressions.js workout-flow.js adaptive-training.js sleep-tracker.js health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp movement-progressions.js workout-flow.js adaptive-training.js sleep-tracker.js health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js account-data.js styles.css command-hud.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"
@@ -147,6 +148,7 @@ jobs:
           unzip -Z1 "$APK" | grep -Fx "assets/www/enter_the_system_landscape.jpg"
           cmp enter_the_system_landscape.jpg <(unzip -p "$APK" assets/www/enter_the_system_landscape.jpg)
           cmp styles.css <(unzip -p "$APK" assets/www/styles.css)
+          cmp command-hud.css <(unzip -p "$APK" assets/www/command-hud.css)
           cmp side-system.css <(unzip -p "$APK" assets/www/side-system.css)
           cmp app.js <(unzip -p "$APK" assets/www/app.js)
           cmp diagnostics.js <(unzip -p "$APK" assets/www/diagnostics.js)

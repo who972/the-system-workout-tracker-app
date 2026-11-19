@@ -1,0 +1,157 @@
+/* Central Command uses the existing live readouts and orbital controls. */
+body.system-os-ready > .command-deck {
+  --hud-ice: #9ff5ff;
+  background:
+    radial-gradient(ellipse at 50% 41%, #11364a 0%, #071c2c 33%, transparent 65%),
+    linear-gradient(142deg, #071420, #02070f 59%, #061523);
+}
+
+.command-deck .command-deck__grid {
+  inset: 11px 14px;
+  opacity: .8;
+  border-radius: 25px 25px 15px 15px;
+  background:
+    radial-gradient(ellipse at center, transparent 34%, #02070d 99%),
+    linear-gradient(90deg, #51c6e512 1px, transparent 1px) center / 27px 27px,
+    linear-gradient(#51c6e512 1px, transparent 1px) center / 27px 27px;
+}
+
+.command-deck .command-deck__grid::before,
+.command-deck .command-deck__grid::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.command-deck .command-deck__grid::before {
+  border: 1px solid #4da8c052;
+  box-shadow: inset 0 0 26px #345f7429, 0 0 18px #36799916;
+  mask-image: linear-gradient(110deg, #000 9%, #0003 30%, transparent 44% 57%, #0006 78%, #000 94%);
+}
+
+.command-deck .command-deck__grid::after {
+  inset: 4px 7px;
+  border: 1px solid transparent;
+  border-top-color: #60d7ee52;
+  border-bottom-color: #60d7ee26;
+  mask-image: linear-gradient(90deg, #000 10%, transparent 23% 77%, #000 90%);
+}
+
+body.system-os-ready .command-deck .system-core::before {
+  content: "";
+  position: absolute;
+  inset: 1%;
+  animation: none;
+  pointer-events: none;
+  border-radius: 50%;
+  background: repeating-conic-gradient(from 9deg, #8ddfed55 0 1deg, transparent 1deg 6deg);
+  mask-image: radial-gradient(circle, transparent 62%, #000 62.4% 65.5%, transparent 66%);
+}
+
+.command-deck .system-core .orbit-a {
+  border-color: #459dbb42;
+  border-top-color: #90efffbb;
+  border-bottom-color: #568dff83;
+}
+.command-deck .system-core .orbit-b {
+  border-top-color: #70e6fca8;
+  border-bottom-color: #306da3aa;
+}
+.command-deck .system-core .orbit-c {
+  border-color: #77cce75e;
+}
+
+.command-deck .core-orbit-menu:not(.core-orbit-front)::before {
+  border-color: #78dbf275;
+  box-shadow: 0 0 14px #36c1e346, inset 0 0 18px #419dcd28;
+}
+
+body.system-os-ready .command-deck .system-core__center {
+  background:
+    radial-gradient(ellipse at 35% 24%, #6bdbee75, transparent 48%),
+    radial-gradient(circle at 53% 60%, #103750, #071b2e 61%, #03101c 78%);
+  border-color: #6ce2ffb8;
+  box-shadow: inset 0 0 22px #50c9f06e, 0 0 16px #3bd7f587, 0 0 43px #3289c94d;
+}
+
+.command-deck #coreIdle {
+  isolation: isolate;
+}
+.command-deck #coreIdle::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 3%;
+  border-radius: 50%;
+  pointer-events: none;
+  transform: rotate(-17deg);
+  background:
+    repeating-radial-gradient(ellipse at 50% -28%, transparent 0 11px, #a3eaff42 12px, transparent 13px 16px),
+    repeating-radial-gradient(ellipse at 50% 130%, transparent 0 15px, #8adbeb39 16px, transparent 17px 20px);
+  mask-image: radial-gradient(ellipse, transparent 24%, #0008 45%, #000 70%, transparent 72%);
+}
+body.system-os-ready .command-deck #coreIdle strong {
+  color: #edfdff;
+  text-shadow: 0 0 16px #40dfff, 0 2px 7px #001022;
+  font-variant-numeric: tabular-nums;
+}
+
+body.system-os-ready .command-deck .core-orbit-menu button {
+  border-color: #5ccce496;
+  background: radial-gradient(circle at 35% 24%, #246383, #0b293d 56%, #040d1a 82%);
+  box-shadow: inset 0 0 9px #62d9eb29, 0 0 14px #43c9ef42;
+}
+
+body.system-os-ready .command-deck .core-orbit-menu button span {
+  color: #e0f8ff;
+  background: #04111ce8;
+  border-color: #438a9d75;
+  border-radius: 9px;
+}
+
+body.system-os-ready .command-deck .hud-module.command-fixed-panel {
+  border: 1px solid #438fa464;
+  border-radius: 15px 7px 17px 7px;
+  clip-path: none;
+  background:
+    radial-gradient(ellipse at 10% 0%, #1342559c, transparent 68%),
+    linear-gradient(150deg, #0a2333f2, #040d19ed 74%);
+  box-shadow: inset 0 0 22px #347f9b2c, 0 9px 22px #0003;
+}
+
+body.system-os-ready .command-deck .hud-module.command-fixed-panel::before {
+  width: 24px;
+  left: 15px;
+  border-radius: 0 0 3px 3px;
+  background: var(--hud-ice);
+  box-shadow: 0 0 11px #5beaff;
+}
+
+.command-deck .command-fixed-panel .hud-module__tag { color: var(--hud-ice); }
+.command-deck .command-fixed-panel .analysis-stat em {
+  background: linear-gradient(90deg, #347bb0, #78edff);
+}
+
+body.system-os-ready .command-deck .os-dock {
+  border-color: #44879970;
+  border-radius: 18px 18px 9px 9px;
+  clip-path: none;
+  background: linear-gradient(180deg, #0b293aee, #040d19f5);
+}
+
+body.system-os-ready .command-deck .os-dock .core-action {
+  clip-path: none;
+  color: #03131e;
+  background: linear-gradient(110deg, #77ebff, #48b6ec);
+  border-color: #adf6ff;
+  border-radius: 11px;
+  box-shadow: 0 0 14px #51dafe59, inset 0 1px 0 #e2fcffb8;
+}
+
+body.system-os-ready .command-deck .os-dock .core-action:hover,
+body.system-os-ready .command-deck .os-dock .core-action:focus-visible {
+  color: #021427;
+  background: #b0f5ff;
+}
