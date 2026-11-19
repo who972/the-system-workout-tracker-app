@@ -1,10 +1,11 @@
 package com.thesystem.workouttracker
 
 import android.os.Bundle
-import android.content.Intent
 import android.net.Uri
 import android.util.Base64
 import android.webkit.JavascriptInterface
+import android.webkit.ValueCallback
+import android.webkit.WebChromeClient
 import android.webkit.WebView
 import androidx.activity.ComponentActivity
 import androidx.activity.result.contract.ActivityResultContracts
@@ -40,6 +41,12 @@ class MainActivity : ComponentActivity() {
     private var pendingBackupName = "the-system-backup.json"
     private var pendingBackupJson = ""
     private val backupLauncher = registerForActivityResult(ActivityResultContracts.CreateDocument("application/json")) { uri -> uri?.let { contentResolver.openOutputStream(it)?.use { out -> out.write(pendingBackupJson.toByteArray(Charsets.UTF_8)) } } }
+    private var backupFileCallback: ValueCallback<Array<Uri>>? = null
+    private val backupImportLauncher = registerForActivityResult(ActivityResultContracts.OpenDocument()) { uri ->
+        val callback = backupFileCallback
+        backupFileCallback = null
+        callback?.onReceiveValue(uri?.let { arrayOf(it) })
+    }
     inner class SystemAndroidBridge { @JavascriptInterface fun keepWorkoutScreenOn(enabled: Boolean) { runOnUiThread { webView.keepScreenOn = enabled } }; @JavascriptInterface fun exportBackup(name: String, json: String) { runOnUiThread { pendingBackupName=name; pendingBackupJson=json; backupLauncher.launch(name) } }; @JavascriptInterface fun getAppVersion(): String { val p=packageManager.getPackageInfo(packageName,0); return p.versionName + " / build " + androidx.core.content.pm.PackageInfoCompat.getLongVersionCode(p) } }
     private val voice by lazy { SystemVoice(this) { type, text ->
         if (::webView.isInitialized) webView.evaluateJavascript("window.SystemAssistant?.nativeEvent(" + JSONObject().put("type",type).put("text",text).toString() + ")", null)
@@ -62,7 +69,12 @@ class MainActivity : ComponentActivity() {
         @JavascriptInterface fun stop() { runOnUiThread { voiceRequested=false;voice.stop() } }
     }
     override fun onPause() { webView.keepScreenOn = false; voice.stop(); super.onPause() }
-    override fun onDestroy() { voice.close();super.onDestroy() }
+    override fun onDestroy() {
+        backupFileCallback?.onReceiveValue(null)
+        backupFileCallback = null
+        voice.close()
+        super.onDestroy()
+    }
     private lateinit var webView: WebView
     private lateinit var health: HealthConnectClient
     private var permissionReply: JavaScriptReplyProxy? = null
@@ -93,11 +105,27 @@ class MainActivity : ComponentActivity() {
         webView.settings.cacheMode = android.webkit.WebSettings.LOAD_NO_CACHE
         webView.addJavascriptInterface(SystemAndroidBridge(), "SystemAndroid")
         webView.addJavascriptInterface(SystemVoiceBridge(), "SystemVoiceNative")
+        webView.webChromeClient = object : WebChromeClient() {
+            override fun onShowFileChooser(
+                view: WebView,
+                callback: ValueCallback<Array<Uri>>,
+                params: FileChooserParams
+            ): Boolean {
+                if (backupFileCallback != null) return false
+                backupFileCallback = callback
+                try {
+                    backupImportLauncher.launch(arrayOf("application/json", "text/plain", "application/octet-stream"))
+                } catch (_: android.content.ActivityNotFoundException) {
+                    backupFileCallback = null
+                    callback.onReceiveValue(null)
+                }
+                return true
+            }
+        }
         webView.webViewClient = object : android.webkit.WebViewClient() {
             override fun shouldOverrideUrlLoading(view: WebView, request: android.webkit.WebResourceRequest): Boolean {
                 val uri = request.url
                 if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") return false
-                if (uri.scheme in setOf("https", "mailto")) runCatching { startActivity(Intent(Intent.ACTION_VIEW, uri)) }
                 return true
             }
             override fun shouldInterceptRequest(
@@ -105,12 +133,10 @@ class MainActivity : ComponentActivity() {
                 request: android.webkit.WebResourceRequest
             ): android.webkit.WebResourceResponse? {
                 val uri = request.url
-                // Intercept only the virtual local app origin. Supabase authentication
-                // and every other remote HTTPS request must be handled by WebView networking.
                 return if (uri.scheme == "https" && uri.host == "appassets.androidplatform.net") {
                     loader.shouldInterceptRequest(uri)
                 } else {
-                    super.shouldInterceptRequest(view, request)
+                    android.webkit.WebResourceResponse("text/plain", "UTF-8", java.io.ByteArrayInputStream(byteArrayOf()))
                 }
             }
         }

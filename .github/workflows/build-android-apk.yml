@@ -3,7 +3,7 @@ name: Build Android Debug APK
 on:
   workflow_dispatch:
   push:
-    branches: [main, health-membership-foundation, adaptive-training, workout-autoflow, movement-progression-v91]
+    branches: [main, health-membership-foundation, adaptive-training, workout-autoflow, movement-progression-v91, device-only-v92]
     paths:
       - "android-wrapper/**"
       - "index.html"
@@ -11,14 +11,14 @@ on:
       - "adaptive-training.js"
       - "workout-flow.js"
       - "movement-progressions.js"
-      - "train-together.js"
+
       - "competitive-credits.js"
-      - "tests/train-together.test.cjs"
+
       - "supabase/migrations/**"
       - "diagnostics.js"
       - "account-data.js"
       - "tests/account-data.test.cjs"
-      - "tests/account-isolation.test.cjs"
+      - "tests/device-only.test.cjs"
       - "tests/**"
       - "sw.js"
       - "styles.css"
@@ -55,11 +55,11 @@ jobs:
         with:
           gradle-version: "8.11.1"
 
-      - name: Verify solo and Train Together flows
+      - name: Install test dependencies
         shell: bash
         run: |
           npm install --prefix "$RUNNER_TEMP/train-tests" @electric-sql/pglite@0.3.14 jsdom@26.1.0 playwright@1.58.2
-          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/train-together.test.cjs
+
 
       - name: Verify session switch on landscape phones
         shell: bash
@@ -85,7 +85,7 @@ jobs:
         run: |
           set -euo pipefail
           node --check competitive-credits.js
-          node --check train-together.js
+
           node --check adaptive-training.js
           node --check workout-flow.js
           node --check movement-progressions.js
@@ -101,9 +101,9 @@ jobs:
           node tests/diagnostics.test.cjs
           node --check account-data.js
           node tests/account-data.test.cjs
-          node tests/account-isolation.test.cjs
+          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/device-only.test.cjs
           node tests/competitive-credits.test.cjs
-          JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/recovery.test.cjs
+
           JSDOM_MODULE="$RUNNER_TEMP/train-tests/node_modules/jsdom" node tests/render-security.test.cjs
           PGLITE_MODULE="$RUNNER_TEMP/train-tests/node_modules/@electric-sql/pglite" node tests/social-security.test.cjs
           node tests/health-connect.test.cjs
@@ -124,7 +124,7 @@ jobs:
           WEB="android-wrapper/app/src/main/assets/www"
           rm -rf "$WEB"
           mkdir -p "$WEB"
-          cp movement-progressions.js workout-flow.js adaptive-training.js sleep-tracker.js health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js train-together.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
+          cp movement-progressions.js workout-flow.js adaptive-training.js sleep-tracker.js health-insights.js system-assistant.js workout-help.js diagnostics.js index.html app.js competitive-credits.js account-data.js styles.css side-system.css side-system.js health-connect.js manifest.webmanifest icon.svg enter_the_system_landscape.jpg sw.js "$WEB"/
           grep -q "V42 ORBIT RUNTIME PROBE" "$WEB/app.js"
           echo "Verified V42 orbit runtime in packaged app.js"
           test -s "$WEB/enter_the_system_landscape.jpg"

@@ -27,7 +27,7 @@ const server = http.createServer((req, res) => {
     await page.goto(`http://127.0.0.1:${server.address().port}/`);
     await page.waitForTimeout(600);
     await page.evaluate(() => {
-      getCloudSession = () => ({ access_token: 'layout-test-only' });
+      enterMainInterface();
       SystemOnboarding.reset();
       SystemOnboarding.show();
     });
@@ -98,7 +98,7 @@ const server = http.createServer((req, res) => {
         if(step===6) { await page.locator('#awWalk').fill('4'); await page.locator('[data-walk-effort="2"]').click(); }
         if(step===7) { await page.locator('#awMarch').fill('2'); await page.locator('[data-march-effort="2"]').click(); }
         if(step===8) {await page.locator('[data-mob="3"]').click();await page.locator('[data-energy="2"]').click();}
-        await page.locator(step<5?'#obNext':'#awNext').click();
+        await page.locator(step<4?'#obNext':step===4?'#entryTestBegin':'#awNext').click();
       }
       console.log('Assessment completion state:', await page.evaluate(()=>({heading:document.querySelector('#awakeningAssessment h1')?.textContent, next:document.querySelector('#awNext')?.textContent,saved:!!localStorage.getItem(ASSESSMENT_KEY),ob:onboardingData()})));
       await page.waitForTimeout(300);

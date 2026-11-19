@@ -7,7 +7,7 @@ const COMMAND_GUIDE=[
  ['During a workout','Show proper form','I did 10 reps at 25 pounds','I had two reps left','Start the timer','Pause the timer','How many sets are left?','Skip the rest timer','That was too hard','This movement hurts','Finish my workout','Save my progress for later'],
  ['Plan and progress','Open my training plan','Change to hybrid training','Change my available equipment','Change my fitness goal','I can train three days a week','Show my training schedule','I missed yesterday','Show my assessment results','Show my personal records','Compare my recent workouts','How close am I to leveling up?','Open my achievements','Show my streak','Show side missions','Open Boss Stage'],
  ['Health and fuel','Open my health data','How many steps today?','When did my watch last sync?','How did I sleep?','Show my sleep history','Give me my recovery briefing','I am tired today','My muscles are sore','Log 16 ounces of water','How much water have I logged?','Open my food log'],
- ['Social and settings','Open Train Together','Host a workout','Join a workout','Show my friends','Open my squad','Show squad progress','Read my alerts','Give me today’s briefing','Open my profile','Change my units','Open sound settings','Back up my progress','Open import options','Show the tutorial'],
+ ['Settings','Read my alerts','Give me today’s briefing','Open my profile','Change my units','Open sound settings','Back up my progress','Open import options','Show the tutorial'],
  ['Voice controls','Stop speaking','Repeat that','Mute spoken replies','Unmute spoken replies','Close the assistant','Never mind']
 ];
 const ROUTES=[
@@ -23,8 +23,6 @@ const ROUTES=[
  [/sleep history/,'telemetry','.system-sleep-tracker'],
  [/health data|steps|watch.*sync|sync.*watch|health connect/,'telemetry','exerciseTracker'],
  [/food log|nutrition|meal|fuel/,'nutrition','nutritionDashboard'],
- [/train together|host a workout|join a workout/,'together','trainTogetherPanel'],
- [/friends|squad|social|leaderboard/,'social','osSocialCommand'],
  [/alerts|what.?s new/,'alerts','systemAlertCenter'],
  [/tutorial|how to use/,'tutorial',''],
  [/back ?up|import|sound settings|change my units|profile|settings/,'profile','profileSettings'],
@@ -74,7 +72,7 @@ function interpret(input,context={}){
  if(/only have|shorter workout|full session|easier session/.test(s))return {type:'duration',minutes:mins?numberValue(mins[1]):null,full:/full session/.test(s)};
  if(/i.m tired|i am tired|muscles are sore|fatigued/.test(s))return {type:'readiness'};
  for(const [re,module,target] of ROUTES)if(re.test(s)){const result={type:'route',module,target};if(module==='exercise'&&/find|show.*exercises/.test(s)){const word=s.match(/dumbbell|barbell|chest|leg|core|band|bodyweight/);if(word)result.query=word[0];}return result;}
- if(/\b(open|show|go to)\b/.test(s))for(const [word,module] of [['player','player'],['progress','progress'],['health','telemetry'],['fuel','nutrition'],['settings','profile'],['training','missions'],['mission','missions'],['social','social']])if(s.includes(word))return {type:'open',module};
+ if(/\b(open|show|go to)\b/.test(s))for(const [word,module] of [['player','player'],['progress','progress'],['health','telemetry'],['fuel','nutrition'],['settings','profile'],['training','missions'],['mission','missions']])if(s.includes(word))return {type:'open',module};
  if(/\b(sleep|slept)\b/.test(s))return {type:'sleep'};
  if(/\b(health briefing|health summary|recovery briefing)\b/.test(s))return {type:'health-briefing'};
  if(/\b(mission|workout|training|next|briefing)\b/.test(s))return {type:'mission'};
@@ -95,7 +93,7 @@ function currentSet(){if(!isLive())return null;const m=missionForMode(adaptiveSy
 function locationToken(){const x=currentSet();return x?systemMissionKey()+':'+getWorkoutMode()+':'+liveIndex+':'+x.name:null}
 function offer(command,message){pending={...command,token:locationToken()};expires=Date.now()+60000;document.getElementById('assistantSave').textContent=command.type==='water'?'CONFIRM WATER LOG':'CONFIRM';document.getElementById('assistantConfirm').hidden=false;answer(message+' Say confirm or tap Confirm.');}
 function dismiss(){stop();pending=null;context={};document.getElementById('assistantConfirm').hidden=true;dialog.close();}
-function navigate(module,target){dismiss();if(module==='tutorial'){root.SystemTutorial?.show();return}if(module==='alerts'){document.getElementById('systemAlertBtn')?.click();return}if(module==='together'){document.getElementById('quickTogether')?.click();return}root.SystemOS?.open(module);const el=target?.startsWith('.')?document.querySelector(target):document.getElementById(target);if(el){for(let n=el;n;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true;el.scrollIntoView({block:'start'});el.querySelector('input,select,button')?.focus({preventScroll:true});}}
+function navigate(module,target){dismiss();if(module==='tutorial'){root.SystemTutorial?.show();return}if(module==='alerts'){document.getElementById('systemAlertBtn')?.click();return}root.SystemOS?.open(module);const el=target?.startsWith('.')?document.querySelector(target):document.getElementById(target);if(el){for(let n=el;n;n=n.parentElement)if(n.tagName==='DETAILS')n.open=true;el.scrollIntoView({block:'start'});el.querySelector('input,select,button')?.focus({preventScroll:true});}}
 function confirmPending(){if(!pending){answer('There is no change waiting for confirmation. Tell me what you want to do.');return}const p=pending;pending=null;document.getElementById('assistantConfirm').hidden=true;if(Date.now()>expires){answer('That request expired. Please ask again.');return}if(p.token&&p.token!==locationToken()){answer('The current set changed. Please repeat your request for this set.');return}
  try{switch(p.type){
  case 'water':{const n=ensureNutrition();fuelDay(n).water.push(p.amount);saveNutrition(n);renderNutrition();answer('Logged '+p.amount+' fluid ounces. Today’s total is '+waterTotal()+' fluid ounces.');break;}
@@ -147,7 +145,7 @@ function run(input){
  case 'choice':if(!context.choices[command.index]){answer('That option is not available. Ask for alternatives again.');break}offer({...command,name:context.choices[command.index],selectIndex:context.selectIndex},'Use '+context.choices[command.index]+'?');break;
  case 'readiness':navigate('missions','trainingReadiness');break;
  case 'unsupported':answer('That action isn’t supported by voice. Use the app’s controls to review and make that change.');break;
- default:context={};answer('I can help with Training, custom workouts, the exercise library, progress, health, fuel, social features or settings. Which one do you want? Tap Help for the full request list.');
+ default:context={};answer('I can help with Training, custom workouts, the exercise library, progress, health, fuel or settings. Which one do you want? Tap Help for the full request list.');
  }
 }
 function start(){stop();if(!native()?.available()){setStatus('On-device speech is unavailable. Type a command below.');return}setStatus('Preparing microphone…');document.body.classList.add('system-voice-listening');native().listen();timer=setTimeout(()=>{stop();setStatus('Listening stopped. Tap Listen to try again.')},20000)}

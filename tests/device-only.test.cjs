@@ -1,0 +1,77 @@
+const fs = require('node:fs');
+const assert = require('node:assert/strict');
+const { JSDOM, VirtualConsole } = require(process.env.JSDOM_MODULE || 'jsdom');
+const path = require('node:path');
+const root = path.resolve(__dirname, '..') + path.sep;
+const html = fs.readFileSync(root+'index.html','utf8');
+const files = [...html.matchAll(/<script src="([^"?]+)[^"]*"><\/script>/g)].map(match=>match[1]);
+async function boot(seed) {
+  const errors=[];
+  const console = new VirtualConsole();
+  console.on('jsdomError',e=>errors.push(e.message));
+  const dom = new JSDOM(html,{url:'https://appassets.androidplatform.net/assets/www/index.html',runScripts:'outside-only',pretendToBeVisual:true,virtualConsole:console});
+  const w=dom.window;
+  Object.entries(seed).forEach(([key,value])=>w.localStorage.setItem(key,value));
+  w.sessionStorage.setItem('theSystemCloudSession','old');
+  w.fetch = async (...args)=>{errors.push('Unexpected fetch '+args[0]);throw Error('Offline')};
+  w.HTMLCanvasElement.prototype.getContext=()=>null;
+  w.scrollTo=()=>{};
+  w.confirm=()=>true;
+  w.setInterval=()=>0;
+  const ready = new Promise(resolve=>w.document.addEventListener('DOMContentLoaded',()=>setImmediate(resolve),{once:true}));
+  for(const file of files) require('node:vm').runInContext(fs.readFileSync(root+file,'utf8'),dom.getInternalVMContext(),{filename:file});
+  await ready;
+  return {dom,w,errors};
+}
+(async()=>{
+  const fresh=await boot({});
+  const w=fresh.w;
+  assert(!w.document.getElementById('systemEntryScreen').hidden);
+  w.document.getElementById('enterTheSystem').click();
+  assert(w.document.getElementById('systemEntryScreen').hidden);
+  for(let i=0;i<4;i++)w.document.getElementById('obNext').click();
+  w.document.getElementById('entryTestSkip').click();
+  assert(!JSON.parse(w.localStorage.systemOnboardingV2).assessmentPending);
+  assert.equal(w.getSystemSettings().name,'Player');
+  assert(!w.localStorage.systemAwakeningAssessmentV1);
+  assert(!w.document.querySelector('.system-onboarding.active'));
+  assert.equal(w.getCloudSession(),null);
+  assert(!w.document.getElementById('quickTogether'));
+  assert(!w.document.getElementById('authGate'));
+  const button=w.document.querySelector('.core-action');
+  assert.match(button.textContent,/MISSION/);
+  button.click();
+  assert(w.document.querySelector('.os-module-stage.active'));
+  assert.deepEqual(fresh.errors,[]);
+  fresh.dom.window.close();
+
+  const prior={systemOnboardingV2:JSON.stringify({name:'EJ',assessmentPending:false,completedAt:'2026-10-28'}),systemWorkoutSessions:JSON.stringify([{date:'2026-10-28'}]),theSystemCloudSession:'old',theSystemDataOwnerV1:'original',theSystemDeviceAccountsV1:'{"old":{}}'};
+  const upgrade=await boot(prior);
+  const u=upgrade.w;
+  assert(u.document.getElementById('systemEntryScreen').hidden);
+  assert.equal(u.localStorage.systemWorkoutSessions,prior.systemWorkoutSessions);
+  assert.equal(u.localStorage.theSystemDeviceAccountsV1,prior.theSystemDeviceAccountsV1);
+  assert.equal(u.localStorage.theSystemCloudSession,undefined);
+  assert.equal(u.sessionStorage.theSystemCloudSession,undefined);
+  const backup=u.systemBackup();
+  assert.equal(backup.localStorage.systemWorkoutSessions,prior.systemWorkoutSessions);
+  assert.equal(backup.localStorage.theSystemDeviceAccountsV1,undefined);
+  let saved;
+  u.SystemAndroid={exportBackup:(name,data)=>saved={name,backup:JSON.parse(data)}};
+  await u.exportSystemBackup();
+  assert.match(saved.name,/\.json$/);
+  assert.equal(saved.backup.localStorage.systemWorkoutSessions,prior.systemWorkoutSessions);
+  await u.importSystemBackup({text:async()=>JSON.stringify({...backup,localStorage:{...backup.localStorage,systemWorkoutSessions:'[]',theSystemCloudSession:'stale'}})});
+  assert.equal(u.localStorage.systemWorkoutSessions,'[]');
+  assert.equal(u.localStorage.theSystemCloudSession,undefined);
+  assert.deepEqual(upgrade.errors,[]);
+  upgrade.dom.window.close();
+
+  const pending=await boot({...prior,systemOnboardingV2:JSON.stringify({assessmentPending:true})});
+  pending.w.document.getElementById('entryTestBegin').click();
+  assert(pending.w.document.getElementById('awakeningAssessment').classList.contains('active'));
+  assert.deepEqual(pending.errors,[]);
+  pending.dom.window.close();
+  console.log('PASS: fresh offline setup and mission, optional Entry Test, existing workout data, credential removal, and JSON backup round trip.');
+})().catch(error=>{console.error(error);process.exit(1)});
+

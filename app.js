@@ -1360,11 +1360,11 @@ const SystemAudio=(()=>{
 
 function renderSystemSettings(){const x=getSystemSettings();const bi=document.getElementById('installedBuild');if(bi){try{bi.textContent=window.SystemAndroid?.getAppVersion?.()||'WEB BUILD'}catch(_){bi.textContent='WEB BUILD'}}const n=document.getElementById('profileName');if(!n)return;n.value=x.name;document.getElementById('unitSystem').value=x.units;document.getElementById('workoutGoal').value=x.goal;document.getElementById('soundSetting').checked=!!x.sounds;['masterVolume','effectsVolume','musicVolume'].forEach(k=>{const e=document.getElementById(k);if(e)e.value=x[k]??({masterVolume:70,effectsVolume:80,musicVolume:35}[k])});}
 function systemBackup(){const data={app:'The System - Workout Tracker',version:11,exportedAt:new Date().toISOString(),localStorage:{}};for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(AccountData.owned(k))data.localStorage[k]=localStorage.getItem(k);}data.localStorage=AccountData.cloudData(data.localStorage);return data;}
-async function exportSystemBackup(){const data=systemBackup(),name='the-system-workout-tracker-backup-'+getTodayStr()+'.json',json=JSON.stringify(data,null,2);try{if(window.SystemAndroid?.exportBackup){window.SystemAndroid.exportBackup(name,json);document.getElementById('backupStatus').textContent='Backup export opened. Choose where to save it.';return}if(navigator.share&&navigator.canShare){const file=new File([json],name,{type:'application/json'});if(navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'THE SYSTEM backup'});document.getElementById('backupStatus').textContent='Backup shared successfully.';return}}const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('backupStatus').textContent='Backup exported successfully.'}catch(e){document.getElementById('backupStatus').textContent='Backup export failed: '+e.message}}
+async function exportSystemBackup(){const data=systemBackup(),name='the-system-workout-tracker-backup-'+getTodayStr()+'.json',json=JSON.stringify(data,null,2);try{if(window.SystemAndroid?.exportBackup){window.SystemAndroid.exportBackup(name,json);document.getElementById('backupStatus').textContent='Backup export opened. Choose where to save it.';return}const blob=new Blob([json],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(url),1000);document.getElementById('backupStatus').textContent='Backup exported successfully.'}catch(e){document.getElementById('backupStatus').textContent='Backup export failed: '+e.message}}
 async function importSystemBackup(file){const status=document.getElementById('backupStatus');try{const data=JSON.parse(await file.text());if(!data||data.app!=='The System - Workout Tracker'||!data.localStorage)throw new Error('Invalid backup');if(!confirm('Import this backup? Current app data will be replaced.'))return;AccountData.applySnapshot(localStorage,data.localStorage);status.textContent='Backup restored. Reloading…';setTimeout(()=>location.reload(),500);}catch(e){status.textContent='Backup could not be imported.';}}
-// Account operations are separate; destructive cloud changes must succeed before local changes.
+// Device data operations.
 let accountDataBusy=false;
-function accountDataStatus(message){document.getElementById('backupStatus').textContent=message;const status=document.getElementById('deleteAccountStatus');if(status)status.textContent=message;}
+function accountDataStatus(message){document.getElementById('backupStatus').textContent=message;}
 function accountConfirmation(message,word=''){
   const dialog=document.getElementById('accountConfirmDialog');
   if(dialog.open||accountDataBusy)return Promise.resolve(false);
@@ -1387,354 +1387,48 @@ async function runAccountOperation(operation){
   finally{accountDataBusy=false;document.querySelectorAll('[data-account-operation]').forEach(b=>b.disabled=false);}
 }
 async function factoryResetSystem(){
-  if(!await accountConfirmation('Factory Reset signs you out and clears this device’s app data, settings, cache and onboarding. Your account and saved cloud progress stay intact. Unsynced progress will be lost. Continue?'))return;
+  if(!await accountConfirmation('Factory Reset clears all app data on this device, including your workouts, settings and setup. Continue?'))return;
   return runAccountOperation(async()=>{
-    // No network request: never upload, reset, or delete cloud data here.
     await AccountData.clearDevice(localStorage,sessionStorage,window.caches);
     location.reload();
   });
 }
 async function resetTrainingData(){
-  if(!await accountConfirmation('Reset Progress restarts XP, rank, missions, streaks, achievements, boss progress and your assessment. Your account, profile and settings stay. Type RESET to continue.','RESET'))return;
+  if(!await accountConfirmation('Reset Progress restarts XP, rank, missions, streaks, achievements, boss progress and your assessment. Your profile and settings stay. Type RESET to continue.','RESET'))return;
   return runAccountOperation(async()=>{
     const fresh=defaultState();fresh.weight=state.weight;
     const next=AccountData.resetSnapshot(systemBackup().localStorage,fresh);
-    if(getCloudSession()?.user?.id){
-      accountDataStatus('Resetting saved cloud progress…');
-      await cloudRequest('/rest/v1/rpc/reset_my_progress',{method:'POST',body:JSON.stringify({replacement:{app:'The System - Workout Tracker',version:12,localStorage:AccountData.cloudData(next)}})});
-    }
     AccountData.applySnapshot(localStorage,next);
     state=fresh;
-    location.reload(); // onboarding.assessmentPending resumes the Initial Assessment.
+    location.reload(); 
   });
 }
-async function deleteSystemAccount(){
-  const session=getCloudSession();
-  if(!session?.user?.id){accountDataStatus('Sign in before deleting your account.');return;}
-  const dialog=document.getElementById('deleteAccountDialog');
-  if(accountDataBusy||dialog.open)return;
-  document.getElementById('deleteAccountForm').reset();
-  document.getElementById('deleteAccountStatus').textContent='';
-  dialog.oncancel=()=>document.getElementById('deleteAccountForm').reset();
-  dialog.showModal();
-  document.getElementById('deleteAccountPassword').focus();
-}
-async function submitDeleteAccount(e){
-  e.preventDefault();
-  const form=e.currentTarget,password=form.elements.password.value,confirmation=form.elements.confirmation.value;
-  if(confirmation!=='DELETE'||!password){accountDataStatus('Enter your password and type DELETE exactly.');return;}
-  return runAccountOperation(async()=>{
-    accountDataStatus('Verifying password and deleting account…');
-    await cloudRequest('/functions/v1/delete-account',{method:'POST',body:JSON.stringify({password,confirmation})});
-    form.reset();document.getElementById('deleteAccountDialog').close();
-    await AccountData.clearDevice(localStorage,sessionStorage,window.caches);
-    location.reload();
-  });
-}
-function initSystemSettings(){renderSystemSettings();const f=document.getElementById('profileForm');if(f)f.onsubmit=e=>{e.preventDefault();const x={...getSystemSettings(),name:document.getElementById('profileName').value.trim()||'Player',units:document.getElementById('unitSystem').value,goal:document.getElementById('workoutGoal').value,sounds:document.getElementById('soundSetting').checked,masterVolume:Number(document.getElementById('masterVolume')?.value||70),effectsVolume:Number(document.getElementById('effectsVolume')?.value||80),musicVolume:Number(document.getElementById('musicVolume')?.value||35)};saveSystemSettings(x);document.getElementById('backupStatus').textContent='Settings saved.';addSystemMessage(`Profile updated — ${escapeHtml(x.name)} • ${x.goal}`,'quest');};document.getElementById('testSystemAudio')?.addEventListener('click',()=>{const x=getSystemSettings();x.sounds=document.getElementById('soundSetting').checked;x.masterVolume=Number(document.getElementById('masterVolume')?.value||70);x.effectsVolume=Number(document.getElementById('effectsVolume')?.value||80);saveSystemSettings(x);SystemAudio.play('mission_complete')});document.getElementById('exportDataBtn')?.addEventListener('click',exportSystemBackup);document.getElementById('importDataInput')?.addEventListener('change',e=>{if(e.target.files[0])importSystemBackup(e.target.files[0]);});document.getElementById('resetTrainingBtn')?.addEventListener('click',resetTrainingData);document.getElementById('resetAllBtn')?.addEventListener('click',factoryResetSystem);document.getElementById('deleteAccountBtn')?.addEventListener('click',deleteSystemAccount);document.getElementById('deleteAccountForm')?.addEventListener('submit',submitDeleteAccount);document.getElementById('cancelDeleteAccount')?.addEventListener('click',()=>{document.getElementById('deleteAccountForm').reset();document.getElementById('deleteAccountDialog').close();});}
+function initSystemSettings(){renderSystemSettings();const f=document.getElementById('profileForm');if(f)f.onsubmit=e=>{e.preventDefault();const x={...getSystemSettings(),name:document.getElementById('profileName').value.trim()||'Player',units:document.getElementById('unitSystem').value,goal:document.getElementById('workoutGoal').value,sounds:document.getElementById('soundSetting').checked,masterVolume:Number(document.getElementById('masterVolume')?.value||70),effectsVolume:Number(document.getElementById('effectsVolume')?.value||80),musicVolume:Number(document.getElementById('musicVolume')?.value||35)};saveSystemSettings(x);document.getElementById('backupStatus').textContent='Settings saved.';addSystemMessage(`Profile updated — ${escapeHtml(x.name)} • ${x.goal}`,'quest');};document.getElementById('testSystemAudio')?.addEventListener('click',()=>{const x=getSystemSettings();x.sounds=document.getElementById('soundSetting').checked;x.masterVolume=Number(document.getElementById('masterVolume')?.value||70);x.effectsVolume=Number(document.getElementById('effectsVolume')?.value||80);saveSystemSettings(x);SystemAudio.play('mission_complete')});document.getElementById('exportDataBtn')?.addEventListener('click',exportSystemBackup);document.getElementById('importDataInput')?.addEventListener('change',e=>{if(e.target.files[0])importSystemBackup(e.target.files[0]);});document.getElementById('resetTrainingBtn')?.addEventListener('click',resetTrainingData);document.getElementById('resetAllBtn')?.addEventListener('click',factoryResetSystem);}
 document.addEventListener('DOMContentLoaded',initSystemSettings);
 
-// --- Shared Supabase Cloud Sync ---
-const CLOUD_CONFIG_KEY='theSystemCloudConfig';
-const CLOUD_SESSION_KEY='theSystemCloudSession';
-const AUTH_REMEMBER_KEY='theSystemRememberMe';
-const SYSTEM_CLOUD={url:'https://wczmxbvdfctffhpohnne.supabase.co',key:'sb_publishable_Pl0Ls17XrDeEHtt4n2UOPQ_PKyye8o1'};
-function getCloudConfig(){return SYSTEM_CLOUD}
-function getCloudSession(){try{return JSON.parse(sessionStorage.getItem(CLOUD_SESSION_KEY)||localStorage.getItem(CLOUD_SESSION_KEY)||'null')}catch(e){return null}}
-function storeCloudSession(session,remember=true){
-  const changed=AccountData.activateAccount(localStorage,session.user.id,getCloudSession()?.user?.id);
-  const raw=JSON.stringify(session);
-  sessionStorage.setItem(CLOUD_SESSION_KEY,raw);
-  localStorage.setItem(AUTH_REMEMBER_KEY,remember?'1':'0');
-  if(remember)localStorage.setItem(CLOUD_SESSION_KEY,raw);
-  else localStorage.removeItem(CLOUD_SESSION_KEY);
-  return changed;
-}
-function cloudStatus(msg,ok=false){const e=document.getElementById('cloudStatus');if(e){e.textContent=msg;e.dataset.ok=ok?'1':'0';}}
-async function cloudRequest(path,opts={}){const c=SYSTEM_CLOUD,s=getCloudSession();const h={'apikey':c.key,'Content-Type':'application/json',...(opts.headers||{})};if(s?.access_token)h.Authorization='Bearer '+s.access_token;const r=await fetch(c.url+path,{...opts,headers:h});const body=await r.text();let data={};try{data=body?JSON.parse(body):{}}catch(e){}if(!r.ok)throw new Error(data.msg||data.message||data.error_description||data.error||'Cloud request failed.');return data;}
-async function cloudSignUp(){try{const emailEl=document.getElementById('cloudEmail'),passwordEl=document.getElementById('cloudPassword');if(!emailEl||!passwordEl){showAuthGate();throw new Error('Use the account screen to create your account.');}const email=emailEl.value.trim(),password=passwordEl.value;if(!email||password.length<6)throw new Error('Enter a valid email and a password of at least 6 characters.');cloudStatus('Creating account…');const s=await cloudRequest('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});if(s.access_token){await completeAuthGate(s,true);}else cloudStatus('Account created. Check your email to confirm it, then sign in.',true);}catch(e){cloudStatus(e.message)}}
-async function cloudSignIn(){try{const emailEl=document.getElementById('cloudEmail'),passwordEl=document.getElementById('cloudPassword');if(!emailEl||!passwordEl){showAuthGate();throw new Error('Use the account screen to sign in.');}const email=emailEl.value.trim(),password=passwordEl.value;if(!email||!password)throw new Error('Enter your email and password.');cloudStatus('Signing in…');const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});await completeAuthGate(s,true);}catch(e){cloudStatus(e.message)}}
-function cloudSignOut(){clearTimeout(cloudAutoTimer);localStorage.removeItem(CLOUD_SESSION_KEY);sessionStorage.removeItem(CLOUD_SESSION_KEY);localStorage.setItem(AUTH_REMEMBER_KEY,'0');location.reload();}
-function cloudPayload(){return cloudOwnedSnapshot();}
-let cloudAutoTimer=null,cloudSyncBusy=false,cloudSyncQueued=false;
-function cloudOwnedSnapshot(){return {app:'The System - Workout Tracker',version:13,exportedAt:new Date().toISOString(),localStorage:AccountData.cloudData(systemBackup().localStorage)}}
-function cloudSyncStatus(msg,ok=false){cloudStatus(msg,ok);const e=document.getElementById('lastCloudSync');if(e&&msg)e.textContent=msg}
-async function autoCloudSync(reason='change'){
- const s=getCloudSession();if(!s?.user?.id||localStorage.getItem(AccountData.ownerKey)!==s.user.id||cloudSyncBusy||!navigator.onLine){if(cloudSyncBusy)cloudSyncQueued=true;return false}
- cloudSyncBusy=true;cloudSyncQueued=false;
- try{const now=new Date().toISOString();cloudSyncStatus('SYNCING…');await cloudRequest('/rest/v1/workout_backups?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:s.user.id,data:cloudOwnedSnapshot(),updated_at:now})});if(getCloudSession()?.user?.id!==s.user.id)return false;localStorage.setItem('theSystemLastSync',now);cloudSyncStatus('CLOUD SYNCED • '+new Date(now).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),true);return true}catch(e){cloudSyncStatus(navigator.onLine?'SYNC PENDING • '+e.message:'OFFLINE • CHANGES SAVED LOCALLY');return false}finally{cloudSyncBusy=false;if(cloudSyncQueued)scheduleCloudSync('queued')}}
-function scheduleCloudSync(reason='change'){if(!getCloudSession()?.user?.id)return;clearTimeout(cloudAutoTimer);cloudAutoTimer=setTimeout(()=>autoCloudSync(reason),1200)}
-async function restoreCloudOnSignIn(){
- const s=getCloudSession();if(!s?.user?.id||localStorage.getItem(AccountData.ownerKey)!==s.user.id)return false;
- try{cloudSyncStatus('CHECKING CLOUD…');const rows=await cloudRequest('/rest/v1/workout_backups?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=data,updated_at&limit=1');if(getCloudSession()?.user?.id!==s.user.id)return false;if(!rows.length){await autoCloudSync('first-device');return false}
- const row=rows[0],cloudAt=Date.parse(row.updated_at||0),localAt=Date.parse(localStorage.getItem('theSystemLastSync')||0);
- if(cloudAt>localAt){const keepSession=localStorage.getItem(CLOUD_SESSION_KEY),remember=localStorage.getItem(AUTH_REMEMBER_KEY);AccountData.applySnapshot(localStorage,row.data?.localStorage||{});if(keepSession)localStorage.setItem(CLOUD_SESSION_KEY,keepSession);if(remember)localStorage.setItem(AUTH_REMEMBER_KEY,remember);localStorage.setItem('theSystemLastSync',row.updated_at);cloudSyncStatus('CLOUD RESTORED • '+new Date(row.updated_at).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),true);return true}
- scheduleCloudSync('sign-in');return false
- }catch(e){cloudSyncStatus('SYNC PENDING • '+e.message);return false}
-}
-function initAutomaticCloudSync(){
- const session=getCloudSession();
- if(session?.user?.id&&AccountData.activateAccount(localStorage,session.user.id,session.user.id)){location.reload();return;}
- window.addEventListener('online',()=>scheduleCloudSync('online'));
- document.addEventListener('visibilitychange',()=>{if(document.visibilityState==='hidden')autoCloudSync('background');else scheduleCloudSync('foreground')});
- window.addEventListener('beforeunload',()=>{if(getCloudSession()?.user?.id)autoCloudSync('exit')});
- const originalSet=Storage.prototype.setItem;Storage.prototype.setItem=function(k,v){originalSet.call(this,k,v);if(this===localStorage&&AccountData?.owned?.(k)&&![CLOUD_SESSION_KEY,'theSystemLastSync'].includes(k))scheduleCloudSync(k)};
- if(getCloudSession()?.user?.id)restoreCloudOnSignIn().then(restored=>{if(restored)location.reload();});
-}
-document.addEventListener('DOMContentLoaded',initAutomaticCloudSync);
+// Shared gameplay helpers can still consult the legacy social interface.
+function getCloudSession(){return null}
+async function cloudRequest(){throw new Error("Network features are unavailable in this edition.")}
 
-async function pushCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id||localStorage.getItem(AccountData.ownerKey)!==s.user.id)throw new Error('Sign in first.');cloudStatus('Uploading…');syncLocalSocialIdentity();await cloudRequest('/rest/v1/workout_backups?on_conflict=user_id',{method:'POST',headers:{Prefer:'resolution=merge-duplicates,return=minimal'},body:JSON.stringify({user_id:s.user.id,data:cloudPayload(),updated_at:new Date().toISOString()})});localStorage.setItem('theSystemLastSync',new Date().toISOString());cloudStatus('Cloud backup uploaded.',true);pushSocialIdentity();renderCloudAccount();}catch(e){cloudStatus(e.message)}}
-async function pullCloudBackup(){try{const s=getCloudSession();if(!s?.user?.id)throw new Error('Sign in first.');cloudStatus('Downloading…');const rows=await cloudRequest('/rest/v1/workout_backups?user_id=eq.'+encodeURIComponent(s.user.id)+'&select=data,updated_at&limit=1');if(!rows.length)throw new Error('No cloud backup found.');if(!confirm('Restore the cloud backup on this device? Current local training data will be replaced.'))return;const keepSession=localStorage.getItem(CLOUD_SESSION_KEY);if(getCloudSession()?.user?.id!==s.user.id)return;AccountData.applySnapshot(localStorage,rows[0].data.localStorage||{});if(keepSession)localStorage.setItem(CLOUD_SESSION_KEY,keepSession);localStorage.setItem('theSystemLastSync',rows[0].updated_at||new Date().toISOString());location.reload();}catch(e){cloudStatus(e.message)}}
-function renderCloudAccount(){const s=getCloudSession(),signed=document.getElementById('cloudSignedIn');if(signed)signed.textContent=s?.user?.email?'SIGNED IN: '+s.user.email.toUpperCase():'NOT SIGNED IN';const last=document.getElementById('lastCloudSync');if(last){const x=localStorage.getItem('theSystemLastSync');last.textContent=x?'Last sync: '+new Date(x).toLocaleString():'No cloud sync yet.';}}
-function initCloudSync(){renderCloudAccount();document.getElementById('cloudSignUp')?.addEventListener('click',cloudSignUp);document.getElementById('cloudSignIn')?.addEventListener('click',cloudSignIn);document.getElementById('cloudSignOut')?.addEventListener('click',cloudSignOut);document.getElementById('cloudPush')?.addEventListener('click',pushCloudBackup);document.getElementById('cloudPull')?.addEventListener('click',pullCloudBackup);}
-document.addEventListener('DOMContentLoaded',initCloudSync);
-let authMode='signin';
-function authGateStatus(msg,ok=false){const e=document.getElementById('authGateStatus');if(e){e.textContent=msg;e.dataset.ok=ok?'1':'0'}}
-function showAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=false}
-function hideAuthGate(){const g=document.getElementById('authGate');if(g)g.hidden=true}
-function showSystemEntry(){
-  const e=document.getElementById('systemEntryScreen');
-  if(e)e.hidden=false;
-  document.body.classList.add('system-entry-open');
-}
-function hideSystemEntry(){
-  const e=document.getElementById('systemEntryScreen');
-  if(e)e.hidden=true;
-  document.body.classList.remove('system-entry-open');
-}
 function enterMainInterface(){
-  hideAuthGate();
-  hideSystemEntry();
-  resetAuthProgress();
-  const boot=document.getElementById('systemBoot');
-  if(boot)boot.hidden=true;
-  document.body.classList.remove('system-boot-open','system-entering');
-  try{
-    const d=new Date();
-    const day=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    localStorage.setItem('theSystemDailyBriefing',day);
-  }catch(_){}
-  window.scrollTo({top:0,left:0,behavior:'auto'});
+  document.getElementById("systemEntryScreen").hidden=true;
+  document.body.classList.remove("system-entry-open");
 }
-function authDelay(ms){return new Promise(resolve=>setTimeout(resolve,ms))}
-function authProgress(stage,title,message){
-  const card=document.querySelector('.auth-card');
-  const box=document.getElementById('authProgress');
-  const t=document.getElementById('authProgressTitle');
-  const m=document.getElementById('authProgressMessage');
-  const bar=document.getElementById('authProgressBar');
-  if(!card||!box)return;
-  card.classList.add('auth-processing');
-  box.hidden=false;
-  if(t)t.textContent=title;
-  if(m)m.textContent=message;
-  if(bar)bar.style.width=({1:'34%',2:'68%',3:'100%'})[stage]||'0%';
-  box.querySelectorAll('[data-auth-step]').forEach(el=>{
-    const n=Number(el.dataset.authStep);
-    el.classList.toggle('done',n<stage);
-    el.classList.toggle('active',n===stage);
-  });
-}
-function resetAuthProgress(){
-  const card=document.querySelector('.auth-card');
-  const box=document.getElementById('authProgress');
-  card?.classList.remove('auth-processing');
-  if(box)box.hidden=true;
-}
-async function completeAuthGate(session,remember=true){
-  if(!session?.access_token)throw new Error('Sign-in response did not include a valid session.');
-  authProgress(2,'VERIFYING IDENTITY','Secure session established. Verifying Hunter profile…');
-  if(storeCloudSession(session,remember)){location.reload();return;}
-  renderCloudAccount();
-  if(await restoreCloudOnSignIn()){location.reload();return;}
-  await authDelay(320);
-  authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface…');
-  await authDelay(520);
+function enterDeviceSystem(){
   enterMainInterface();
+  if(shouldOnboard())showOnboarding();
+  else if(!localStorage.getItem(ASSESSMENT_KEY)&&onboardingData()?.assessmentPending)offerEntryTest();
 }
-function setAuthMode(mode){
-  authMode=mode;
-  resetAuthProgress();
-  document.getElementById('authShowSignIn')?.classList.toggle('active',mode==='signin');
-  document.getElementById('authShowSignUp')?.classList.toggle('active',mode==='signup');
-  const b=document.getElementById('authSubmit');
-  const remember=document.querySelector('.auth-remember');
-  if(b)b.textContent=mode==='signin'?'Sign In':'Create Account';
-  if(remember)remember.hidden=mode!=='signin';
-  authGateStatus('');
-}
-async function authGateSubmit(e){
-  e.preventDefault();
-  const email=document.getElementById('authEmail').value.trim();
-  const password=document.getElementById('authPassword').value;
-  const remember=document.getElementById('authRememberMe')?.checked!==false;
-  if(!email||password.length<6){authGateStatus('Enter a valid email and a password of at least 6 characters.');return}
-  try{
-    authGateStatus('');
-    authProgress(1,authMode==='signin'?'SIGNING IN':'CREATING ACCOUNT',authMode==='signin'?'Connecting to THE SYSTEM…':'Creating your Hunter profile…');
-    await authDelay(180);
-    if(authMode==='signup'){
-      const s=await cloudRequest('/auth/v1/signup',{method:'POST',body:JSON.stringify({email,password})});
-      if(s.access_token){
-        await completeAuthGate(s,true);
-      }else{
-        resetAuthProgress();
-        authGateStatus('Account created. Check your email to confirm it, then return here and sign in.',true);
-      }
-    }else{
-      const s=await cloudRequest('/auth/v1/token?grant_type=password',{method:'POST',body:JSON.stringify({email,password})});
-      await completeAuthGate(s,remember);
-    }
-  }catch(err){
-    resetAuthProgress();
-    authGateStatus(err.message);
+document.addEventListener("DOMContentLoaded",()=>{
+  const entry=document.getElementById("systemEntryScreen");
+  localStorage.removeItem("theSystemCloudSession");
+  sessionStorage.removeItem("theSystemCloudSession");
+  if(onboardingData())enterDeviceSystem();
+  else {
+    entry.hidden=false;
+    document.body.classList.add("system-entry-open");
+    document.getElementById("enterTheSystem").addEventListener("click",enterDeviceSystem,{once:true});
   }
-}
-async function authForgot(){
- const email=document.getElementById('authEmail').value.trim();if(!email){authGateStatus('Enter your email first.');return}
- try{authGateStatus('Sending reset email…');await cloudRequest('/auth/v1/recover',{method:'POST',body:JSON.stringify({email})});showRecovery();authGateStatus('Check your email. Copy the password-reset link and paste it below.',true)}catch(err){authGateStatus(err.message)}
-}
-function recoveryParams(){const q=new URLSearchParams(location.search),h=new URLSearchParams(location.hash.replace(/^#/,''));return {type:q.get('type')||h.get('type'),access_token:q.get('access_token')||h.get('access_token'),refresh_token:q.get('refresh_token')||h.get('refresh_token')}}
-function showRecovery(){
- resetAuthProgress();showAuthGate();document.querySelector('.auth-tabs').hidden=true;document.getElementById('authGateForm').hidden=true;document.getElementById('authForgot').hidden=true;document.getElementById('recoveryForm').hidden=false;
- document.querySelector('.auth-card h1').textContent='Set a new password.';document.querySelector('.auth-copy').textContent='Copy the reset link from your email and paste it here. You can reset your password without leaving the app.';
- const linked=recoveryParams().type==='recovery'&&!!recoveryParams().access_token;
- const input=document.getElementById('recoveryLink');input.hidden=linked;input.required=!linked;
- authGateStatus(linked?'Recovery link received. Choose a new password.':'Paste your password-reset link below.',true);
-}
-async function recoveryTokenFromLink(value){
- let link;try{link=new URL(value.trim())}catch(_){throw Error('Paste the full password-reset link from your email.')}
- const expected=new URL(SYSTEM_CLOUD.url);
- if(link.origin!==expected.origin||link.pathname!=='/auth/v1/verify'||link.searchParams.get('type')!=='recovery')throw Error('Use the password-reset link from THE SYSTEM email.');
- const hash=link.searchParams.get('token')||link.searchParams.get('token_hash');
- if(!hash||hash.length<20||hash.length>512)throw Error('This recovery link is invalid. Request a new reset email.');
- const session=await cloudRequest('/auth/v1/verify',{method:'POST',body:JSON.stringify({token_hash:hash,type:'recovery'})});
- if(!session?.access_token)throw Error('This recovery link is invalid or expired. Request a new reset email.');return session.access_token;
-}
-let recoveryAccessToken='';
-async function submitRecovery(e){
- e.preventDefault();const p=document.getElementById('recoveryPassword').value,c=document.getElementById('recoveryPasswordConfirm').value;
- if(p.length<6){authGateStatus('Password must be at least 6 characters.');return}if(p!==c){authGateStatus('Passwords do not match.');return}
- try{authGateStatus('Updating password…');const r=recoveryParams();const token=recoveryAccessToken||(r.type==='recovery'?r.access_token:null)||await recoveryTokenFromLink(document.getElementById('recoveryLink').value);recoveryAccessToken=token;
- const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{method:'PUT',headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+token,'Content-Type':'application/json'},body:JSON.stringify({password:p})});const data=await res.json().catch(()=>({}));if(!res.ok)throw Error(data.message||data.msg||'Could not update password.');
- recoveryAccessToken='';localStorage.removeItem(CLOUD_SESSION_KEY);sessionStorage.removeItem(CLOUD_SESSION_KEY);history.replaceState({},'',location.pathname);document.getElementById('recoveryForm').reset();authGateStatus('Password updated. You can now sign in.',true);setTimeout(()=>location.reload(),900);
- }catch(err){authGateStatus(err.message)}
-}
-async function validateStoredCloudSession(){
-  const session=getCloudSession();
-  if(!session?.access_token)return null;
-  const remember=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
-  const check=async token=>{
-    const res=await fetch(SYSTEM_CLOUD.url+'/auth/v1/user',{headers:{apikey:SYSTEM_CLOUD.key,Authorization:'Bearer '+token}});
-    if(res.ok)return await res.json();
-    if(res.status===401||res.status===403)return null;
-    throw new Error('Unable to verify account session.');
-  };
-  try{
-    const user=await check(session.access_token);
-    if(user){
-      const valid={...session,user};
-      storeCloudSession(valid,remember);
-      return valid;
-    }
-    if(session.refresh_token){
-      const refreshed=await fetch(SYSTEM_CLOUD.url+'/auth/v1/token?grant_type=refresh_token',{
-        method:'POST',
-        headers:{apikey:SYSTEM_CLOUD.key,'Content-Type':'application/json'},
-        body:JSON.stringify({refresh_token:session.refresh_token})
-      });
-      const data=await refreshed.json().catch(()=>({}));
-      if(refreshed.ok&&data?.access_token){
-        const refreshedUser=data.user||await check(data.access_token);
-        if(refreshedUser){
-          const next={...session,...data,user:refreshedUser};
-          storeCloudSession(next,remember);
-          return next;
-        }
-      }
-    }
-  }catch(err){
-    console.warn('Stored session validation failed:',err);
-  }
-  localStorage.removeItem(CLOUD_SESSION_KEY);
-  sessionStorage.removeItem(CLOUD_SESSION_KEY);
-  return null;
-}
-async function startEntryAuthentication(){
-  showAuthGate();
-  setAuthMode('signin');
-  const remembered=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
-  const saved=getCloudSession();
-
-  if(!remembered||!saved?.access_token){
-    if(!remembered){
-      localStorage.removeItem(CLOUD_SESSION_KEY);
-      sessionStorage.removeItem(CLOUD_SESSION_KEY);
-    }
-    resetAuthProgress();
-    authGateStatus('');
-    setTimeout(()=>document.getElementById('authEmail')?.focus({preventScroll:true}),120);
-    return;
-  }
-
-  authGateStatus('');
-  authProgress(1,'SIGNING IN','Remembered account found. Restoring secure session…');
-  await authDelay(260);
-  authProgress(2,'VERIFYING IDENTITY','Confirming saved session with THE SYSTEM…');
-  const valid=await validateStoredCloudSession();
-  if(valid?.access_token){
-    await authDelay(300);
-    authProgress(3,'INITIALIZING THE SYSTEM','Loading command interface…');
-    await authDelay(520);
-    renderCloudAccount();
-    enterMainInterface();
-  }else{
-    resetAuthProgress();
-    authGateStatus('Session expired. Sign in again.');
-  }
-}
-async function initAuthGate(){
-  const r=recoveryParams();
-
-  document.getElementById('authShowSignIn')?.addEventListener('click',()=>setAuthMode('signin'));
-  document.getElementById('authShowSignUp')?.addEventListener('click',()=>setAuthMode('signup'));
-  document.getElementById('authGateForm')?.addEventListener('submit',authGateSubmit);
-  document.getElementById('authForgot')?.addEventListener('click',authForgot);
-  document.getElementById('recoveryForm')?.addEventListener('submit',submitRecovery);
-  document.getElementById('cancelRecovery')?.addEventListener('click',()=>{recoveryAccessToken='';history.replaceState({},'',location.pathname);location.reload()});
-  document.getElementById('enterTheSystem')?.addEventListener('click',startEntryAuthentication);
-
-  const rememberEl=document.getElementById('authRememberMe');
-  if(rememberEl)rememberEl.checked=localStorage.getItem(AUTH_REMEMBER_KEY)!=='0';
-
-  resetAuthProgress();
-  hideAuthGate();
-
-  if(r.type==='recovery'&&r.access_token){
-    hideSystemEntry();
-    showRecovery();
-    return;
-  }
-
-  if(getCloudSession()?.access_token&&localStorage.getItem(AUTH_REMEMBER_KEY)!=='0'){
-    await startEntryAuthentication();
-    if(!getCloudSession()?.access_token)showAuthGate();
-  }else showSystemEntry();
-}
-document.addEventListener('DOMContentLoaded',initAuthGate);
-document.addEventListener('DOMContentLoaded',()=>{
-  document.querySelectorAll('[data-password-toggle]').forEach(btn=>{
-    btn.addEventListener('click',()=>{
-      const input=document.getElementById(btn.dataset.passwordToggle);
-      if(!input)return;
-      const reveal=input.type==='password';
-      input.type=reveal?'text':'password';
-      btn.textContent=reveal?'Hide':'Show';
-      btn.setAttribute('aria-label',(reveal?'Hide':'Show')+' password');
-      input.focus({preventScroll:true});
-      try{input.setSelectionRange(input.value.length,input.value.length)}catch(_){}
-    });
-  });
 });
 
 // RC1 navigation and lightweight production error handling
@@ -1878,7 +1572,7 @@ document.addEventListener('DOMContentLoaded',initHologramCommandUnit);
 function initSystemOS(){
  document.body.classList.add('system-os-ready');
  const deck=document.getElementById('commandDeck'); if(!deck)return;
- const top=document.createElement('div');top.className='os-topbar';top.innerHTML='<span><b>THE SYSTEM OS</b> // CENTRAL COMMAND</span><span class="os-topbar__right"><i id="osNetwork">SYSTEM ONLINE</i><i id="osClock">--:--</i></span>';deck.appendChild(top);
+ const top=document.createElement('div');top.className='os-topbar';top.innerHTML='<span><b>THE SYSTEM OS</b> // CENTRAL COMMAND</span><span class="os-topbar__right"><i id="osNetwork">DEVICE MODE</i><i id="osClock">--:--</i></span>';deck.appendChild(top);
  const stage=document.createElement('section');stage.className='os-module-stage';stage.setAttribute('aria-hidden','true');stage.innerHTML='<div class="os-module-scan"></div><header class="os-module-head"><div><small id="osModuleKicker">SYSTEM // MODULE</small><strong id="osModuleTitle">MODULE</strong></div><div class="os-module-controls"><button id="osModuleMin" type="button" aria-label="Minimize">−</button><button id="osModuleClose" type="button" aria-label="Close">×</button></div></header><div id="osModuleBody" class="os-module-body"></div>';deck.appendChild(stage);
  const body=document.getElementById('osModuleBody'),title=document.getElementById('osModuleTitle'),kicker=document.getElementById('osModuleKicker');
  let parked=null,current=null;
@@ -1892,8 +1586,7 @@ function initSystemOS(){
   achievements:{title:'ACHIEVEMENTS',kicker:'SYSTEM // RECORDS',ids:['achievementGrid']},
   profile:{title:'SYSTEM CONFIGURATION',kicker:'PLAYER // SETTINGS',ids:['profileSettings']},
   nutrition:{title:'FUEL & RECOVERY',kicker:'SYSTEM // FUEL',ids:['nutritionDashboard']},
-  exercise:{title:'EXERCISE DATABASE',kicker:'SYSTEM // TRAINING ARCHIVE',ids:['exerciseLibrary']},
-  social:{title:'SOCIAL COMMAND',kicker:'NETWORK // CHALLENGES',ids:['osSocialCommand']}
+  exercise:{title:'EXERCISE DATABASE',kicker:'SYSTEM // TRAINING ARCHIVE',ids:['exerciseLibrary']}
  };
  function restore(){if(!parked)return;parked.forEach(({el,parent,next})=>{if(next&&next.parentNode===parent)parent.insertBefore(el,next);else parent.appendChild(el)});parked=null}
  function setActive(name,on=true){document.querySelectorAll('[data-os-module],[data-holo]').forEach(x=>x.classList.toggle('os-active',on&&(x.dataset.osModule===name||x.dataset.holo===name)))}
@@ -1902,7 +1595,7 @@ function initSystemOS(){
   const m=map[name];if(!m)return;if(name==='nutrition')renderNutrition();if(name==='player'&&typeof renderPlayerStatus==='function')renderPlayerStatus();
   if(current===name&&stage.classList.contains('minimized')){stage.classList.remove('minimized');document.body.classList.add('os-module-open');return}
   restore();setActive(current,false);body.innerHTML='';parked=[];current=name;
-  if(name==='social'){let social=document.getElementById('osSocialCommand');if(!social){social=document.createElement('section');social.id='osSocialCommand';document.body.appendChild(social)}renderSocialCommand()}
+
   m.ids.forEach(id=>{const el=document.getElementById(id);if(el){parked.push({el,parent:el.parentNode,next:el.nextSibling});body.appendChild(el)}});
   if(name==='missions'){body.querySelectorAll('#sideMissionSystem,#bossStageSystem,#exerciseLibrary').forEach(el=>{const group=document.createElement('details');group.className='training-group';const label=document.createElement('summary');label.textContent=el.id==='sideMissionSystem'?'Side Missions':el.id==='bossStageSystem'?'Boss Stage':'Exercise Library';el.before(group);group.append(label,el)});}
   if(!parked.length)body.innerHTML='<div class="os-placeholder"><div><span class="os-status">MODULE ONLINE // LINK READY</span><strong>'+m.title+'</strong><p>This SYSTEM module is online and ready for its connected data.</p></div></div>';
@@ -2114,7 +1807,6 @@ function installPlayerSearch(root){
  box.querySelector('form').onsubmit=async e=>{e.preventDefault();const out=box.querySelector('#playerSearchResults');out.innerHTML='<div class="social-empty">SCANNING NETWORK...</div>';try{const rows=await searchSocialPlayers(box.querySelector('input').value),me=socialCloudUser().id;out.innerHTML=rows.filter(p=>p.user_id!==me).map(p=>'<article class="player-search-row" data-dossier-player="'+p.user_id+'"><div><strong>'+escapeHtml(p.display_name)+'</strong><small>LV '+(p.level||1)+' • '+escapeHtml(p.rank||'E-Rank')+(p.title?' • '+escapeHtml(p.title):'')+'</small></div><div><b>'+Number(p.xp||0).toLocaleString()+' POINTS</b><small>'+Number(p.gates||0)+' GATES • BEST '+Number(p.best_score||0)+'</small></div><button type="button" data-challenge-player="'+escapeHtml(p.display_name)+'">CHALLENGE</button></article>').join('')||'<div class="social-empty">NO PLAYERS FOUND</div>';out.querySelectorAll('[data-dossier-player]').forEach(r=>r.onclick=e=>{if(!e.target.closest('[data-challenge-player]'))openPlayerDossier(r.dataset.dossierPlayer)});out.querySelectorAll('[data-challenge-player]').forEach(b=>b.onclick=()=>{const input=document.getElementById('challengePlayer');if(input){input.value=b.dataset.challengePlayer;input.focus()}})}catch(err){out.innerHTML='<div class="social-empty">NETWORK SEARCH UNAVAILABLE</div>'}};
 }
 renderSocialCommand=renderSocialCloud;
-const _v26Push=pushCloudBackup;pushCloudBackup=async function(){const r=await _v26Push();try{await syncSocialProfile()}catch(e){}return r};
 
 
 /* ===== V27 SOCIAL COMMAND // LIVE DUELS ===== */
@@ -2692,28 +2384,7 @@ window.SystemDiagnostics=async function(){
 
 
 /* ===== V33 SESSION + SOCIAL LIFECYCLE HARDENING ===== */
-let cloudRefreshPromise=null;
-function cloudSessionExpired(s=getCloudSession()){if(!s?.access_token)return true;const exp=Number(s.expires_at||0);if(exp)return Date.now()>=exp*1000-60000;try{const p=JSON.parse(atob(s.access_token.split('.')[1].replace(/-/g,'+').replace(/_/g,'/')));return Date.now()>=Number(p.exp||0)*1000-60000}catch(e){return false}}
-async function refreshCloudSession(){
- const s=getCloudSession();if(!s?.refresh_token)throw new Error('Session expired. Sign in again.');
- if(cloudRefreshPromise)return cloudRefreshPromise;
- cloudRefreshPromise=(async()=>{const r=await fetch(SYSTEM_CLOUD.url+'/auth/v1/token?grant_type=refresh_token',{method:'POST',headers:{apikey:SYSTEM_CLOUD.key,'Content-Type':'application/json'},body:JSON.stringify({refresh_token:s.refresh_token})});const data=await r.json().catch(()=>({}));if(!r.ok)throw new Error(data.msg||data.message||data.error_description||'Session expired. Sign in again.');if(getCloudSession()?.user?.id!==s.user.id)throw new Error('Account changed. Sign in again.');storeCloudSession(data,localStorage.getItem(AUTH_REMEMBER_KEY)!=='0');return data})().finally(()=>cloudRefreshPromise=null);return cloudRefreshPromise
-}
-const _v33CloudRequest=cloudRequest;
-cloudRequest=async function(path,opts={}){
- const authPath=path.startsWith('/auth/v1/');
- let s=getCloudSession();if(!authPath&&s?.refresh_token&&cloudSessionExpired(s)){try{await refreshCloudSession()}catch(e){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();throw e}}
- try{return await _v33CloudRequest(path,opts)}catch(e){
-  const msg=String(e.message||'');s=getCloudSession();
-  if(!authPath&&s?.refresh_token&&/jwt|token|expired|unauthorized|401/i.test(msg)){try{await refreshCloudSession();return await _v33CloudRequest(path,opts)}catch(x){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();throw x}}
-  throw e
- }
-};
-async function validateCloudSession(){
- const s=getCloudSession();if(!s?.access_token)return false;
- try{if(cloudSessionExpired(s)&&s.refresh_token)await refreshCloudSession();await _v33CloudRequest('/auth/v1/user');return true}catch(e){localStorage.removeItem(CLOUD_SESSION_KEY);showAuthGate();renderCloudAccount();return false}
-}
-document.addEventListener('DOMContentLoaded',()=>{if(getCloudSession()?.access_token)validateCloudSession()});
+
 
 // Canonical multiplayer "missions" metric is completed workout sessions, not daily quest cards.
 function socialMissionCount(){return workoutHistory().length}
@@ -3017,7 +2688,7 @@ function initCommandWorkspace(){
  });
  const refresh=()=>{const read=id=>document.getElementById(id)?.textContent||'';const campaign=document.getElementById('campaignProgressSummary');if(campaign)campaign.textContent=read('hudStreak')+' DAY STREAK · '+read('hudWorkouts')+' MISSIONS CLEARED';const main=deck.querySelector('.core-action');if(main){const done=Object.values(getMissionProgress()).some(x=>x.done);main.textContent=document.getElementById('start-mission-btn')?.disabled?'MISSION CLEARED':done?'RESUME MISSION':'BEGIN MISSION'}};
  document.getElementById('quickFocus').onclick=e=>{const on=deck.classList.toggle('command-focus');e.currentTarget.setAttribute('aria-pressed',String(on));e.currentTarget.textContent=on?'EXIT FOCUS':'FOCUS'};
- document.getElementById('quickTogether').onclick=()=>{window.SystemOS?.open('missions');const start=document.getElementById('start-mission-btn');if(start?.disabled){window.SystemOS?.notify?.('Today’s mission is complete. Choose another workout from Training.');return}start?.click();document.getElementById('ttOpen')?.click();document.getElementById('trainTogetherPanel')?.scrollIntoView({block:'nearest'})};
+
  document.getElementById('quickWater').onclick=()=>{window.SystemOS?.open('nutrition');document.querySelector('[data-fuel-water]')?.focus()};
  const os=window.SystemOS,stage=document.querySelector('.os-module-stage');
  if(os&&stage){const baseOpen=os.open,baseClose=os.close;let windowVersion=0;
