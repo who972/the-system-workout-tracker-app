@@ -187,7 +187,7 @@ jobs:
 
   browser-checks:
     runs-on: ubuntu-24.04
-    timeout-minutes: 8
+    timeout-minutes: 12
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -198,7 +198,7 @@ jobs:
       - name: Verify landscape browser flows
         shell: bash
         run: |
-          timeout 120s node "$RUNNER_TEMP/train-tests/node_modules/playwright/cli.js" install --with-deps chromium
+          timeout 300s node "$RUNNER_TEMP/train-tests/node_modules/playwright/cli.js" install --with-deps chromium
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" timeout 65s node tests/movement-progressions-layout.test.cjs
           PLAYWRIGHT_MODULE="$RUNNER_TEMP/train-tests/node_modules/playwright" timeout 65s node tests/session-equipment-layout.test.cjs
           NODE_PATH="$RUNNER_TEMP/train-tests/node_modules" timeout 65s node tests/onboarding-layout.test.cjs
