@@ -2499,6 +2499,46 @@ function healthValue(value, kind){
  if(kind==='distanceMeters')return (n/(getSystemSettings().units==='metric'?1000:1609.344)).toFixed(2)+(getSystemSettings().units==='metric'?' km':' mi');
  return Math.round(n).toLocaleString()+(kind==='activeMinutes'?' min':kind==='calories'?' kcal':kind==='heartRate'?' bpm':'');
 }
+function renderTodayActivity(root, telemetry, workouts){
+ const section=document.createElement('section');
+ const heading=document.createElement('h3');
+ heading.textContent='TODAY’S ACTIVITY';
+ section.append(heading);
+
+ const list=document.createElement('div');
+ list.className='health-workouts';
+ section.append(list);
+ const day=new Date();
+ day.setHours(0,0,0,0);
+ const now=Date.now();
+ const today=workouts
+  .map(workout=>({workout,start:Date.parse(workout?.startTime)}))
+  .filter(({start})=>start>=day.getTime()&&start<=now)
+  .sort((a,b)=>b.start-a.start);
+ const available=telemetry.status==='connected'&&telemetry.permissions?.activeMinutes!==false;
+ const sources={
+  'com.sec.android.app.shealth':'Samsung Health',
+  'com.fitbit.FitbitMobile':'Google Health (Fitbit)',
+  'com.google.android.apps.fitness':'Google Fit'
+ };
+ if(available&&today.length){
+  for(const {workout,start} of today){
+   const card=document.createElement('article');
+   const title=document.createElement('strong');
+   title.textContent=workout.title||'Recorded workout';
+   const details=document.createElement('span');
+   const source=Object.hasOwn(sources,workout.source)?sources[workout.source]:workout.source||'Health Connect';
+   details.textContent=[new Date(start).toLocaleTimeString([], {hour:'numeric',minute:'2-digit'}),healthValue(workout.minutes,'activeMinutes'),source].join(' • ');
+   card.append(title,details);
+   list.append(card);
+  }
+ }else{
+  const note=document.createElement('p');
+  note.textContent=available?'No shared workouts today.':telemetry.status==='error'?'Sync Health Connect to refresh workout activity.':'Connect Health Connect and allow exercise access to see workouts.';
+  list.append(note);
+ }
+ root.querySelector('.health-actions').after(section);
+}
 function renderHealthTelemetry(v=healthTelemetry()){
  const linked=v.status==='connected',today=v.today||{},hs=document.getElementById('hudSteps'),ha=document.getElementById('hudActive'),hl=document.getElementById('hudHealthLink');
  if(hs)hs.textContent=linked?healthValue(today.steps??v.steps,'steps'):'—';if(ha)ha.textContent=linked?healthValue(today.activeMinutes??v.activeMinutes,'activeMinutes'):'—';if(hl)hl.textContent=linked?'ONLINE':v.status==='error'?'ERROR':'READY';
@@ -2508,6 +2548,7 @@ function renderHealthTelemetry(v=healthTelemetry()){
  const days=Array.isArray(v.days)?v.days:[],workouts=Array.isArray(v.workouts)?v.workouts:[];
  root.innerHTML='<div class="health-connect-head"><span>HEALTH CONNECT // ANDROID</span><b class="'+(linked?'online':'standby')+'">'+status+'</b></div><p class="health-sync-note">Automatic sources: steps use one provider, preferring watch data. Calories and heart rate use one provider per day. Exercise, distance and sleep follow Health Connect priorities.</p><div class="health-connect-grid">'+categories.map(([key,label])=>'<article><small>'+label+' TODAY</small><strong>'+healthValue(today[key],key)+'</strong><small>'+(v.permissions?.[key]===false?'Permission not granted':escapeHtml(today[key+'Source']||''))+'</small></article>').join('')+'</div><p class="health-sync-note">'+(v.lastError?'Sync failed. Check Health Connect permissions and try again. ':v.status==='permission-denied'?'Allow at least one health category to connect. ':'')+'Last successful sync: '+(v.syncedAt?new Date(v.syncedAt).toLocaleString():'Not synced')+'</p><div class="health-actions"><button id="healthConnectAction" '+(!native?'disabled':'')+'>'+(linked?'SYNC HEALTH DATA':'CONNECT HEALTH CONNECT')+'</button><button id="healthPermissionsAction" '+(!native?'disabled':'')+'>UPDATE PERMISSIONS</button></div><h3>7-DAY HEALTH HISTORY</h3><p class="health-sync-note">— means no shared data or no permission. Today is partial. Sleep is counted within each calendar day. Calories include resting energy.</p><div class="health-history-scroll"><table class="health-history"><thead><tr><th>DAY</th>'+categories.map(x=>'<th>'+x[1]+'</th>').join('')+'</tr></thead><tbody>'+days.map(d=>'<tr><th>'+escapeHtml(d.date)+'</th>'+categories.map(([key])=>'<td>'+healthValue(d[key],key)+(d[key+'Source']?'<br><small>'+escapeHtml(d[key+'Source'])+'</small>':'')+'</td>').join('')+'</tr>').join('')+'</tbody></table>'+(days.length?'':'<p>Connect to load the last seven days.</p>')+'</div><h3>RECORDED WORKOUTS // LAST 7 DAYS</h3><div class="health-workouts">'+(workouts.length?[...workouts].sort((a,b)=>new Date(b.startTime)-new Date(a.startTime)).map(w=>'<article><strong>'+escapeHtml(w.title||'Recorded workout')+'</strong><span>'+escapeHtml(new Date(w.startTime).toLocaleString())+' • '+healthValue(w.minutes,'activeMinutes')+'</span></article>').join(''):'<p>No shared workouts in this period.</p>')+'</div>';
  if(window.SystemSleepTracker){const sleep=document.createElement('section');root.querySelector('.health-actions').after(sleep);window.SystemSleepTracker.render(sleep,v)}
+ renderTodayActivity(root,v,workouts);
  const context=window.SystemHealthInsights?.summarize(v);const briefingDetail=document.getElementById('healthBriefingDetail');if(briefingDetail&&context)briefingDetail.textContent=context.text;if(context){const note=document.createElement('p');note.className='health-sync-note';note.setAttribute('role','status');note.textContent='SYSTEM HEALTH BRIEFING // '+context.text;root.prepend(note)}
  document.getElementById('healthConnectAction')?.addEventListener('click',()=>syncHealthConnect(!linked));document.getElementById('healthPermissionsAction')?.addEventListener('click',()=>syncHealthConnect(true));
 }
